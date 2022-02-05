@@ -1,7 +1,9 @@
 ﻿#pragma once
 
+#include <Logger.h>
 #include <string>
 #include <vector>
+#include <ranges>
 
 #include "Solution.hpp"
 #include "Matrix.hpp"
@@ -28,6 +30,9 @@ namespace OPLibrary
 		Matrix<T>* constraintObjectives_;
 		Matrix<T>* objectives_;
 
+		std::vector<std::string> INITIALIZABLE_ARGS;
+		std::map<std::string, long double*> INITIALIZATOR;
+
 	public:
 		Solver() : constraints_(nullptr), constraintObjectives_(nullptr), objectives_(nullptr) {}
 		virtual ~Solver() = default;
@@ -36,11 +41,26 @@ namespace OPLibrary
 		 * \brief Returns all the arguments which can and need to be initialized before trying to solve the optimization problem.
 		 * \return vector of arguments
 		 */
-		virtual std::vector<std::string> getInitializableArgs() = 0;
+		virtual std::vector<std::string> getInitializableArgs()
+		{
+			return INITIALIZABLE_ARGS;
+		}
 		/**
 		 * \brief Sets the value of an initializable argument for the Solver.
 		 */
-		virtual void setInitializableArg(const std::string&, const long double&) = 0;
+		virtual void setInitializableArg(const std::string& arg, const long double& val)
+		{
+			using namespace std;
+
+			if (ranges::find(INITIALIZABLE_ARGS.begin(), INITIALIZABLE_ARGS.end(), arg) != INITIALIZABLE_ARGS.end())
+			{
+				*INITIALIZATOR[arg] = val;
+			}
+			else
+			{
+				Logger::getInstance().error(format("Tried to set an invalid initializable arg {} to value {}, skipping.", arg, val));
+			}
+		}
 
 		/**
 		 * \brief Sets the constraints matrix.

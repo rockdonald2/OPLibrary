@@ -116,7 +116,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Workspace\egyetem\szakdolgozat\OPLibrary\OPLibrary\OPProblemReader;C:\Workspace\egyetem\szakdolgozat\OPLibrary\OPLibrary\OPSolutionWriter;C:\Workspace\egyetem\szakdolgozat\OPLibrary\OPLibrary\OPDataStructures;C:\Workspace\egyetem\szakdolgozat\OPLibrary\OPLibrary\OPUtility;C:\Workspace\egyetem\szakdolgozat\OPLibrary\OPLibrary\OPSolver;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Workspace\repos\github\OPLibrary\OPDataStructures;C:\Workspace\repos\github\OPLibrary\OPProblemReader;C:\Workspace\repos\github\OPLibrary\OPSolutionWriter;C:\Workspace\repos\github\OPLibrary\OPSolver;C:\Workspace\repos\github\OPLibrary\OPUtility;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
