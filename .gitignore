@@ -1,5 +1,6 @@
 .idea
 .vs
+.vscode
 **/x64
 **/Debug/
 **/Release/
