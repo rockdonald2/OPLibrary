@@ -37,34 +37,48 @@ namespace OPLibrary
 			this->INITIALIZATOR.insert(make_pair<string, long double*>("alpha", &alpha_));
 			this->INITIALIZATOR.insert(make_pair<string, long double*>("mu", &mu_));
 		}
-		
-		void setConstraints(Matrix<T>* cnstrs) override
-		{
-			this->constraints_ = cnstrs;
-		}
 
-		void setConstraintObjectives(Matrix<T>* cnstrsObjs) override
-		{
-			this->constraintObjectives_ = cnstrsObjs;
-		}
-		void setObjectives(Matrix<T>* objs) override
-		{
-			this->objectives_ = objs;
-		}
+		void setConstraints(Matrix<T>* cnstrs) override;
+		void setConstraintObjectives(Matrix<T>* cnstrsObjs) override;
+		void setObjectives(Matrix<T>* objs) override;
 
-		SolutionStatus solve() override
-		{
-			if (this->constraints_ == nullptr || this->objectives_ == nullptr || this->constraintObjectives_ == nullptr)
-			{
-				throw SolverException("Cannot solve optimization problem without correctly setting the constraints, objectives and constraint objectives.");
-			}
+		SolutionStatus solve() override;
 
-			return SolutionStatus::NONOPTIMAL;
-		}
-
-		Solution getSolution() override
-		{
-			return {};
-		}
+		Solution getSolution() override;
 	};
+
+	template <typename T>
+	void SOCPSolver<T>::setConstraints(Matrix<T>* cnstrs)
+	{
+		this->constraints_ = cnstrs;
+	}
+
+	template <typename T>
+	void SOCPSolver<T>::setConstraintObjectives(Matrix<T>* cnstrsObjs)
+	{
+		this->constraintObjectives_ = cnstrsObjs;
+	}
+
+	template <typename T>
+	void SOCPSolver<T>::setObjectives(Matrix<T>* objs)
+	{
+		this->objectives_ = objs;
+	}
+
+	template <typename T>
+	SolutionStatus SOCPSolver<T>::solve()
+	{
+		if (this->constraints_ == nullptr || this->objectives_ == nullptr || this->constraintObjectives_ == nullptr)
+		{
+			throw SolverException("Cannot solve optimization problem without correctly setting the constraints, objectives and constraint objectives.");
+		}
+
+		return SolutionStatus::NONOPTIMAL;
+	}
+
+	template <typename T>
+	Solution SOCPSolver<T>::getSolution()
+	{
+		return {};
+	}
 }

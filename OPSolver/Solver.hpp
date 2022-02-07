@@ -41,26 +41,11 @@ namespace OPLibrary
 		 * \brief Returns all the arguments which can and need to be initialized before trying to solve the optimization problem.
 		 * \return vector of arguments
 		 */
-		virtual std::vector<std::string> getInitializableArgs()
-		{
-			return INITIALIZABLE_ARGS;
-		}
+		virtual std::vector<std::string> getInitializableArgs();
 		/**
 		 * \brief Sets the value of an initializable argument for the Solver.
 		 */
-		virtual void setInitializableArg(const std::string& arg, const long double& val)
-		{
-			using namespace std;
-
-			if (ranges::find(INITIALIZABLE_ARGS.begin(), INITIALIZABLE_ARGS.end(), arg) != INITIALIZABLE_ARGS.end())
-			{
-				*INITIALIZATOR[arg] = val;
-			}
-			else
-			{
-				Logger::getInstance().error(format("Tried to set an invalid initializable arg {} to value {}, skipping.", arg, val));
-			}
-		}
+		virtual void setInitializableArg(const std::string& arg, const long double& val);
 
 		/**
 		 * \brief Sets the constraints matrix.
@@ -87,4 +72,25 @@ namespace OPLibrary
 		 */
 		virtual Solution getSolution() = 0;
 	};
+
+	template <typename T>
+	std::vector<std::string> Solver<T>::getInitializableArgs()
+	{
+		return INITIALIZABLE_ARGS;
+	}
+
+	template <typename T>
+	void Solver<T>::setInitializableArg(const std::string& arg, const long double& val)
+	{
+		using namespace std;
+
+		if (ranges::find(INITIALIZABLE_ARGS.begin(), INITIALIZABLE_ARGS.end(), arg) != INITIALIZABLE_ARGS.end())
+		{
+			*INITIALIZATOR[arg] = val;
+		}
+		else
+		{
+			Logger::getInstance().error(format("Tried to set an invalid initializable arg {} to value {}, skipping.", arg, val));
+		}
+	}
 }
