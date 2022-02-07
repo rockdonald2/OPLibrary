@@ -150,6 +150,13 @@ namespace OPLibrary
 		virtual Matrix<T>* transpose(const bool& inplace = false) = 0;
 
 		/**
+		 * \brief Inverts the matrix, inplace or not, if not returns the new inverted Matrix.
+		 * \param inplace determines if inplace or not
+		 * \return inverted Matrix
+		 */
+		virtual Matrix<T>* inverse(const bool& inplace = false) = 0;
+
+		/**
 		 * \brief Adds a value to a specific position in the Matrix.
 		 * \param rPos position in rows
 		 * \param cPos position in columns
@@ -235,5 +242,7 @@ namespace OPLibrary
 		 * \param rCol right column
 		 */
 		virtual void exchangeCols(const size_t& lCol, const size_t& rCol) = 0;
+
+		virtual Matrix<T>* solve(Matrix<T>& rhs, const std::string& solver = "bdcsvd") = 0;
 	};
 }

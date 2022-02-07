@@ -70,6 +70,7 @@ namespace OPLibrary
 		std::vector<T> removeRow(const size_t& rPos) override;
 
 		Matrix<T>* transpose(const bool& inplace = false) override;
+		Matrix<T>* inverse(const bool& inplace = false) override;
 
 		void addToElementByPos(const size_t& rPos, const size_t& cPos, const T& val) override;
 		void multiplyElementByPos(const size_t& rPos, const size_t& cPos, const T& val) override;
@@ -105,6 +106,8 @@ namespace OPLibrary
 
 		void exchangeRows(const size_t& lRow, const size_t& rRow) override;
 		void exchangeCols(const size_t& lCol, const size_t& rCol) override;
+
+		Matrix<T>* solve(Matrix<T>& rhs, const std::string& solver) override;
 	};
 
 	template <typename T>
@@ -337,6 +340,21 @@ namespace OPLibrary
 	}
 
 	template <typename T>
+	Matrix<T>* DenseMatrix<T>::inverse(const bool& inplace)
+	{
+		if (inplace)
+		{
+			this->matrix_ = this->matrix_.inverse();
+			return this;
+		}
+
+		const Matrix<T>* upcast = this;
+		auto* retVal = new DenseMatrix(*upcast);
+		retVal->inverse(true);
+		return retVal;
+	}
+
+	template <typename T>
 	void DenseMatrix<T>::addToElementByPos(const size_t& rPos, const size_t& cPos, const T& val)
 	{
 		if (rPos >= this->rows_) throw MatrixException("Invalid row position was tried to be set: " + std::to_string(rPos));
@@ -498,5 +516,45 @@ namespace OPLibrary
 		if (lCol >= this->getCols() || rCol >= this->getCols()) throw MatrixException("Row position out of bounds for exchanging rows: " + std::to_string(lCol) + "-" + std::to_string(rCol));
 
 		this->matrix_.col(lCol).swap(this->matrix_.col(rCol));
+	}
+
+	template <typename T>
+	Matrix<T>* DenseMatrix<T>::solve(Matrix<T>& rhs, const std::string& solver)
+	{
+		using namespace Eigen;
+
+		auto lhsE = this->matrix_;
+		auto rhsVals(rhs.getValues());
+		const auto rhsRows(rhs.getRows());
+		const auto rhsCols(rhs.getCols());
+
+		const Eigen::Matrix<T, Dynamic, Dynamic> rhsE = Map<Eigen::Matrix<T, Dynamic, Dynamic>>(rhsVals.data(), rhsRows, rhsCols);
+
+		auto ret = new DenseMatrix();
+
+		Eigen::Matrix<T, Dynamic, Dynamic> solution;
+		if (solver == "bdcsvd")
+		{
+			solution = lhsE.bdcSvd(ComputeThinU | ComputeThinV).solve(rhsE).eval();
+		}
+		else if (solver == "jacobi")
+		{
+			solution = lhsE.jacobiSvd(ComputeThinU | ComputeThinV).solve(rhsE).eval();
+		}
+		else if (solver == "colPivHouseholder")
+		{
+			solution = lhsE.colPivHouseholderQr().solve(rhsE).eval();
+		}
+		else
+		{
+			throw MatrixException("Unsupported solver.");
+		}
+
+		std::vector<T> tmpResultVec(solution.size());
+		Map<Eigen::Matrix<T, Dynamic, Dynamic>>(tmpResultVec.data(), solution.rows(), solution.cols()) = solution;
+
+		ret->setValues(tmpResultVec, tmpResultVec.size(), 1);
+
+		return ret;
 	}
 }
