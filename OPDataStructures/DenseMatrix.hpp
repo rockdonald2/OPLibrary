@@ -107,7 +107,8 @@ namespace OPLibrary
 		void exchangeRows(const size_t& lRow, const size_t& rRow) override;
 		void exchangeCols(const size_t& lCol, const size_t& rCol) override;
 
-		Matrix<T>* solve(Matrix<T>& rhs, const std::string& solver) override;
+		Matrix<T>* solve(Matrix<T>& rhs, const DecompositionType& decomposition) override;
+		Matrix<T>* solve(Matrix<T>* rhs, const DecompositionType& decomposition) override;
 	};
 
 	template <typename T>
@@ -519,7 +520,13 @@ namespace OPLibrary
 	}
 
 	template <typename T>
-	Matrix<T>* DenseMatrix<T>::solve(Matrix<T>& rhs, const std::string& solver)
+	Matrix<T>* DenseMatrix<T>::solve(Matrix<T>* rhs, const DecompositionType& decomposition)
+	{
+		return this->solve(*rhs, decomposition);
+	}
+
+	template <typename T>
+	Matrix<T>* DenseMatrix<T>::solve(Matrix<T>& rhs, const DecompositionType& decomposition)
 	{
 		using namespace Eigen;
 
@@ -533,15 +540,15 @@ namespace OPLibrary
 		auto ret = new DenseMatrix();
 
 		Eigen::Matrix<T, Dynamic, Dynamic> solution;
-		if (solver == "bdcsvd")
+		if (decomposition == DecompositionType::BDCSVD)
 		{
 			solution = lhsE.bdcSvd(ComputeThinU | ComputeThinV).solve(rhsE).eval();
 		}
-		else if (solver == "jacobi")
+		else if (decomposition == DecompositionType::JACOBISVD)
 		{
 			solution = lhsE.jacobiSvd(ComputeThinU | ComputeThinV).solve(rhsE).eval();
 		}
-		else if (solver == "colPivHouseholder")
+		else if (decomposition == DecompositionType::COLPIVHOUSEHOLDER)
 		{
 			solution = lhsE.colPivHouseholderQr().solve(rhsE).eval();
 		}

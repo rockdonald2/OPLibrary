@@ -7,6 +7,16 @@
 namespace OPLibrary
 {
 	/**
+	 * \brief Available decomposition types for solve method.
+	 */
+	enum class DecompositionType
+	{
+		BDCSVD,
+		JACOBISVD,
+		COLPIVHOUSEHOLDER
+	};
+
+	/**
 	 * \brief Matrix representation, abstract users need to provide an implementation for.
 	 */
 	template <typename T>
@@ -243,6 +253,19 @@ namespace OPLibrary
 		 */
 		virtual void exchangeCols(const size_t& lCol, const size_t& rCol) = 0;
 
-		virtual Matrix<T>* solve(Matrix<T>& rhs, const std::string& solver = "bdcsvd") = 0;
+		/**
+		 * \brief Solves a system of equations with lhs as this and the given rhs, clients can decide which decomposition type is used.
+		 * \param rhs the right-hand side of the equation
+		 * \param decomposition type
+		 * \return solution matrix/vector
+		 */
+		virtual Matrix<T>* solve(Matrix<T>& rhs, const DecompositionType& decomposition = DecompositionType::BDCSVD) = 0;
+		/**
+		 * \brief Solves a system of equations with lhs as this and the given rhs, clients can decide which decomposition type is used.
+		 * \param rhs the right-hand side of the equation
+		 * \param decomposition type
+		 * \return solution matrix/vector
+		 */
+		virtual Matrix<T>* solve(Matrix<T>* rhs, const DecompositionType& decomposition = DecompositionType::BDCSVD) = 0;
 	};
 }

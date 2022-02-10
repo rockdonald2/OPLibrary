@@ -70,5 +70,20 @@ namespace OPLibrary
 
 			throw MatrixException("Invalid matrix type given.");
 		}
+
+		/**
+		 * \brief Makes a deep copy of a matrix.
+		 * \param matrix to make a copy of
+		 * \return Matrix
+		 */
+		[[nodiscard]] Matrix<T>* createMatrix(const Matrix<T>* matrix) const
+		{
+			switch (type_)
+			{
+			case MatrixType::DENSE: return new DenseMatrix<T>(*matrix);
+			}
+
+			throw MatrixException("Invalid matrix type given.");
+		}
 	};
 }

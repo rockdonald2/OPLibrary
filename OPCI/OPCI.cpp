@@ -37,12 +37,13 @@ int main(int argc, char* argv[])
 			for (const auto args = solver->getInitializableArgs(); const auto & arg : args)
 			{
 				const auto argE = ArgsParser::getArgByString(arg);
-				
+
 				try
 				{
 					const auto argVal = ArgsParser::getLongDoubleArgument(argE);
 					solver->setInitializableArg(arg, argVal);
-				} catch (...) {}
+				}
+				catch (...) {}
 			}
 
 			solver->setConstraints(matrix.get());
