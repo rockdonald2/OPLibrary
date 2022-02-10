@@ -102,6 +102,10 @@ namespace OPLibrary
 			return out;
 		}
 
+		Matrix<T>* block(size_t sRow, size_t sCol, size_t eRow, size_t eCol) override;
+		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, Matrix<T>* newVals) override;
+		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::vector<T>& newVals) override;
+
 		std::string toString() const override;
 
 		void exchangeRows(const size_t& lRow, const size_t& rRow) override;
@@ -493,6 +497,70 @@ namespace OPLibrary
 	Matrix<T>* DenseMatrix<T>::operator-(const Matrix<T>& rhs) const
 	{
 		return *this - (&rhs);
+	}
+
+	template <typename T>
+	Matrix<T>* DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol)
+	{
+		using namespace Eigen;
+
+		if (sRow < 0 || sRow >= this->rows_) throw MatrixException("Out of bounds exception in block for rows.");
+		if (eRow < 0 || eRow >= this->rows_) throw MatrixException("Out of bounds exception in block for rows.");
+		if (sRow > eRow) throw MatrixException("In block operation the start row cannot be bigger than the end row.");
+		if (sCol < 0 || sCol >= this->cols_) throw MatrixException("Out of bounds exception in block for columns.");
+		if (eCol < 0 || eCol >= this->cols_) throw MatrixException("Out of bounds exception in block for columns.");
+		if (sCol > eCol) throw MatrixException("In block operation the start column cannot be bigger than the end column.");
+
+		const size_t nRows(eRow - sRow + 1);
+		const size_t nCols(eCol - sCol + 1);
+
+		Matrix<T>* retMatrix = new DenseMatrix(nRows, nCols);
+
+		const auto tmpMatrix(Eigen::Matrix<T, Dynamic, Dynamic>(this->matrix_.block(sRow, sCol, nRows, nCols)));
+		std::vector<T> tmpVals(tmpMatrix.size());
+		Map<Eigen::Matrix<T, Dynamic, Dynamic>>(tmpVals.data(), tmpMatrix.rows(), tmpMatrix.cols()) = tmpMatrix;
+
+		retMatrix->setValues(tmpVals, nRows, nCols);
+
+		return retMatrix;
+	}
+
+	template <typename T>
+	void DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, Matrix<T>* newVals)
+	{
+		using namespace Eigen;
+
+		if (sRow < 0 || sRow >= this->rows_) throw MatrixException("Out of bounds exception in block for rows.");
+		if (eRow < 0 || eRow >= this->rows_) throw MatrixException("Out of bounds exception in block for rows.");
+		if (sRow > eRow) throw MatrixException("In block operation the start row cannot be bigger than the end row.");
+		if (sCol < 0 || sCol >= this->cols_) throw MatrixException("Out of bounds exception in block for columns.");
+		if (eCol < 0 || eCol >= this->cols_) throw MatrixException("Out of bounds exception in block for columns.");
+		if (sCol > eCol) throw MatrixException("In block operation the start column cannot be bigger than the end column.");
+
+		const size_t nRows(eRow - sRow + 1);
+		const size_t nCols(eCol - sCol + 1);
+
+		if (newVals->getSize() != (nRows * nCols)) throw MatrixException("The supplied new value matrix's does not apply to the block.");
+
+		auto nVals(newVals->getValues());
+
+		const Eigen::Matrix<T, Dynamic, Dynamic> bMatrix = Map<Eigen::Matrix<T, Dynamic, Dynamic>>(nVals.data(), nRows, nCols);
+
+		this->matrix_.block(sRow, sCol, nRows, nCols) = bMatrix;
+	}
+
+	template <typename T>
+	void DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::vector<T>& newVals)
+	{
+		const size_t nRows(eRow - sRow + 1);
+		const size_t nCols(eCol - sCol + 1);
+
+		Matrix<T>* tmpMatrix = new DenseMatrix(nRows, nCols);
+		tmpMatrix->setValues(newVals, nRows, nCols);
+
+		this->block(sRow, sCol, eRow, eCol, tmpMatrix);
+
+		delete tmpMatrix;
 	}
 
 	template <typename T>

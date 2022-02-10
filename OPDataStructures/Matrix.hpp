@@ -254,6 +254,34 @@ namespace OPLibrary
 		virtual void exchangeCols(const size_t& lCol, const size_t& rCol) = 0;
 
 		/**
+		 * \brief Slices and returns a block of the matrix.
+		 * \param sRow starting row
+		 * \param sCol starting column
+		 * \param eRow ending row
+		 * \param eCol ending column
+		 * \return (sRow, sCol) - (eRow, eCol) block of Matrix as a new Matrix
+		 */
+		virtual Matrix<T>* block(size_t sRow, size_t sCol, size_t eRow, size_t eCol) = 0;
+		/**
+		 * \brief Slices and exchanges a block of the matrix.
+		 * \param sRow starting row
+		 * \param sCol starting column
+		 * \param eRow ending row
+		 * \param eCol ending column
+		 * \param newVals the new values of the specified block
+		 */
+		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, Matrix<T>* newVals) = 0;
+		/**
+		 * \brief Slices and exchanges a block of the matrix.
+		 * \param sRow starting row
+		 * \param sCol starting column
+		 * \param eRow ending row
+		 * \param eCol ending column
+		 * \param newVals the new values of the specified block
+		 */
+		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::vector<T>& newVals) = 0;
+
+		/**
 		 * \brief Solves a system of equations with lhs as this and the given rhs, clients can decide which decomposition type is used.
 		 * \param rhs the right-hand side of the equation
 		 * \param decomposition type
