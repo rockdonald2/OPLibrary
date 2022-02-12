@@ -28,11 +28,15 @@ int main(int argc, char* argv[])
 			const unique_ptr<Matrix<long double>> vector1(matrixFactory.createMatrix());
 			const unique_ptr<Matrix<long double>> vector2(matrixFactory.createMatrix());
 
-			reader->readProblem(matrix.get(), vector1.get(), vector2.get());
+			const unique_ptr<Problem<long double>> problem(new Problem(matrix.get(), vector1.get(), vector2.get()));
+
+			reader->readProblem(problem.get());
 
 			inFile.close();
 
 			const unique_ptr<Solver<long double>> solver(SolverFactory::createSolver<long double>(ArgsParser::getStringArgument(ArgsParser::Args::SOLVER_TYPE)));
+
+			solver->setProblem(problem.get());
 
 			for (const auto args = solver->getInitializableArgs(); const auto & arg : args)
 			{
@@ -45,10 +49,6 @@ int main(int argc, char* argv[])
 				}
 				catch (...) {}
 			}
-
-			solver->setConstraints(matrix.get());
-			solver->setConstraintObjectives(vector1.get());
-			solver->setObjectives(vector2.get());
 
 			if (solver->solve() == SolutionStatus::NONOPTIMAL)
 			{

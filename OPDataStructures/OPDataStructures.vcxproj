@@ -161,6 +161,7 @@
     <ClInclude Include="MatrixFactory.hpp" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="DenseMatrix.hpp" />
+    <ClInclude Include="Problem.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

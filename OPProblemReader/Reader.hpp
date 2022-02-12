@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Matrix.hpp"
+#include "Problem.hpp"
 
 namespace OPLibrary
 {
@@ -16,7 +17,7 @@ namespace OPLibrary
 		/**
 		 * \brief Reads in the optimization problem in order of: constraints, constraints objectives and objectives.
 		 */
-		virtual void readProblem(Matrix<T>*, Matrix<T>*, Matrix<T>*) = 0;
+		virtual void readProblem(Problem<T>* problem) = 0;
 
 		/**
 		 * \brief Reads in the dimensions.

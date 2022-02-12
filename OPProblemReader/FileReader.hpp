@@ -28,7 +28,7 @@ namespace OPLibrary
 	public:
 		explicit FileReader(std::ifstream* input) : rows_(0), cols_(0), input_(input) {}
 
-		void readProblem(Matrix<T>* matrix, Matrix<T>* vector1, Matrix<T>* vector2) override;
+		void readProblem(Problem<T>* problem) override;
 
 		void readParams() override;
 		[[nodiscard]] std::pair<size_t, size_t> getParams() const override;
@@ -95,16 +95,21 @@ namespace OPLibrary
 	}
 
 	template <typename T>
-	void FileReader<T>::readProblem(Matrix<T>* matrix, Matrix<T>* vector1, Matrix<T>* vector2)
+	void FileReader<T>::readProblem(Problem<T>* problem)
 	{
 		using namespace std;
+
+		if (problem->getObjectives() == nullptr || problem->getConstraints() == nullptr || problem->getConstraintsObjectives() == nullptr)
+		{
+			throw ReaderException("All problem matrices should be initialized before read.");
+		}
 
 		if (input_->is_open())
 		{
 			readParams();
-			readMatrix(matrix);
-			readVector(vector1);
-			readVector(vector2);
+			readMatrix(problem->getConstraints());
+			readVector(problem->getConstraintsObjectives());
+			readVector(problem->getObjectives());
 		}
 		else
 		{

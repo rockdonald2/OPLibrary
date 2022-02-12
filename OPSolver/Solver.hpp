@@ -7,6 +7,7 @@
 
 #include "Solution.hpp"
 #include "Matrix.hpp"
+#include "Problem.hpp"
 
 namespace OPLibrary
 {
@@ -26,39 +27,35 @@ namespace OPLibrary
 	class Solver
 	{
 	protected:
-		Matrix<T>* constraints_;
-		Matrix<T>* constraintObjectives_;
-		Matrix<T>* objectives_;
-
 		std::vector<std::string> INITIALIZABLE_ARGS;
 		std::map<std::string, long double*> INITIALIZATOR;
 
+		Problem<T>* problem_;
+
 	public:
-		Solver() : constraints_(nullptr), constraintObjectives_(nullptr), objectives_(nullptr) {}
+		Solver() : problem_(nullptr) {}
 		virtual ~Solver() = default;
 
 		/**
 		 * \brief Returns all the arguments which can and need to be initialized before trying to solve the optimization problem.
 		 * \return vector of arguments
 		 */
-		virtual std::vector<std::string> getInitializableArgs();
+		virtual std::vector<std::string> getInitializableArgs() const;
 		/**
 		 * \brief Sets the value of an initializable argument for the Solver.
 		 */
 		virtual void setInitializableArg(const std::string& arg, const long double& val);
 
 		/**
-		 * \brief Sets the constraints matrix.
+		 * \brief Sets the problem for this solver.
+		 * \param problem instance
 		 */
-		virtual void setConstraints(Matrix<T>*) = 0;
+		virtual void setProblem(Problem<T>* problem) = 0;
 		/**
-		 * \brief Sets the constraint objectives vector.
+		 * \brief Returns the set problem for this solver.
+		 * \return problem instance
 		 */
-		virtual void setConstraintObjectives(Matrix<T>*) = 0;
-		/**
-		 * \brief Sets the objectives vector.
-		 */
-		virtual void setObjectives(Matrix<T>*) = 0;
+		virtual Problem<T>* getProblem() const = 0;
 
 		/**
 		 * \brief Solves the optimization problem with the set parameters.
@@ -74,7 +71,7 @@ namespace OPLibrary
 	};
 
 	template <typename T>
-	std::vector<std::string> Solver<T>::getInitializableArgs()
+	std::vector<std::string> Solver<T>::getInitializableArgs() const
 	{
 		return INITIALIZABLE_ARGS;
 	}
