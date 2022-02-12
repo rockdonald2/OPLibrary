@@ -182,6 +182,11 @@ namespace OPLibrary
 		virtual void multiplyElementByPos(const size_t& rPos, const size_t& cPos, const T& val) = 0;
 
 		/**
+		 * \brief Returns the Euclidean norm of the matrix.
+		 */
+		virtual T norm() const = 0;
+
+		/**
 		 * \brief Multiplies with a Matrix.
 		 * \param rhs second Matrix
 		 * \return New Matrix as product
@@ -261,7 +266,7 @@ namespace OPLibrary
 		 * \param eCol ending column
 		 * \return (sRow, sCol) - (eRow, eCol) block of Matrix as a new Matrix
 		 */
-		virtual Matrix<T>* block(size_t sRow, size_t sCol, size_t eRow, size_t eCol) = 0;
+		virtual Matrix<T>* block(size_t sRow, size_t sCol, size_t eRow, size_t eCol) const = 0;
 		/**
 		 * \brief Slices and exchanges a block of the matrix.
 		 * \param sRow starting row

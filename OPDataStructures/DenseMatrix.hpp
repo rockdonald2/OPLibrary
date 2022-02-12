@@ -75,6 +75,8 @@ namespace OPLibrary
 		void addToElementByPos(const size_t& rPos, const size_t& cPos, const T& val) override;
 		void multiplyElementByPos(const size_t& rPos, const size_t& cPos, const T& val) override;
 
+		T norm() const override;
+
 		Matrix<T>* operator*(const Matrix<T>* rhs) override;
 		Matrix<T>* operator*(const Matrix<T>& rhs) override;
 
@@ -102,7 +104,7 @@ namespace OPLibrary
 			return out;
 		}
 
-		Matrix<T>* block(size_t sRow, size_t sCol, size_t eRow, size_t eCol) override;
+		Matrix<T>* block(size_t sRow, size_t sCol, size_t eRow, size_t eCol) const override;
 		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, Matrix<T>* newVals) override;
 		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::vector<T>& newVals) override;
 
@@ -378,6 +380,12 @@ namespace OPLibrary
 	}
 
 	template <typename T>
+	T DenseMatrix<T>::norm() const
+	{
+		return this->matrix_.norm();
+	}
+
+	template <typename T>
 	Matrix<T>* DenseMatrix<T>::operator*(const Matrix<T>* rhs)
 	{
 		using namespace Eigen;
@@ -500,7 +508,7 @@ namespace OPLibrary
 	}
 
 	template <typename T>
-	Matrix<T>* DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol)
+	Matrix<T>* DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol) const
 	{
 		using namespace Eigen;
 
