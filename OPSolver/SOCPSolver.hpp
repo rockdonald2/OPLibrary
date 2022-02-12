@@ -9,6 +9,7 @@
 
 #include "Logger.h"
 #include "MatrixFactory.hpp"
+#include "SOCPSolver.hpp"
 #include "Solution.hpp"
 #include "SolverException.hpp"
 
@@ -53,6 +54,29 @@ namespace OPLibrary
 		Matrix<T>* s_;
 		Matrix<T>* e_;
 
+		bool checkIsTermination() const;
+
+		static T calculateEigenMin(Matrix<T>* vec)
+		{
+			using namespace std;
+
+			assert(vec->getCols() == 1 && "Eigenvalue min can only be calculated for vectors.");
+
+			const unique_ptr<Matrix<T>> tmpBlock(vec->block(1, 0, vec->getRows() - 1, 0));
+
+			return vec->get(0, 0) - tmpBlock->norm();
+		}
+		static T calculateEigenMax(Matrix<T>* vec)
+		{
+			using namespace std;
+
+			assert(vec->getCols() == 1 && "Eigenvalue max can only be calculated for vectors.");
+
+			const unique_ptr<Matrix<T>> tmpBlock(vec->block(1, 0, vec->getRows() - 1, 0));
+
+			return vec->get(0, 0) + tmpBlock->norm();
+		}
+
 	public:
 		SOCPSolver() : theta_(std::numbers::pi_v<long double> / 4), epsilon_(1.0e-6), tau_(1.0 / 2), alpha_(0.5),
 			mu_(1), beta_(1.0 / 2), init_(new ClassicInitializator()), x_(nullptr), y_(nullptr), s_(nullptr), e_(nullptr)
@@ -81,6 +105,17 @@ namespace OPLibrary
 
 		Solution getSolution() override;
 	};
+
+	template <typename T>
+	bool SOCPSolver<T>::checkIsTermination() const
+	{
+		// mu < epsilon; az x minden erteke pozitiv; s minden erteke pozitiv; kupfeltetel ellenorzes
+		// tehat megkell nezni azt, hogy lambda_min(x) > 0
+		// lambda_min(s) > 0
+		// kupfeltetel -- most eltekintunk rola, ennel az atlagosabb implementacional biztos, hogy bent maradunk
+
+		return (mu_ < epsilon_) && (calculateEigenMin(x_) > 0) && (calculateEigenMin(s_) > 0);
+	}
 
 	template <typename T>
 	void SOCPSolver<T>::setProblem(Problem<T>* problem)
@@ -123,6 +158,13 @@ namespace OPLibrary
 		}();
 
 		init_->initialize(x_, y_, s_);
+
+		/*size_t iters__(0);
+
+		while (checkIsTermination())
+		{
+			++iters__;
+		}*/
 
 		return SolutionStatus::NONOPTIMAL;
 	}
