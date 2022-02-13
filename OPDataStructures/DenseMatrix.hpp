@@ -114,6 +114,7 @@ namespace OPLibrary
 		Matrix<T>* block(size_t sRow, size_t sCol, size_t eRow, size_t eCol) const override;
 		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, Matrix<T>* newVals) override;
 		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::vector<T>& newVals) override;
+		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const T& scalar) override;
 
 		std::string toString() const override;
 
@@ -629,6 +630,22 @@ namespace OPLibrary
 
 		Matrix<T>* tmpMatrix = new DenseMatrix(nRows, nCols);
 		tmpMatrix->setValues(newVals, nRows, nCols);
+
+		this->block(sRow, sCol, eRow, eCol, tmpMatrix);
+
+		delete tmpMatrix;
+	}
+
+	template <typename T>
+	void DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const T& scalar)
+	{
+		using namespace std;
+
+		const size_t nRows(eRow - sRow + 1);
+		const size_t nCols(eCol - sCol + 1);
+
+		Matrix<T>* tmpMatrix = new DenseMatrix(nRows, nCols);
+		tmpMatrix->setValues(vector<T>(nRows * nCols, scalar), nRows, nCols);
 
 		this->block(sRow, sCol, eRow, eCol, tmpMatrix);
 

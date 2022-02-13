@@ -309,6 +309,15 @@ namespace OPLibrary
 		 * \param newVals the new values of the specified block
 		 */
 		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::vector<T>& newVals) = 0;
+		/**
+		 * \brief Fills the block with a scalar value.
+		 * \param sRow starting row
+		 * \param sCol starting column
+		 * \param eRow ending row
+		 * \param eCol ending column
+		 * \param scalar the new value for this block
+		 */
+		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const T& scalar) = 0;
 
 		/**
 		 * \brief Solves a system of equations with lhs as this and the given rhs, clients can decide which decomposition type is used.
