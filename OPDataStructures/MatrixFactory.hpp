@@ -24,7 +24,7 @@ namespace OPLibrary
 		 * \brief Creates a MatrixFactory for the specified type of matrix.
 		 * \param type of factory
 		 */
-		explicit MatrixFactory(const MatrixType& type) : type_(type) {}
+		explicit MatrixFactory(const MatrixType& type = MatrixType::DENSE) : type_(type) {}
 
 		/**
 		 * \brief Creates an empty matrix.

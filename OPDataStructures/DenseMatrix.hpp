@@ -58,6 +58,9 @@ namespace OPLibrary
 		std::vector<T> getValues() const override;
 		void setValues(const std::vector<T>& values, const size_t& rows, const size_t& cols) override;
 
+		std::vector<T> getDiagonalValues() const override;
+		void setDiagonalValues(const std::vector<T>& values) override;
+
 		std::vector<T> getColumn(const size_t& cPos) const override;
 
 		void addColumn(std::vector<T> values) override;
@@ -82,6 +85,10 @@ namespace OPLibrary
 
 		std::vector<T> operator*(const std::vector<T>* rhs) override;
 		std::vector<T> operator*(const std::vector<T>& rhs) override;
+
+		Matrix<T>* operator*(const T& rhs) override;
+
+		Matrix<T>* operator/(const T& rhs) override;
 
 		Matrix<T>* operator+(const Matrix<T>* rhs) const override;
 		Matrix<T>* operator+(const Matrix<T>& rhs) const override;
@@ -195,6 +202,30 @@ namespace OPLibrary
 
 		auto tmpVals(values);
 		this->matrix_ = Map<Eigen::Matrix<T, Dynamic, Dynamic>>(tmpVals.data(), rows, cols);
+	}
+
+	template <typename T>
+	std::vector<T> DenseMatrix<T>::getDiagonalValues() const
+	{
+		using namespace Eigen;
+
+		const auto retrievedDiagonal = this->matrix_.diagonal();
+
+		std::vector<T> retVector(retrievedDiagonal.size());
+
+		Map<Eigen::Matrix<T, Dynamic, 1>>(retVector.data(), retrievedDiagonal.size()) = retrievedDiagonal;
+
+		return retVector;
+	}
+
+	template <typename T>
+	void DenseMatrix<T>::setDiagonalValues(const std::vector<T>& values)
+	{
+		size_t i__(0);
+		for (const auto& elem : values)
+		{
+			this->matrix_.diagonal()[i__++] = elem;
+		}
 	}
 
 	template <typename T>
@@ -337,6 +368,8 @@ namespace OPLibrary
 		if (inplace)
 		{
 			this->matrix_.transposeInPlace();
+			this->rows_ = this->matrix_.rows();
+			this->cols_ = this->matrix_.cols();
 			return this;
 		}
 
@@ -439,6 +472,37 @@ namespace OPLibrary
 	std::vector<T> DenseMatrix<T>::operator*(const std::vector<T>& rhs)
 	{
 		return *this * (&rhs);
+	}
+
+	template <typename T>
+	Matrix<T>* DenseMatrix<T>::operator*(const T& rhs)
+	{
+		using namespace Eigen;
+
+		Matrix<T>* retMatrix(new DenseMatrix(this->rows_, this->cols_));
+
+		const auto tmpResult = Eigen::Matrix<T, Dynamic, Dynamic>(this->matrix_ * rhs);
+		std::vector<T> tmpResultVec(tmpResult.size());
+		Map<Eigen::Matrix<T, Dynamic, Dynamic>>(tmpResultVec.data(), tmpResult.rows(), tmpResult.cols()) = tmpResult;
+
+		retMatrix->setValues(tmpResultVec, tmpResult.rows(), tmpResult.cols());
+
+		return retMatrix;
+	}
+
+	template <typename T>
+	Matrix<T>* DenseMatrix<T>::operator/(const T& rhs)
+	{
+		assert(this->cols_ == 1 && "Componentwise division valid for vector only.");
+
+		Matrix<T>* retMatrix(new DenseMatrix(this->rows_, 1));
+
+		for (size_t i = 0; i < this->rows_; ++i)
+		{
+			retMatrix->set(i, 0, this->get(i, 0) / rhs);
+		}
+
+		return retMatrix;
 	}
 
 	template <typename T>

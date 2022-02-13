@@ -105,6 +105,17 @@ namespace OPLibrary
 		virtual void setValues(const std::vector<T>& values, const size_t& rows, const size_t& cols) = 0;
 
 		/**
+		 * \brief Returns all the values from diagonal.
+		 * \return vector of values
+		 */
+		virtual std::vector<T> getDiagonalValues() const = 0;
+		/**
+		 * \brief Sets all the values along the diagonal.
+		 * \param values vector of values for the diagonal
+		 */
+		virtual void setDiagonalValues(const std::vector<T>& values) = 0;
+
+		/**
 		 * \brief Returns a column of values.
 		 * \param cPos position in columns
 		 * \return vector of values
@@ -191,13 +202,13 @@ namespace OPLibrary
 		 * \param rhs second Matrix
 		 * \return New Matrix as product
 		 */
-		virtual Matrix* operator*(const Matrix* rhs) = 0;
+		virtual Matrix<T>* operator*(const Matrix* rhs) = 0;
 		/**
 		 * \brief Multiplies with a Matrix.
 		 * \param rhs second Matrix
 		 * \return New Matrix as product
 		 */
-		virtual Matrix* operator*(const Matrix& rhs) = 0;
+		virtual Matrix<T>* operator*(const Matrix& rhs) = 0;
 		/**
 		 * \brief Multiplies with a vector.
 		 * \param rhs second vector
@@ -210,31 +221,44 @@ namespace OPLibrary
 		 * \return New vector as product
 		 */
 		virtual std::vector<T> operator*(const std::vector<T>& rhs) = 0;
+		/**
+		 * \brief Multiplies matrix with a scalar, componentwise.
+		 * \param rhs scalar value
+		 * \return New Matrix as product with scalar
+		 */
+		virtual Matrix<T>* operator*(const T& rhs) = 0;
+
+		/**
+		 * \brief Divides componentwise a matrix with a scalar.
+		 * \param rhs scalar value
+		 * \return New Matrix as result
+		 */
+		virtual Matrix<T>* operator/(const T& rhs) = 0;
 
 		/**
 		 * \brief Adds to a Matrix.
 		 * \param rhs second Matrix
 		 * \return New matrix as addition product
 		 */
-		virtual Matrix* operator+(const Matrix* rhs) const = 0;
+		virtual Matrix<T>* operator+(const Matrix* rhs) const = 0;
 		/**
 		 * \brief Adds to a Matrix.
 		 * \param rhs second Matrix
 		 * \return New matrix as addition product
 		 */
-		virtual Matrix* operator+(const Matrix& rhs) const = 0;
+		virtual Matrix<T>* operator+(const Matrix& rhs) const = 0;
 		/**
 		 * \brief Subtracts to a Matrix.
 		 * \param rhs second Matrix
 		 * \return New matrix as product
 		 */
-		virtual Matrix* operator-(const Matrix* rhs) const = 0;
+		virtual Matrix<T>* operator-(const Matrix* rhs) const = 0;
 		/**
 		 * \brief Subtracts to a Matrix.
 		 * \param rhs second Matrix
 		 * \return New matrix as product
 		 */
-		virtual Matrix* operator-(const Matrix& rhs) const = 0;
+		virtual Matrix<T>* operator-(const Matrix& rhs) const = 0;
 
 		/**
 		 * \brief Prints a Matrix instance to the output stream.

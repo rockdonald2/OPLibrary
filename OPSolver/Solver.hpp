@@ -6,7 +6,6 @@
 #include <ranges>
 
 #include "Solution.hpp"
-#include "Matrix.hpp"
 #include "Problem.hpp"
 
 namespace OPLibrary
