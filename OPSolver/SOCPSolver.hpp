@@ -53,6 +53,8 @@ namespace OPLibrary
 
 		bool checkIsTermination() const;
 
+		// UTILITY functions for this method
+		
 		static T calculateEigenMinOf(Matrix<T>* vec)
 		{
 			using namespace std;
@@ -192,7 +194,12 @@ namespace OPLibrary
 
 			return ret;
 		}
+		
 		Matrix<T>* calculateW() const;
+		Matrix<T>* calculateV() const;
+		Matrix<T>* calculatePv() const;
+
+		Matrix<T>* calculateA_() const;
 
 	public:
 		SOCPSolver() : theta_(std::numbers::pi_v<long double> / 4), epsilon_(1.0e-6), tau_(1.0 / 2), alpha_(0.5),
@@ -231,7 +238,7 @@ namespace OPLibrary
 		// lambda_min(s) > 0
 		// kupfeltetel -- most eltekintunk rola, ennel az atlagosabb implementacional biztos, hogy bent maradunk
 
-		return (mu_ < epsilon_) && (calculateEigenMinOf(x_) > 0) && (calculateEigenMinOf(s_) > 0);
+		return (mu_ >= epsilon_) && (calculateEigenMinOf(x_) > 0) && (calculateEigenMinOf(s_) > 0);
 	}
 
 	template <typename T>
@@ -249,6 +256,48 @@ namespace OPLibrary
 
 		return *pMatrixSqrtx * *sqrtSMultiplication;
 	}
+
+	template <typename T>
+	Matrix<T>* SOCPSolver<T>::calculateV() const
+	{
+		// (P(w^(-1/2)) * x) / sqrt(mu)
+		using namespace std;
+
+		const unique_ptr<Matrix<T>> w(calculateW());
+		const unique_ptr<Matrix<T>> sqrtInverseW(calculatePowerOf(calculatePowerOf(w.get(), 0.5), -1));
+		const unique_ptr<Matrix<T>> pOfW(calculatePMatrixOf(sqrtInverseW));
+		const unique_ptr<Matrix<T>> xMultipliedpOfW(*pOfW * *this->x_);
+
+		return *xMultipliedpOfW / std::pow(this->mu_, 0.5);
+	}
+
+	template <typename T>
+	Matrix<T>* SOCPSolver<T>::calculatePv() const
+	{
+		// pv = v^-1 - v, klasszikus phi(t) = t fuggveny eseten
+		using namespace std;
+		
+		const unique_ptr<Matrix<T>> v(calculateV());
+		const unique_ptr<Matrix<T>> vInverse(calculatePowerOf(v.get(), -1));
+
+		return *vInverse - *v;
+	}
+
+	template <typename T>
+	Matrix<T>* SOCPSolver<T>::calculateA_() const
+	{
+		using namespace std;
+		// A_ = sqrt(mu) * A * P(w^1/2)
+		const unique_ptr<Matrix<T>> AMultipliedMu(this->problem_->getConstraints() * pow(this->mu_, 0.5));
+
+		const unique_ptr<Matrix<T>> w(calculateW());
+		const unique_ptr<Matrix<T>> sqrtW(calculatePowerOf(w.get(), 0.5));
+		const unique_ptr<Matrix<T>> pOfW(calculatePMatrixOf(sqrtW.get()));
+
+		return *AMultipliedMu * *pOfW;
+	}
+
+	// TODO: hasznald a make_unique-t new konstruktorhivas helyett
 
 	template <typename T>
 	void SOCPSolver<T>::setProblem(Problem<T>* problem)
@@ -295,9 +344,6 @@ namespace OPLibrary
 
 		while (checkIsTermination())
 		{
-			// kiszamolni a Pv-t
-			// pv = v^-1 - v, ahol a v = P(w)^(-1/2) * x
-
 			++iters__;
 		}
 
