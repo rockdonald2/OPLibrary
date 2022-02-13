@@ -1,13 +1,11 @@
 ﻿#pragma once
 
 #include <format>
-#include <map>
 #include "Solver.hpp"
 #include <numbers>
 #include <vector>
 #include <string>
 
-#include "Logger.h"
 #include "MatrixFactory.hpp"
 #include "SOCPSolver.hpp"
 #include "Solution.hpp"
@@ -136,10 +134,17 @@ namespace OPLibrary
 			const auto c1(factory.createMatrix(n, 1));
 			c1->set(0, 0, 0.5);
 
-			const unique_ptr<Matrix<T>> x2n(vec->block(1, 0, vec->getRows() - 1, 0));
+			const unique_ptr<Matrix<T>> x2n(vec->block(1, 0, n - 1, 0));
 			const auto normx2n(x2n->norm());
 
-			c1->block(1, 0, n - 1, 0, *(*x2n / normx2n) * 0.5);
+			const auto zeroVector__(vector<T>(n - 1, 0));
+			if (x2n->getValues() == zeroVector__)
+			{
+				c1->block(1, 0, n - 1, 0, zeroVector__);
+			} else
+			{
+				c1->block(1, 0, n - 1, 0, *(*x2n / normx2n) * 0.5);
+			}
 
 			return c1;
 		}
@@ -155,10 +160,17 @@ namespace OPLibrary
 			const auto c2(factory.createMatrix(n, 1));
 			c2->set(0, 0, 0.5);
 
-			const unique_ptr<Matrix<T>> x2n(vec->block(1, 0, vec->getRows() - 1, 0));
+			const unique_ptr<Matrix<T>> x2n(vec->block(1, 0, n - 1, 0));
 			const auto normx2n(x2n->norm());
 
-			c2->block(1, 0, n - 1, 0, *(*(*x2n * -1) / normx2n) * 0.5);
+			const auto zeroVector__(vector<T>(n - 1, 0));
+			if (x2n->getValues() == zeroVector__)
+			{
+				c2->block(1, 0, n - 1, 0, zeroVector__);
+			} else
+			{
+				c2->block(1, 0, n - 1, 0, *(*(*x2n * -1) / normx2n) * 0.5);
+			}
 
 			return c2;
 		}
@@ -228,6 +240,14 @@ namespace OPLibrary
 		// w = P(x^1/2) * (P(x^1/2)*s)^(-1/2)
 		// NT skalazasi pont
 		// w vektor
+		using namespace std;
+
+		const unique_ptr<Matrix<T>> sqrtx(calculatePowerOf(this->x_, 0.5));
+		const unique_ptr<Matrix<T>> pMatrixSqrtx(calculatePMatrixOf(sqrtx.get()));
+		const unique_ptr<Matrix<T>> sMultipliedBypMatrix(*pMatrixSqrtx * *this->s_);
+		const unique_ptr<Matrix<T>> sqrtSMultiplication(calculatePowerOf(calculatePowerOf(sMultipliedBypMatrix.get(), 0.5), -1));
+
+		return *pMatrixSqrtx * *sqrtSMultiplication;
 	}
 
 	template <typename T>
@@ -271,19 +291,17 @@ namespace OPLibrary
 
 		init_->initialize(x_, y_, s_);
 
-		//size_t iters__(0);
+		size_t iters__(0);
 
-		//while (checkIsTermination())
-		//{
-		//	// kiszamolni a Pv-t
-		//	// pv = v^-1 - v, ahol a v = P(w)^(-1/2) * x
+		while (checkIsTermination())
+		{
+			// kiszamolni a Pv-t
+			// pv = v^-1 - v, ahol a v = P(w)^(-1/2) * x
 
-		//	++iters__;
-		//}
+			++iters__;
+		}
 
-		calculateSquareRootOf(this->problem_->getObjectives());
-
-		//Logger::getInstance().info(format("Solved in {} iterations.", iters__));
+		Logger::getInstance().info(format("Solved in {} iterations.", iters__));
 
 		return SolutionStatus::NONOPTIMAL;
 	}
