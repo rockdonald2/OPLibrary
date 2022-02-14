@@ -25,15 +25,15 @@ public:
 	/**
 	 * \brief Writes an information message with timestamp.
 	 */
-	void info(const std::string&) const;
+	void info(const std::string_view&) const;
 	/**
 	 * \brief Writes an error message with timestamp.
 	 */
-	void error(const std::string&) const;
+	void error(const std::string_view&) const;
 	/**
 	 * \brief Writes an information message without timestamp.
 	 */
-	void blank(const std::string&) const;
+	void blank(const std::string_view&) const;
 
 private:
 	// regular constructor
