@@ -20,45 +20,39 @@ int main(int argc, char* argv[])
 			ifstream inFile;
 			inFile.open(ArgsParser::getStringArgument(ArgsParser::Args::INPUT_FILE));
 
-			const unique_ptr<Reader<long double>> reader(ReaderBuilder<long double>().setType(ReaderType::FILE).setInput(&inFile).build());
+			const auto reader(ReaderBuilder<long double>().setType(ReaderType::FILE).setInput(&inFile).build());
 
 			const MatrixFactory<long double> matrixFactory(MatrixType::DENSE);
 
-			const unique_ptr<Matrix<long double>> matrix(matrixFactory.createMatrix());
-			const unique_ptr<Matrix<long double>> vector1(matrixFactory.createMatrix());
-			const unique_ptr<Matrix<long double>> vector2(matrixFactory.createMatrix());
+			auto matrix(matrixFactory.createMatrix());
+			auto vector1(matrixFactory.createMatrix());
+			auto vector2(matrixFactory.createMatrix());
 
-			const unique_ptr<Problem<long double>> problem(new Problem(matrix.get(), vector1.get(), vector2.get()));
+			const auto problem(make_shared<Problem<long double>>(Problem(matrix, vector1, vector2)));
 
 			reader->readProblem(problem.get());
 
 			inFile.close();
 
-			const unique_ptr<Solver<long double>> solver(SolverFactory::createSolver<long double>(ArgsParser::getStringArgument(ArgsParser::Args::SOLVER_TYPE)));
+			const auto solver(SolverFactory::createSolver<long double>(ArgsParser::getStringArgument(ArgsParser::Args::SOLVER_TYPE)));
 
-			solver->setProblem(problem.get());
+			solver->setProblem(problem);
 
-			for (const auto args = solver->getInitializableArgs(); const auto & arg : args)
+			for (const auto args(solver->getInitializableArgs()); const auto & arg : args)
 			{
-				const auto argE = ArgsParser::getArgByString(arg);
+				const auto argE(ArgsParser::getArgByString(arg));
 
 				try
 				{
-					const auto argVal = ArgsParser::getLongDoubleArgument(argE);
+					const auto argVal(ArgsParser::getLongDoubleArgument(argE));
 					solver->setInitializableArg(arg, argVal);
 				}
 				catch (...) {}
 			}
 
-			if (solver->solve() == SolutionStatus::NONOPTIMAL)
-			{
-				Logger::getInstance().error("There is no optimal solution for this optimization problem.");
-				hr = EXIT_FAILURE;
-			}
-			else
-			{
-				Solution solution(solver->getSolution());
-			}
+			solver->solve();
+
+			const auto solution(solver->getSolution());
 		}
 		catch (const ReaderException& e)
 		{

@@ -54,13 +54,13 @@ namespace OPLibrary
 		 * \brief Creates the Reader instance with set parameters.
 		 * \return Reader instance
 		 */
-		[[nodiscard]] Reader<T>* build() const
+		[[nodiscard]] std::unique_ptr<Reader<T>> build() const
 		{
 			if (input_ == nullptr) throw ReaderException("Invalid input stream.");
 
 			switch (type_)
 			{
-			case ReaderType::FILE: return new FileReader<T>(static_cast<std::ifstream*>(input_));
+			case ReaderType::FILE: return std::move(std::make_unique<FileReader<T>>(static_cast<std::ifstream*>(input_)));
 			}
 
 			throw ReaderException("Unsupported reader type.");

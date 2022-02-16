@@ -30,14 +30,14 @@ namespace OPLibrary
 		 * \return Solver instance
 		 */
 		template <typename T>
-		static Solver<T>* createSolver(const std::string& type)
+		static std::unique_ptr<Solver<T>> createSolver(const std::string& type)
 		{
 			std::string temp(type);
 			std::ranges::transform(temp, temp.begin(), [](const unsigned char c) { return std::tolower(c); });
 
 			switch (map_Str_To_Solver_[temp])
 			{
-			case SolverType::SOCP: return new SOCPSolver<T>();
+			case SolverType::SOCP: return std::move(std::make_unique<SOCPSolver<T>>());
 			}
 
 			throw SolverException("Unsupported solver type.");

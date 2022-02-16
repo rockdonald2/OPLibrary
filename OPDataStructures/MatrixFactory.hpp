@@ -30,11 +30,11 @@ namespace OPLibrary
 		 * \brief Creates an empty matrix.
 		 * \return Matrix
 		 */
-		[[nodiscard]] Matrix<T>* createMatrix() const
+		[[nodiscard]] std::unique_ptr<Matrix<T>> createMatrix() const
 		{
 			switch (type_)
 			{
-			case MatrixType::DENSE: return new DenseMatrix<T>();
+			case MatrixType::DENSE: return std::move(std::make_unique<DenseMatrix<T>>(DenseMatrix<T>()));
 			}
 
 			throw MatrixException("Invalid matrix type given.");
@@ -46,11 +46,11 @@ namespace OPLibrary
 		 * \param initialCols column number
 		 * \return Matrix
 		 */
-		[[nodiscard]] Matrix<T>* createMatrix(const size_t& initialRows, const size_t& initialCols) const
+		[[nodiscard]] std::unique_ptr<Matrix<T>> createMatrix(const size_t& initialRows, const size_t& initialCols) const
 		{
 			switch (type_)
 			{
-			case MatrixType::DENSE: return new DenseMatrix<T>(initialRows, initialCols);
+			case MatrixType::DENSE: return std::move(std::make_unique<DenseMatrix<T>>(DenseMatrix<T>(initialRows, initialCols)));
 			}
 
 			throw MatrixException("Invalid matrix type given.");
@@ -61,11 +61,11 @@ namespace OPLibrary
 		 * \param matrix to make a copy of
 		 * \return Matrix
 		 */
-		[[nodiscard]] Matrix<T>* createMatrix(const Matrix<T>& matrix) const
+		[[nodiscard]] std::unique_ptr<Matrix<T>> createMatrix(const Matrix<T>& matrix) const
 		{
 			switch (type_)
 			{
-			case MatrixType::DENSE: return new DenseMatrix<T>(matrix);
+			case MatrixType::DENSE: return std::move(std::make_unique<DenseMatrix<T>>(DenseMatrix<T>(matrix)));
 			}
 
 			throw MatrixException("Invalid matrix type given.");
@@ -76,11 +76,41 @@ namespace OPLibrary
 		 * \param matrix to make a copy of
 		 * \return Matrix
 		 */
-		[[nodiscard]] Matrix<T>* createMatrix(const Matrix<T>* matrix) const
+		[[nodiscard]] std::unique_ptr<Matrix<T>> createMatrix(const Matrix<T>* matrix) const
 		{
 			switch (type_)
 			{
-			case MatrixType::DENSE: return new DenseMatrix<T>(*matrix);
+			case MatrixType::DENSE: return std::move(std::make_unique<DenseMatrix<T>>(DenseMatrix<T>(*matrix)));
+			}
+
+			throw MatrixException("Invalid matrix type given.");
+		}
+
+		/**
+		 * \brief Makes a deep copy of a matrix.
+		 * \param matrix to make a copy of
+		 * \return Matrix
+		 */
+		[[nodiscard]] std::unique_ptr<Matrix<T>> createMatrix(const std::unique_ptr<Matrix<T>> matrix) const
+		{
+			switch (type_)
+			{
+			case MatrixType::DENSE: return std::move(std::make_unique<DenseMatrix<T>>(DenseMatrix<T>(*matrix)));
+			}
+
+			throw MatrixException("Invalid matrix type given.");
+		}
+
+		/**
+		 * \brief Makes a deep copy of a matrix.
+		 * \param matrix to make a copy of
+		 * \return Matrix
+		 */
+		[[nodiscard]] std::unique_ptr<Matrix<T>> createMatrix(const std::shared_ptr<Matrix<T>> matrix) const
+		{
+			switch (type_)
+			{
+			case MatrixType::DENSE: return std::move(std::make_unique<DenseMatrix<T>>(DenseMatrix<T>(*matrix)));
 			}
 
 			throw MatrixException("Invalid matrix type given.");

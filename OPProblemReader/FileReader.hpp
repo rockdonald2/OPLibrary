@@ -107,9 +107,9 @@ namespace OPLibrary
 		if (input_->is_open())
 		{
 			readParams();
-			readMatrix(problem->getConstraints());
-			readVector(problem->getConstraintsObjectives());
-			readVector(problem->getObjectives());
+			readMatrix(problem->getConstraints().get());
+			readVector(problem->getConstraintsObjectives().get());
+			readVector(problem->getObjectives().get());
 		}
 		else
 		{

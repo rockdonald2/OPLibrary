@@ -37,7 +37,7 @@ public:
 
 private:
 	// regular constructor
-	Logger() : info_(std::cout), err_(std::cerr) {};
+	Logger() : info_(std::cout), err_(std::cerr) {}
 
 public:
 	Logger(const Logger&) = delete;

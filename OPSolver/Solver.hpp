@@ -30,7 +30,7 @@ namespace OPLibrary
 		std::vector<std::string> INITIALIZABLE_ARGS;
 		std::map<std::string, long double*> INITIALIZATOR;
 
-		Problem<T>* problem_;
+		std::shared_ptr<Problem<T>> problem_;
 
 	public:
 		Solver() : problem_(nullptr) {}
@@ -40,7 +40,7 @@ namespace OPLibrary
 		 * \brief Returns all the arguments which can and need to be initialized before trying to solve the optimization problem.
 		 * \return vector of arguments
 		 */
-		virtual std::vector<std::string> getInitializableArgs() const;
+		[[nodiscard]] virtual std::vector<std::string> getInitializableArgs() const;
 		/**
 		 * \brief Sets the value of an initializable argument for the Solver.
 		 */
@@ -52,10 +52,15 @@ namespace OPLibrary
 		 */
 		virtual void setProblem(Problem<T>* problem) = 0;
 		/**
+		 * \brief Sets the problem for this solver.
+		 * \param problem instance
+		 */
+		virtual void setProblem(std::shared_ptr<Problem<T>> problem) = 0;
+		/**
 		 * \brief Returns the set problem for this solver.
 		 * \return problem instance
 		 */
-		virtual Problem<T>* getProblem() const = 0;
+		[[nodiscard]] virtual std::shared_ptr<Problem<T>> getProblem() const = 0;
 
 		/**
 		 * \brief Solves the optimization problem with the set parameters.
@@ -67,7 +72,7 @@ namespace OPLibrary
 		 * \brief Returns the representation of the solution for the set problem.
 		 * \return Solution
 		 */
-		virtual Solution getSolution() = 0;
+		[[nodiscard]] virtual Solution getSolution() = 0;
 	};
 
 	template <typename T>
