@@ -15,6 +15,7 @@ namespace OPLibrary
 	 * \brief Builder for Readers.
 	 */
 	template <typename T>
+		requires std::floating_point<T>
 	class ReaderBuilder
 	{
 		ReaderType type_;

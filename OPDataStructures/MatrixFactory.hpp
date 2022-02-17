@@ -15,6 +15,7 @@ namespace OPLibrary
 	 * \brief Factory for Matrix instances.
 	 */
 	template <typename T>
+		requires std::floating_point<T>
 	class MatrixFactory final
 	{
 		MatrixType type_;

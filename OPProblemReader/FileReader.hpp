@@ -14,6 +14,7 @@ namespace OPLibrary
 	 * \brief Reader for file input.
 	 */
 	template <typename T>
+		requires std::floating_point<T>
 	class FileReader final : public Reader<T>
 	{
 		size_t rows_;
@@ -38,6 +39,7 @@ namespace OPLibrary
 	};
 
 	template <typename T>
+		requires std::floating_point<T>
 	void FileReader<T>::readParam(size_t& holder) const
 	{
 		using namespace std;
@@ -63,6 +65,7 @@ namespace OPLibrary
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	void FileReader<T>::readInput(const size_t& maxRows, const size_t& maxCols, Matrix<T>* holder) const
 	{
 		using namespace std;
@@ -95,6 +98,7 @@ namespace OPLibrary
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	void FileReader<T>::readProblem(Problem<T>* problem)
 	{
 		using namespace std;
@@ -118,6 +122,7 @@ namespace OPLibrary
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	void FileReader<T>::readParams()
 	{
 		readParam(rows_);
@@ -125,12 +130,14 @@ namespace OPLibrary
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	std::pair<size_t, size_t> FileReader<T>::getParams() const
 	{
 		return std::make_pair<size_t, size_t>(static_cast<size_t>(rows_), static_cast<size_t>(cols_));
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	void FileReader<T>::readMatrix(Matrix<T>* matrix)
 	{
 		if (rows_ == 0 || cols_ == 0) readParams();
@@ -140,6 +147,7 @@ namespace OPLibrary
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	void FileReader<T>::readVector(Matrix<T>* vector)
 	{
 		if (rows_ == 0 || cols_ == 0) readParams();

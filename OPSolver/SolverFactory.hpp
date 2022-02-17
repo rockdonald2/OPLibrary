@@ -30,6 +30,7 @@ namespace OPLibrary
 		 * \return Solver instance
 		 */
 		template <typename T>
+			requires std::floating_point<T>
 		static std::unique_ptr<Solver<T>> createSolver(const std::string& type)
 		{
 			std::string temp(type);

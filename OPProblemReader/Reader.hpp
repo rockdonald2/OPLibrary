@@ -9,6 +9,7 @@ namespace OPLibrary
 	 * \brief Representation of Reader.
 	 */
 	template <typename T>
+		requires std::floating_point<T>
 	class Reader
 	{
 	public:

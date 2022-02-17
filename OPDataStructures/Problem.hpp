@@ -8,6 +8,7 @@ namespace OPLibrary
 	 * \brief Representation of the optimization problem.
 	 */
 	template <typename T>
+		requires std::floating_point<T>
 	class Problem final
 	{
 		std::shared_ptr<Matrix<T>> constraints_;
@@ -62,54 +63,63 @@ namespace OPLibrary
 	};
 
 	template <typename T>
+		requires std::floating_point<T>
 	void Problem<T>::setConstraints(Matrix<T>* cnstrs)
 	{
 		this->constraints_ = std::shared_ptr<Matrix<T>>(cnstrs);
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	void Problem<T>::setConstraints(std::unique_ptr<Matrix<T>> cnstrs)
 	{
 		this->setConstraints(cnstrs.release());
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	void Problem<T>::setConstraintsObjectives(Matrix<T>* cnstrsObjs)
 	{
 		this->constraintObjectives_ = std::shared_ptr<Matrix<T>>(cnstrsObjs);
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	void Problem<T>::setConstraintsObjectives(std::unique_ptr<Matrix<T>> cnstrsObjs)
 	{
 		this->setConstraintsObjectives(cnstrsObjs.release());
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	void Problem<T>::setObjectives(Matrix<T>* objs)
 	{
 		this->objectives_ = std::shared_ptr<Matrix<T>>(objs);
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	void Problem<T>::setObjectives(std::unique_ptr<Matrix<T>> objs)
 	{
 		this->setObjectives(objs.release());
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	std::shared_ptr<Matrix<T>> Problem<T>::getConstraints() const
 	{
 		return this->constraints_;
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	std::shared_ptr<Matrix<T>> Problem<T>::getConstraintsObjectives() const
 	{
 		return this->constraintObjectives_;
 	}
 
 	template <typename T>
+		requires std::floating_point<T>
 	std::shared_ptr<Matrix<T>> Problem<T>::getObjectives() const
 	{
 		return this->objectives_;
