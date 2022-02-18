@@ -34,12 +34,6 @@ int main(int argc, char* argv[])
 
 		inFile.close();
 
-		cout << *problem->getConstraints() // A
-			<< endl << *problem->getConstraintsObjectives() // b
-			<< endl << *problem->getObjectives() << endl; // c
-
-		exit(1);
-
 		const auto solver(
 			SolverFactory::createSolver<long double>(ArgsParser::getStringArgument(ArgsParser::Args::SOLVER_TYPE)));
 
@@ -54,9 +48,7 @@ int main(int argc, char* argv[])
 				const auto argVal(ArgsParser::getLongDoubleArgument(argE));
 				solver->setInitializableArg(arg, argVal);
 			}
-			catch (...)
-			{
-			}
+			catch (...) {}
 		}
 
 		solver->solve();
