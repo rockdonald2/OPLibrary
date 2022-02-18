@@ -87,8 +87,8 @@ namespace OPLibrary
 		Matrix<T>& operator*=(const Matrix<T>* rhs) override;
 		Matrix<T>& operator*=(const Matrix<T>& rhs) override;
 
-		Matrix<T>& operator*=(const std::unique_ptr<Matrix<T>> rhs) override;
-		Matrix<T>& operator*=(const std::shared_ptr<Matrix<T>> rhs) override;
+		Matrix<T>& operator*=(const std::unique_ptr<Matrix<T>>& rhs) override;
+		Matrix<T>& operator*=(const std::shared_ptr<Matrix<T>>& rhs) override;
 
 		Matrix<T>& operator*=(const std::vector<T>* rhs) override;
 		Matrix<T>& operator*=(const std::vector<T>& rhs) override;
@@ -115,8 +115,8 @@ namespace OPLibrary
 		std::unique_ptr<Matrix<T>> operator-(const std::shared_ptr<Matrix<T>>& rhs) const override;
 		Matrix<T>& operator-=(const Matrix<T>* rhs) override;
 		Matrix<T>& operator-=(const Matrix<T>& rhs) override;
-		Matrix<T>& operator-=(const std::shared_ptr<Matrix<T>> rhs) override;
-		Matrix<T>& operator-=(const std::unique_ptr<Matrix<T>> rhs) override;
+		Matrix<T>& operator-=(const std::shared_ptr<Matrix<T>>& rhs) override;
+		Matrix<T>& operator-=(const std::unique_ptr<Matrix<T>>& rhs) override;
 
 		friend std::ostream& operator<<(std::ostream& out, const Matrix<T>& matrix)
 		{
@@ -136,8 +136,8 @@ namespace OPLibrary
 		[[nodiscard]] std::unique_ptr<Matrix<T>>
 			block(size_t sRow, size_t sCol, size_t eRow, size_t eCol) const override;
 		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, Matrix<T>* newVals) override;
-		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, std::unique_ptr<Matrix<T>> newVals) override;
-		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, std::shared_ptr<Matrix<T>> newVals) override;
+		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::unique_ptr<Matrix<T>>& newVals) override;
+		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::shared_ptr<Matrix<T>>& newVals) override;
 		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::vector<T>& newVals) override;
 		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const T& scalar) override;
 
@@ -149,9 +149,9 @@ namespace OPLibrary
 		[[nodiscard]] std::unique_ptr<Matrix<T>> solve(Matrix<T>& rhs, const DecompositionType& decomposition) override;
 		[[nodiscard]] std::unique_ptr<Matrix<T>> solve(Matrix<T>* rhs, const DecompositionType& decomposition) override;
 		[[nodiscard]] std::unique_ptr<Matrix<T>>
-			solve(std::unique_ptr<Matrix<T>>& rhs, const DecompositionType& decomposition) override;
+			solve(const std::unique_ptr<Matrix<T>>& rhs, const DecompositionType& decomposition) override;
 		[[nodiscard]] std::unique_ptr<Matrix<T>>
-			solve(std::shared_ptr<Matrix<T>>& rhs, const DecompositionType& decomposition) override;
+			solve(const std::shared_ptr<Matrix<T>>& rhs, const DecompositionType& decomposition) override;
 	};
 
 	template <typename T>
@@ -731,14 +731,14 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	Matrix<T>& DenseMatrix<T>::operator*=(const std::unique_ptr<Matrix<T>> rhs)
+	Matrix<T>& DenseMatrix<T>::operator*=(const std::unique_ptr<Matrix<T>>& rhs)
 	{
 		return *this *= *rhs;
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	Matrix<T>& DenseMatrix<T>::operator*=(const std::shared_ptr<Matrix<T>> rhs)
+	Matrix<T>& DenseMatrix<T>::operator*=(const std::shared_ptr<Matrix<T>>& rhs)
 	{
 		return *this *= *rhs;
 	}
@@ -1011,14 +1011,14 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	Matrix<T>& DenseMatrix<T>::operator-=(const std::unique_ptr<Matrix<T>> rhs)
+	Matrix<T>& DenseMatrix<T>::operator-=(const std::unique_ptr<Matrix<T>>& rhs)
 	{
 		return *this -= *rhs;
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	Matrix<T>& DenseMatrix<T>::operator-=(const std::shared_ptr<Matrix<T>> rhs)
+	Matrix<T>& DenseMatrix<T>::operator-=(const std::shared_ptr<Matrix<T>>& rhs)
 	{
 		return *this -= *rhs;
 	}
@@ -1082,14 +1082,14 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	void DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, std::unique_ptr<Matrix<T>> newVals)
+	void DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::unique_ptr<Matrix<T>>& newVals)
 	{
 		this->block(sRow, sCol, eRow, eCol, newVals.get());
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	void DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, std::shared_ptr<Matrix<T>> newVals)
+	void DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::shared_ptr<Matrix<T>>& newVals)
 	{
 		this->block(sRow, sCol, eRow, eCol, newVals.get());
 	}
@@ -1166,7 +1166,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::solve(std::unique_ptr<Matrix<T>>& rhs,
+	std::unique_ptr<Matrix<T>> DenseMatrix<T>::solve(const std::unique_ptr<Matrix<T>>& rhs,
 		const DecompositionType& decomposition)
 	{
 		return std::move(this->solve(*rhs, decomposition));
@@ -1174,7 +1174,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::solve(std::shared_ptr<Matrix<T>>& rhs,
+	std::unique_ptr<Matrix<T>> DenseMatrix<T>::solve(const std::shared_ptr<Matrix<T>>& rhs,
 		const DecompositionType& decomposition)
 	{
 		return std::move(this->solve(*rhs, decomposition));

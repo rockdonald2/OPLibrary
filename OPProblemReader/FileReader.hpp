@@ -22,25 +22,19 @@ namespace OPLibrary
 
 		std::ifstream* input_;
 
-		void readParam(size_t& holder) const;
-
+		[[nodiscard]] size_t readParam() const;
 		void readInput(const size_t& maxRows, const size_t& maxCols, Matrix<T>* holder) const;
 
 	public:
 		explicit FileReader(std::ifstream* input) : rows_(0), cols_(0), input_(input) {}
 
 		void readProblem(Problem<T>* problem) override;
-
-		void readParams() override;
-		[[nodiscard]] std::pair<size_t, size_t> getParams() const override;
-
-		void readMatrix(Matrix<T>* matrix) override;
-		void readVector(Matrix<T>* vector) override;
+		void readProblem(const std::shared_ptr<Problem<T>>& problem) override;
 	};
 
 	template <typename T>
 		requires std::floating_point<T>
-	void FileReader<T>::readParam(size_t& holder) const
+	size_t FileReader<T>::readParam() const
 	{
 		using namespace std;
 		string placeholder;
@@ -51,11 +45,9 @@ namespace OPLibrary
 
 			try
 			{
-				if (input_->is_open() && !input_->eof())
-				{
-					holder = stoll(placeholder);
-					break;
-				}
+				if (input_->is_open() && !input_->eof()) return stoll(placeholder);
+
+				throw ReaderException("Reached end of file or suddenly closed while reading in matrices.");
 			}
 			catch (...)
 			{
@@ -71,9 +63,11 @@ namespace OPLibrary
 		using namespace std;
 		string placeholder;
 
-		for (auto i = 0; i < maxRows; ++i)
+		if (holder->getRows() != maxRows || holder->getCols() != maxCols) holder->setSize(maxRows, maxCols);
+
+		for (auto i = 0ULL; i < maxRows; ++i)
 		{
-			for (auto j = 0; j < maxCols; ++j)
+			for (auto j = 0ULL; j < maxCols; ++j)
 			{
 				if (input_->is_open() && !input_->eof())
 				{
@@ -110,10 +104,12 @@ namespace OPLibrary
 
 		if (input_->is_open())
 		{
-			readParams();
-			readMatrix(problem->getConstraints().get());
-			readVector(problem->getConstraintsObjectives().get());
-			readVector(problem->getObjectives().get());
+			rows_ = readParam();
+			cols_ = readParam();
+
+			readInput(rows_, cols_, problem->getConstraints().get()); // A matrix
+			readInput(rows_, 1, problem->getConstraintsObjectives().get()); // b vektor
+			readInput(1, cols_, problem->getObjectives().get()); // c vektor
 		}
 		else
 		{
@@ -121,38 +117,9 @@ namespace OPLibrary
 		}
 	}
 
-	template <typename T>
-		requires std::floating_point<T>
-	void FileReader<T>::readParams()
+	template <typename T> requires std::floating_point<T>
+	void FileReader<T>::readProblem(const std::shared_ptr<Problem<T>>& problem)
 	{
-		readParam(rows_);
-		readParam(cols_);
-	}
-
-	template <typename T>
-		requires std::floating_point<T>
-	std::pair<size_t, size_t> FileReader<T>::getParams() const
-	{
-		return std::make_pair<size_t, size_t>(static_cast<size_t>(rows_), static_cast<size_t>(cols_));
-	}
-
-	template <typename T>
-		requires std::floating_point<T>
-	void FileReader<T>::readMatrix(Matrix<T>* matrix)
-	{
-		if (rows_ == 0 || cols_ == 0) readParams();
-
-		matrix->setSize(rows_, cols_);
-		readInput(rows_, cols_, matrix);
-	}
-
-	template <typename T>
-		requires std::floating_point<T>
-	void FileReader<T>::readVector(Matrix<T>* vector)
-	{
-		if (rows_ == 0 || cols_ == 0) readParams();
-
-		vector->setSize(rows_, 1);
-		readInput(rows_, 1, vector);
+		this->readProblem(problem.get());
 	}
 }

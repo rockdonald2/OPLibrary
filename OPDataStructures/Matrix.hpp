@@ -257,13 +257,13 @@ namespace OPLibrary
 		 * \param rhs scalar value
 		 * \return New Matrix as product with scalar
 		 */
-		virtual Matrix<T>& operator*=(const std::unique_ptr<Matrix<T>> rhs) = 0;
+		virtual Matrix<T>& operator*=(const std::unique_ptr<Matrix<T>>& rhs) = 0;
 		/**
 		 * \brief Matrix multiplication with assignment.
 		 * \param rhs scalar value
 		 * \return New Matrix as product with scalar
 		 */
-		virtual Matrix<T>& operator*=(const std::shared_ptr<Matrix<T>> rhs) = 0;
+		virtual Matrix<T>& operator*=(const std::shared_ptr<Matrix<T>>& rhs) = 0;
 		/**
 		 * \brief Matrix multiplication with assignment.
 		 * \param rhs scalar value
@@ -386,13 +386,13 @@ namespace OPLibrary
 		 * \param rhs second Matrix
 		 * \return New matrix as product
 		 */
-		virtual Matrix& operator-=(const std::shared_ptr<Matrix<T>> rhs) = 0;
+		virtual Matrix& operator-=(const std::shared_ptr<Matrix<T>>& rhs) = 0;
 		/**
 		 * \brief Subtracts to a Matrix.
 		 * \param rhs second Matrix
 		 * \return New matrix as product
 		 */
-		virtual Matrix& operator-=(const std::unique_ptr<Matrix<T>> rhs) = 0;
+		virtual Matrix& operator-=(const std::unique_ptr<Matrix<T>>& rhs) = 0;
 
 		/**
 		 * \brief Prints a Matrix instance to the output stream.
@@ -443,7 +443,7 @@ namespace OPLibrary
 		 * \param eCol ending column
 		 * \param newVals the new values of the specified block
 		 */
-		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, std::unique_ptr<Matrix<T>> newVals) = 0;
+		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::unique_ptr<Matrix<T>>& newVals) = 0;
 		/**
 		 * \brief Slices and exchanges a block of the matrix.
 		 * \param sRow starting row
@@ -452,7 +452,7 @@ namespace OPLibrary
 		 * \param eCol ending column
 		 * \param newVals the new values of the specified block
 		 */
-		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, std::shared_ptr<Matrix<T>> newVals) = 0;
+		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::shared_ptr<Matrix<T>>& newVals) = 0;
 		/**
 		 * \brief Slices and exchanges a block of the matrix.
 		 * \param sRow starting row
@@ -496,7 +496,7 @@ namespace OPLibrary
 		 * \param decomposition type
 		 * \return solution matrix/vector
 		 */
-		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> solve(std::unique_ptr<Matrix<T>>& rhs,
+		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> solve(const std::unique_ptr<Matrix<T>>& rhs,
 			const DecompositionType& decomposition =
 			DecompositionType::BDCSVD) = 0;
 		/**
@@ -505,7 +505,7 @@ namespace OPLibrary
 		 * \param decomposition type
 		 * \return solution matrix/vector
 		 */
-		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> solve(std::shared_ptr<Matrix<T>>& rhs,
+		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> solve(const std::shared_ptr<Matrix<T>>& rhs,
 			const DecompositionType& decomposition =
 			DecompositionType::BDCSVD) = 0;
 	};

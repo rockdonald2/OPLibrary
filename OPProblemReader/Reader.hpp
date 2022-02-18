@@ -19,24 +19,9 @@ namespace OPLibrary
 		 * \brief Reads in the optimization problem in order of: constraints, constraints objectives and objectives.
 		 */
 		virtual void readProblem(Problem<T>* problem) = 0;
-
 		/**
-		 * \brief Reads in the dimensions.
+		 * \brief Reads in the optimization problem in order of: constraints, constraints objectives and objectives.
 		 */
-		virtual void readParams() = 0;
-		/**
-		 * \brief Returns the dimensions.
-		 * \return dimensions pair as row-column.
-		 */
-		[[nodiscard]] virtual std::pair<size_t, size_t> getParams() const = 0;
-
-		/**
-		 * \brief Reads in a Matrix from the input.
-		 */
-		virtual void readMatrix(Matrix<T>*) = 0;
-		/**
-		 * \brief Reads in a Vector from the input.
-		 */
-		virtual void readVector(Matrix<T>*) = 0;
+		virtual void readProblem(const std::shared_ptr<Problem<T>>& problem) = 0;
 	};
 }
