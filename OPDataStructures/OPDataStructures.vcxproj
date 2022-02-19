@@ -155,7 +155,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\OPSolver\Solution.hpp" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Matrix.hpp" />
     <ClInclude Include="MatrixException.hpp" />
@@ -163,6 +162,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="DenseMatrix.hpp" />
     <ClInclude Include="Problem.hpp" />
+    <ClInclude Include="Solution.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

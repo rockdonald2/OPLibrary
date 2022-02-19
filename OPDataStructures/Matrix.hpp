@@ -424,7 +424,7 @@ namespace OPLibrary
 		 * \param eCol ending column
 		 * \return (sRow, sCol) - (eRow, eCol) block of Matrix as a new Matrix
 		 */
-		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> block(size_t sRow, size_t sCol, size_t eRow, size_t eCol) const
+		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol) const
 			= 0;
 		/**
 		 * \brief Slices and exchanges a block of the matrix.
@@ -434,7 +434,7 @@ namespace OPLibrary
 		 * \param eCol ending column
 		 * \param newVals the new values of the specified block
 		 */
-		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, Matrix<T>* newVals) = 0;
+		virtual void block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, Matrix<T>* newVals) = 0;
 		/**
 		 * \brief Slices and exchanges a block of the matrix.
 		 * \param sRow starting row
@@ -443,7 +443,7 @@ namespace OPLibrary
 		 * \param eCol ending column
 		 * \param newVals the new values of the specified block
 		 */
-		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::unique_ptr<Matrix<T>>& newVals) = 0;
+		virtual void block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const std::unique_ptr<Matrix<T>>& newVals) = 0;
 		/**
 		 * \brief Slices and exchanges a block of the matrix.
 		 * \param sRow starting row
@@ -452,7 +452,7 @@ namespace OPLibrary
 		 * \param eCol ending column
 		 * \param newVals the new values of the specified block
 		 */
-		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::shared_ptr<Matrix<T>>& newVals) = 0;
+		virtual void block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const std::shared_ptr<Matrix<T>>& newVals) = 0;
 		/**
 		 * \brief Slices and exchanges a block of the matrix.
 		 * \param sRow starting row
@@ -461,7 +461,7 @@ namespace OPLibrary
 		 * \param eCol ending column
 		 * \param newVals the new values of the specified block
 		 */
-		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::vector<T>& newVals) = 0;
+		virtual void block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const std::vector<T>& newVals) = 0;
 		/**
 		 * \brief Fills the block with a scalar value.
 		 * \param sRow starting row
@@ -470,7 +470,7 @@ namespace OPLibrary
 		 * \param eCol ending column
 		 * \param scalar the new value for this block
 		 */
-		virtual void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const T& scalar) = 0;
+		virtual void block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const T& scalar) = 0;
 
 		/**
 		 * \brief Solves a system of equations with lhs as this and the given rhs, clients can decide which decomposition type is used.

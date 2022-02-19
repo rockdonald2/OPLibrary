@@ -109,7 +109,7 @@ namespace OPLibrary
 
 			readInput(rows_, cols_, problem->getConstraints().get()); // A matrix
 			readInput(rows_, 1, problem->getConstraintsObjectives().get()); // b vektor
-			readInput(1, cols_, problem->getObjectives().get()); // c vektor
+			readInput(cols_, 1, problem->getObjectives().get()); // c vektor
 		}
 		else
 		{

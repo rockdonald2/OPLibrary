@@ -120,26 +120,30 @@ namespace OPLibrary
 
 		friend std::ostream& operator<<(std::ostream& out, const Matrix<T>& matrix)
 		{
+			if (matrix.getSize() == 0) return out;
+
 			for (auto i = 0ULL; i < matrix.getRows(); ++i)
 			{
+				out << "| ";
+
 				for (auto j = 0ULL; j < matrix.getCols(); ++j)
 				{
 					out << matrix.get(i, j) << " ";
 				}
 
-				out << "\n";
+				out << "|\n";
 			}
 
 			return out;
 		}
 
 		[[nodiscard]] std::unique_ptr<Matrix<T>>
-			block(size_t sRow, size_t sCol, size_t eRow, size_t eCol) const override;
-		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, Matrix<T>* newVals) override;
-		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::unique_ptr<Matrix<T>>& newVals) override;
-		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::shared_ptr<Matrix<T>>& newVals) override;
-		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::vector<T>& newVals) override;
-		void block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const T& scalar) override;
+			block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol) const override;
+		void block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, Matrix<T>* newVals) override;
+		void block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const std::unique_ptr<Matrix<T>>& newVals) override;
+		void block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const std::shared_ptr<Matrix<T>>& newVals) override;
+		void block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const std::vector<T>& newVals) override;
+		void block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const T& scalar) override;
 
 		[[nodiscard]] std::string toString() const override;
 
@@ -261,7 +265,7 @@ namespace OPLibrary
 		this->rows_ = rows;
 
 		if (this->matrix_ == nullptr) this->matrix_ = std::make_unique<Eigen::Matrix<
-			T, Eigen::Dynamic, Eigen::Dynamic>>();
+			T, Eigen::Dynamic, Eigen::Dynamic>>(1, 1);
 
 		this->setSize(this->rows_, this->cols_);
 	}
@@ -280,7 +284,7 @@ namespace OPLibrary
 		this->cols_ = cols;
 
 		if (this->matrix_ == nullptr) this->matrix_ = std::make_unique<Eigen::Matrix<
-			T, Eigen::Dynamic, Eigen::Dynamic>>();
+			T, Eigen::Dynamic, Eigen::Dynamic>>(1, 1);
 
 		this->setSize(this->rows_, this->cols_);
 	}
@@ -379,10 +383,14 @@ namespace OPLibrary
 		if (this->matrix_ == nullptr) this->matrix_ = std::make_unique<Eigen::Matrix<
 			T, Eigen::Dynamic, Eigen::Dynamic>>(values.size(), 1);
 
-		size_t i__(0);
-		for (const auto& elem : values)
+		auto diagonal(this->matrix_->diagonal());
+
+		if (static_cast<long long>(values.size()) >= diagonal.size()) throw MatrixException(
+			"Sent values length for diagonal is bigger than Matrix diagonal.");
+
+		for (size_t i(0); const auto & elem : values)
 		{
-			this->matrix_->diagonal()[i__++] = elem;
+			diagonal[i++] = elem;
 		}
 	}
 
@@ -411,9 +419,11 @@ namespace OPLibrary
 		using namespace Eigen;
 
 		if (this->matrix_ == nullptr) this->matrix_ = std::make_unique<Eigen::Matrix<
-			T, Eigen::Dynamic, Eigen::Dynamic>>(1, 1);
+			T, Dynamic, Dynamic>>(1, 1);
+		if (values.size() >= this->cols_) throw MatrixException(
+			"Sent values length is bigger than Matrix columns.");
 
-		std::vector<T> tmpValues(values);
+		auto tmpValues(values);
 
 		auto& instance = this->matrix_;
 		const Map<Eigen::Matrix<T, Dynamic, 1>> newVals(tmpValues.data(), tmpValues.size());
@@ -430,8 +440,10 @@ namespace OPLibrary
 
 		if (cPos >= this->cols_) throw MatrixException(
 			"Invalid column position was tried to be set: " + std::to_string(cPos));
+		if (values.size() >= this->cols_) throw MatrixException(
+			"Sent values length is bigger than Matrix columns.");
 
-		std::vector<T> tmpValues(values);
+		auto tmpValues(values);
 
 		const Map<Eigen::Matrix<T, Dynamic, 1>> newVals(tmpValues.data(), tmpValues.size());
 
@@ -493,6 +505,8 @@ namespace OPLibrary
 
 		if (this->matrix_ == nullptr) this->matrix_ = std::make_unique<Eigen::Matrix<
 			T, Eigen::Dynamic, Eigen::Dynamic>>(1, 1);
+		if (values.size() >= this->rows_) throw MatrixException(
+			"Sent values length is bigger than Matrix rows.");
 
 		auto& instance = this->matrix_;
 		const Map<Eigen::Matrix<T, 1, Dynamic>> newVals(values.data(), values.size());
@@ -509,6 +523,8 @@ namespace OPLibrary
 
 		if (rPos >= this->rows_) throw MatrixException(
 			"Invalid row position was tried to be set: " + std::to_string(rPos));
+		if (values.size() >= this->rows_) throw MatrixException(
+			"Sent values length is bigger than Matrix rows.");
 
 		std::vector<T> tmpValues(values);
 
@@ -578,7 +594,15 @@ namespace OPLibrary
 
 		if (inplace)
 		{
-			*this->matrix_ = this->matrix_->inverse();
+			try
+			{
+				*this->matrix_ = this->matrix_->inverse();
+			}
+			catch (...)
+			{
+				throw MatrixException("Matrix not invertible.");
+			}
+
 			return nullptr;
 		}
 
@@ -632,7 +656,10 @@ namespace OPLibrary
 			"Matrices are not multipliable: l:" + std::to_string(this->cols_) + "- r:" + std::to_string(
 				rhs->getRows()));
 
-		auto retMatrix = make_unique<DenseMatrix<T>>(DenseMatrix(rhs->getRows(), rhs->getCols()));
+		const auto rows(this->getRows());
+		const auto cols(rhs->getCols());
+
+		auto retMatrix = make_unique<DenseMatrix<T>>(DenseMatrix(rows, cols));
 
 		auto rhsVals(rhs->getValues());
 		const auto rhsRows(rhs->getRows());
@@ -646,7 +673,7 @@ namespace OPLibrary
 		Eigen::Map<Eigen::Matrix<T, Dynamic, Dynamic>>(tmpResultVec->data(), tmpResult.rows(), tmpResult.cols()) =
 			tmpResult;
 
-		retMatrix->setValues(*tmpResultVec, rhs->getRows(), rhs->getCols());
+		retMatrix->setValues(*tmpResultVec, rows, cols);
 
 		return move(retMatrix);
 	}
@@ -718,6 +745,7 @@ namespace OPLibrary
 			rhsVals->data(), rhsRows, rhsCols);
 
 		*this->matrix_ = *this->matrix_ * rhsMatrix;
+		this->setSize(this->getRows(), rhs->getCols());
 
 		return *this;
 	}
@@ -756,6 +784,7 @@ namespace OPLibrary
 		const Map<Eigen::Matrix<T, Dynamic, 1>> rhsVector(tmpRhs.data(), tmpRhs.size());
 
 		*this->matrix_ = *this->matrix_ * rhsVector;
+		this->setSize(rhs->size(), 1);
 
 		return *this;
 	}
@@ -764,7 +793,7 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	Matrix<T>& DenseMatrix<T>::operator*=(const std::vector<T>& rhs)
 	{
-		return *this *= rhs;
+		return *this *= &rhs;
 	}
 
 	template <typename T>
@@ -1025,7 +1054,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol) const
+	std::unique_ptr<Matrix<T>> DenseMatrix<T>::block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol) const
 	{
 		using namespace Eigen;
 		using namespace std;
@@ -1054,7 +1083,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	void DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, Matrix<T>* newVals)
+	void DenseMatrix<T>::block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, Matrix<T>* newVals)
 	{
 		using namespace Eigen;
 
@@ -1082,48 +1111,44 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	void DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::unique_ptr<Matrix<T>>& newVals)
+	void DenseMatrix<T>::block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const std::unique_ptr<Matrix<T>>& newVals)
 	{
 		this->block(sRow, sCol, eRow, eCol, newVals.get());
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	void DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::shared_ptr<Matrix<T>>& newVals)
+	void DenseMatrix<T>::block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const std::shared_ptr<Matrix<T>>& newVals)
 	{
 		this->block(sRow, sCol, eRow, eCol, newVals.get());
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	void DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const std::vector<T>& newVals)
+	void DenseMatrix<T>::block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const std::vector<T>& newVals)
 	{
 		const size_t nRows(eRow - sRow + 1);
 		const size_t nCols(eCol - sCol + 1);
 
-		Matrix<T>* tmpMatrix = new DenseMatrix(nRows, nCols);
+		auto tmpMatrix(std::make_unique<DenseMatrix<T>>(DenseMatrix<T>(nRows, nCols)));
 		tmpMatrix->setValues(newVals, nRows, nCols);
 
 		this->block(sRow, sCol, eRow, eCol, tmpMatrix);
-
-		delete tmpMatrix;
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	void DenseMatrix<T>::block(size_t sRow, size_t sCol, size_t eRow, size_t eCol, const T& scalar)
+	void DenseMatrix<T>::block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const T& scalar)
 	{
 		using namespace std;
 
 		const size_t nRows(eRow - sRow + 1);
 		const size_t nCols(eCol - sCol + 1);
 
-		Matrix<T>* tmpMatrix = new DenseMatrix(nRows, nCols);
+		auto tmpMatrix(std::make_unique<DenseMatrix<T>>(DenseMatrix<T>(nRows, nCols)));
 		tmpMatrix->setValues(vector<T>(nRows * nCols, scalar), nRows, nCols);
 
 		this->block(sRow, sCol, eRow, eCol, tmpMatrix);
-
-		delete tmpMatrix;
 	}
 
 	template <typename T>

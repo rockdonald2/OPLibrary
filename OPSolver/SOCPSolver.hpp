@@ -7,7 +7,6 @@
 
 #include "Solver.hpp"
 #include "MatrixFactory.hpp"
-#include "SOCPSolver.hpp"
 #include "Solution.hpp"
 #include "SolverException.hpp"
 
@@ -35,6 +34,11 @@ namespace OPLibrary
 		 * \brief Classic initializator, where for x0 and s0 vector their first value is 1, all other 0; for y all the values are 0.
 		 */
 		class ClassicInitializator final : public Initializator
+		{
+			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
+		};
+
+		class Classic2Initializator final : public Initializator
 		{
 			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
 		};
@@ -211,7 +215,7 @@ namespace OPLibrary
 
 	public:
 		SOCPSolver() : theta_(std::numbers::pi_v<long double> / 4), epsilon_(1.0e-6), tau_(1.0 / 2), alpha_(0.5),
-			mu_(1.0), beta_(1.0 / 2), init_(new ClassicInitializator()), x_(nullptr), y_(nullptr),
+			mu_(1.0), beta_(1.0 / 2), init_(new Classic2Initializator()), x_(nullptr), y_(nullptr),
 			s_(nullptr)
 		{
 			using namespace std;
@@ -284,7 +288,9 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculatePv() const
 	{
+		// ahol v = P(w^-1/2) * x / sqrt(mu) = v / sqrt(mu)
 		// pv = v^-1 - v, klasszikus phi(t) = t fuggveny eseten
+
 		using namespace std;
 
 		const auto v(calculateV());
@@ -301,9 +307,13 @@ namespace OPLibrary
 
 		// A_ = sqrt(mu) * A * P(w^1/2)
 		const auto AMultipliedMu(*this->problem_->getConstraints() * sqrt(this->mu_));
+		cout << *AMultipliedMu << endl;
 		const auto w(calculateW());
+		cout << *w << endl;
 		const auto sqrtW(calculatePowerOf(w.get(), 0.5));
+		cout << *sqrtW << endl;
 		const auto pOfW(calculatePMatrixOf(sqrtW.get()));
+		cout << *pOfW << endl;
 
 		return move(*AMultipliedMu * *pOfW);
 	}
@@ -362,11 +372,10 @@ namespace OPLibrary
 		[this, &matrixFactory]
 		{
 			const auto rows(this->problem_->getObjectives()->getRows());
-			constexpr size_t cols(1);
 
-			x_ = matrixFactory.createMatrix(rows, cols);
-			y_ = matrixFactory.createMatrix(rows, cols);
-			s_ = matrixFactory.createMatrix(rows, cols);
+			x_ = matrixFactory.createMatrix(rows, 1);
+			y_ = matrixFactory.createMatrix(rows, 1);
+			s_ = matrixFactory.createMatrix(rows, 1);
 		}();
 
 		const auto n(this->x_->getRows());
@@ -379,8 +388,6 @@ namespace OPLibrary
 
 		size_t iters(0);
 
-		cout << distanceFromMuCenter() << endl;
-
 		while (checkIsTermination())
 		{
 			++iters;
@@ -389,17 +396,24 @@ namespace OPLibrary
 			{
 				/*
 				 * Egyenletrendszer:
-				 *	[ A_	0		0 ]		[ dx ]					[ 0 ]
-				 *	[ 0		A_T		I ]		[ deltay vagy dy ]	=	[ 0 ]
-				 *	[ I		0		I ]		[ ds ]					[ pv ]
+				 *	[ A_	0		0 ]		[ dx ]			[ 0 ]
+				 *	[ 0		A_T		I ]		[ dy ]		=	[ 0 ]
+				 *	[ I		0		I ]		[ ds ]			[ pv ]
 				 */
 
 				const auto lhs(matrixFactory.createMatrix());
 				const auto rhs(matrixFactory.createMatrix());
 
+				// szorzas eredmeny dimenzioi nem helyesek.
 				const auto A_(calculateA_());
+				cout << *A_ << endl;
 				const auto A_T(A_->transpose());
+				cout << *A_T << endl;
 				const auto pv(calculatePv());
+
+				const auto w(calculateW());
+				cout << *w << endl;
+				cout << *calculatePMatrixOf(w.get()) << endl;
 
 				const auto rows(A_->getRows() + A_T->getRows() + pv->getRows());
 				const auto cols(A_->getCols() + A_T->getCols() + pv->getCols() * n);
@@ -419,8 +433,9 @@ namespace OPLibrary
 
 				const auto sol(lhs->solve(rhs.get(), DecompositionType::JACOBISVD));
 
+				cout << *sol << endl;
+
 				const auto v(calculateV());
-				const auto w(calculateW());
 
 				const auto sqrtw(calculatePowerOf(w.get(), 0.5));
 				const auto invsqrtw(calculatePowerOf(sqrtw.get(), -1));
@@ -471,7 +486,32 @@ namespace OPLibrary
 
 		x->setValues(allZero, rows, 1);
 		x->set(0, 0, 1);
-		y->setValues(vector<T>(rows, 1), rows, 1);
+
+		y->setValues(allZero, rows, 1);
+
+		s->setValues(allZero, rows, 1);
+		s->set(0, 0, 1);
+	}
+
+	template <typename T> requires std::floating_point<T>
+	void SOCPSolver<T>::Classic2Initializator::initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s)
+	{
+		using namespace std;
+
+		if (x == nullptr || y == nullptr || s == nullptr)
+			throw SolverException(
+				"Wrong arguments for initializer, matrices have to be allocated before initializing them.");
+
+		const auto rows(x->getRows());
+
+		const vector<T> allZero(rows, 0);
+		const vector<T> allOne(rows, 1);
+
+		x->setValues(allZero, rows, 1);
+		x->set(0, 0, 1);
+
+		y->setValues(allOne, rows, 1);
+
 		s->setValues(allZero, rows, 1);
 		s->set(0, 0, 2);
 	}

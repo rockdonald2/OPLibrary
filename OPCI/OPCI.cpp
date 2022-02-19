@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 
 		const auto problem(make_shared<Problem<long double>>(Problem(matrix, vector1, vector2)));
 
-		reader->readProblem(problem.get());
+		reader->readProblem(problem);
 
 		inFile.close();
 
