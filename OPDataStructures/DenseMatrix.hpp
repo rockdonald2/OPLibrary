@@ -385,7 +385,7 @@ namespace OPLibrary
 
 		auto diagonal(this->matrix_->diagonal());
 
-		if (static_cast<long long>(values.size()) >= diagonal.size()) throw MatrixException(
+		if (static_cast<long long>(values.size()) > diagonal.size()) throw MatrixException(
 			"Sent values length for diagonal is bigger than Matrix diagonal.");
 
 		for (size_t i(0); const auto & elem : values)
@@ -420,7 +420,7 @@ namespace OPLibrary
 
 		if (this->matrix_ == nullptr) this->matrix_ = std::make_unique<Eigen::Matrix<
 			T, Dynamic, Dynamic>>(1, 1);
-		if (values.size() >= this->cols_) throw MatrixException(
+		if (values.size() > this->cols_) throw MatrixException(
 			"Sent values length is bigger than Matrix columns.");
 
 		auto tmpValues(values);
@@ -440,7 +440,7 @@ namespace OPLibrary
 
 		if (cPos >= this->cols_) throw MatrixException(
 			"Invalid column position was tried to be set: " + std::to_string(cPos));
-		if (values.size() >= this->cols_) throw MatrixException(
+		if (values.size() > this->cols_) throw MatrixException(
 			"Sent values length is bigger than Matrix columns.");
 
 		auto tmpValues(values);
@@ -505,7 +505,7 @@ namespace OPLibrary
 
 		if (this->matrix_ == nullptr) this->matrix_ = std::make_unique<Eigen::Matrix<
 			T, Eigen::Dynamic, Eigen::Dynamic>>(1, 1);
-		if (values.size() >= this->rows_) throw MatrixException(
+		if (values.size() > this->rows_) throw MatrixException(
 			"Sent values length is bigger than Matrix rows.");
 
 		auto& instance = this->matrix_;
@@ -523,7 +523,7 @@ namespace OPLibrary
 
 		if (rPos >= this->rows_) throw MatrixException(
 			"Invalid row position was tried to be set: " + std::to_string(rPos));
-		if (values.size() >= this->rows_) throw MatrixException(
+		if (values.size() > this->rows_) throw MatrixException(
 			"Sent values length is bigger than Matrix rows.");
 
 		std::vector<T> tmpValues(values);
@@ -1133,7 +1133,7 @@ namespace OPLibrary
 		auto tmpMatrix(std::make_unique<DenseMatrix<T>>(DenseMatrix<T>(nRows, nCols)));
 		tmpMatrix->setValues(newVals, nRows, nCols);
 
-		this->block(sRow, sCol, eRow, eCol, tmpMatrix);
+		this->block(sRow, sCol, eRow, eCol, tmpMatrix.get());
 	}
 
 	template <typename T>
@@ -1148,7 +1148,7 @@ namespace OPLibrary
 		auto tmpMatrix(std::make_unique<DenseMatrix<T>>(DenseMatrix<T>(nRows, nCols)));
 		tmpMatrix->setValues(vector<T>(nRows * nCols, scalar), nRows, nCols);
 
-		this->block(sRow, sCol, eRow, eCol, tmpMatrix);
+		this->block(sRow, sCol, eRow, eCol, tmpMatrix.get());
 	}
 
 	template <typename T>
