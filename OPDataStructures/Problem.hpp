@@ -60,6 +60,20 @@ namespace OPLibrary
 		 * \brief Returns the objectives vector.
 		 */
 		std::shared_ptr<Matrix<T>> getObjectives() const;
+
+		friend std::ostream& operator<<(std::ostream& out, const Problem<T>& problem)
+		{
+			assert(problem.constraints_ != nullptr && problem.constraintObjectives_ != nullptr && problem.objectives_ != nullptr && "Tried to output null problem.");
+
+			out << "The set A matrix for the problem is:\n";
+			out << *problem.constraints_;
+			out << "The set b vector for the problem is:\n";
+			out << *problem.constraintObjectives_;
+			out << "The set c vector for the problem is:\n";
+			out << *problem.objectives_;
+
+			return out;
+		}
 	};
 
 	template <typename T>

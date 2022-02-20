@@ -32,9 +32,7 @@ int main(int argc, char* argv[])
 
 		reader->readProblem(problem);
 
-		cout << *problem->getConstraints() << endl;
-		cout << *problem->getConstraintsObjectives() << endl;
-		cout << *problem->getObjectives() << endl;
+		cout << *problem;
 
 		inFile.close();
 
