@@ -36,11 +36,11 @@ namespace OPLibrary
 		{
 		}
 
-		Matrix(const Matrix<T>&) = default;
-		virtual Matrix<T>& operator=(const Matrix<T>&) noexcept = default;
+		Matrix(const Matrix<T>&) = delete;
+		Matrix<T>& operator=(const Matrix<T>&) noexcept;
 
-		Matrix(Matrix<T>&&) = default;
-		virtual Matrix<T>& operator=(Matrix<T>&&) noexcept = 0;
+		Matrix(Matrix<T>&&) = delete;
+		Matrix<T>& operator=(Matrix<T>&&) noexcept;
 
 		virtual ~Matrix() = default;
 
@@ -509,4 +509,29 @@ namespace OPLibrary
 			const DecompositionType& decomposition =
 			DecompositionType::BDCSVD) = 0;
 	};
+
+	template <typename T>
+		requires std::floating_point<T>
+	Matrix<T>& Matrix<T>::operator=(const Matrix<T>& rhs) noexcept
+	{
+		if (&rhs == this) return *this;
+
+		this->setValues(*rhs.getValues(), rhs.getRows(), rhs.getCols());
+
+		return *this;
+	}
+
+	template <typename T>
+		requires std::floating_point<T>
+	Matrix<T>& Matrix<T>::operator=(Matrix<T>&& rhs) noexcept
+	{
+		if (&rhs == this) return *this;
+
+		// TODO: better solution for this
+
+		this->setValues(*rhs.getValues(), rhs.getRows(), rhs.getCols());
+		rhs.setValues(std::vector<T>(), 0, 0);
+
+		return *this;
+	}
 }

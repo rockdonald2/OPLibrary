@@ -36,7 +36,7 @@ namespace OPLibrary
 		DenseMatrix(DenseMatrix<T>&&) noexcept;
 		DenseMatrix& operator=(DenseMatrix<T>&&) noexcept;
 		explicit DenseMatrix(Matrix<T>&&) noexcept;
-		DenseMatrix& operator=(Matrix<T>&&) noexcept override;
+		DenseMatrix& operator=(Matrix<T>&&) noexcept;
 
 		[[nodiscard]] size_t getRows() const override;
 		void setRows(const size_t& rows) override;
@@ -175,7 +175,7 @@ namespace OPLibrary
 			T, Eigen::Dynamic, Eigen::Dynamic>(
 				rhs.getRows(), rhs.getCols()))
 	{
-		this->setValues(rhs.getValues(), rhs.getRows(), rhs.getCols());
+		this->setValues(*rhs.getValues(), rhs.getRows(), rhs.getCols());
 	}
 
 	template <typename T>
@@ -188,7 +188,7 @@ namespace OPLibrary
 
 		this->matrix_ = std::unique_ptr<Eigen::Matrix<T, Dynamic, Dynamic>>(
 			new Eigen::Matrix<T, Dynamic, Dynamic>(rhs.getRows(), rhs.getCols()));
-		this->setValues(rhs.getValues(), rhs.getRows(), rhs.getCols());
+		this->setValues(*rhs.getValues(), rhs.getRows(), rhs.getCols());
 
 		return *this;
 	}
@@ -1158,7 +1158,7 @@ namespace OPLibrary
 		if (this->matrix_ == nullptr) throw MatrixException("Tried to print a null matrix.");
 
 		std::stringstream output;
-		output << matrix_;
+		output << *matrix_;
 		return output.str();
 	}
 
