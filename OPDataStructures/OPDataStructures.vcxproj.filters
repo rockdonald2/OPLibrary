@@ -36,7 +36,7 @@
     <ClInclude Include="Problem.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\OPSolver\Solution.hpp">
+    <ClInclude Include="Solution.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

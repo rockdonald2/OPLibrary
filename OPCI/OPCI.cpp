@@ -32,6 +32,10 @@ int main(int argc, char* argv[])
 
 		reader->readProblem(problem);
 
+		cout << *problem->getConstraints() << endl;
+		cout << *problem->getConstraintsObjectives() << endl;
+		cout << *problem->getObjectives() << endl;
+
 		inFile.close();
 
 		const auto solver(
@@ -54,6 +58,8 @@ int main(int argc, char* argv[])
 		solver->solve();
 
 		const auto solution(solver->getSolution());
+
+		cout << solution << endl;
 	}
 	catch (const ReaderException& e)
 	{

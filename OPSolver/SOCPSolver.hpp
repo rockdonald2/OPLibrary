@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 
+#include "framework.h"
 #include "Solver.hpp"
 #include "MatrixFactory.hpp"
 #include "Solution.hpp"
@@ -35,11 +36,25 @@ namespace OPLibrary
 		 */
 		class ClassicInitializator final : public Initializator
 		{
+		public:
 			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
 		};
 
+		/**
+		 * \brief Classic initializator, where for x0 vector first value is 1, s0 vector fist value is 2, all other 0; for y all the values are 1.
+		 */
 		class Classic2Initializator final : public Initializator
 		{
+		public:
+			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
+		};
+
+		/**
+		 * \brief Classic initializator, where for x0 and s0 vector their first value is 1, all other 0; for y all the values are 1.
+		 */
+		class Classic3Initializator final : public Initializator
+		{
+		public:
 			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
 		};
 
@@ -50,11 +65,16 @@ namespace OPLibrary
 		long double mu_;
 		long double beta_;
 
+		size_t n_;
+		size_t nn_;
+
 		std::unique_ptr<Initializator> init_;
 
 		std::unique_ptr<Matrix<T>> x_;
 		std::unique_ptr<Matrix<T>> y_;
 		std::unique_ptr<Matrix<T>> s_;
+
+		std::shared_ptr<Solution<T>> solution_;
 
 		[[nodiscard]] bool checkIsTermination() const;
 
@@ -205,18 +225,26 @@ namespace OPLibrary
 			return move(ret);
 		}
 
-		std::unique_ptr<Matrix<T>> calculateW() const;
-		std::unique_ptr<Matrix<T>> calculateV() const;
-		std::unique_ptr<Matrix<T>> calculatePv() const;
+		[[nodiscard]] T calculateMu() const;
+		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateW() const;
+		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateV() const;
+		[[nodiscard]] std::unique_ptr<Matrix<T>> calculatePv() const;
 
-		std::unique_ptr<Matrix<T>> calculateA_() const;
+		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateA_() const;
 
-		T distanceFromMuCenter() const;
+		[[nodiscard]] T distanceFromMuCenter() const;
+
+		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateResidualB() const;
+		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateResidualC() const;
+		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateResidualC_() const;
+
+		SolutionStatus classicSolver();
+		SolutionStatus optimizedSolver();
 
 	public:
-		SOCPSolver() : theta_(std::numbers::pi_v<long double> / 4), epsilon_(1.0e-6), tau_(1.0 / 2), alpha_(0.5),
-			mu_(1.0), beta_(1.0 / 2), init_(new Classic2Initializator()), x_(nullptr), y_(nullptr),
-			s_(nullptr)
+		SOCPSolver() : theta_(std::numbers::pi_v<long double> / 4), epsilon_(1.0e-6), tau_(1.0 / 2), alpha_(1.0 / 10),
+			mu_(1.0), beta_(1.0 / 2), n_(0), nn_(0), init_(new Classic2Initializator()), x_(nullptr),
+			y_(nullptr), s_(nullptr), solution_(nullptr)
 		{
 			using namespace std;
 
@@ -235,7 +263,7 @@ namespace OPLibrary
 
 		SolutionStatus solve() override;
 
-		[[nodiscard]] Solution getSolution() override;
+		[[nodiscard]] Solution<T> getSolution() override;
 	};
 
 	template <typename T>
@@ -247,8 +275,14 @@ namespace OPLibrary
 		// lambda_min(s) > 0
 		// kupfeltetel -- most eltekintunk rola, ennel az atlagosabb implementacional biztos, hogy bent maradunk
 
-		//return (distanceFromMuCenter() >= epsilon_) && (calculateEigenMinOf(x_.get()) > 0) && (calculateEigenMinOf(s_.get()) > 0);
-		return (this->mu_ >= epsilon_) && (calculateEigenMinOf(x_.get()) > 0) && (calculateEigenMinOf(s_.get()) > 0);
+		return (mu_ >= epsilon_) && (calculateEigenMinOf(x_.get()) > 0) && (calculateEigenMinOf(s_.get()) > 0);
+	}
+
+	template <typename T>
+		requires std::floating_point<T>
+	T SOCPSolver<T>::calculateMu() const
+	{
+		return (*(*this->x_->transpose() * (2.0 * this->alpha_ / (this->n_ * 1.0))) * *this->s_)->get(0, 0);
 	}
 
 	template <typename T>
@@ -279,6 +313,7 @@ namespace OPLibrary
 		const auto w(calculateW());
 		const auto sqrtInverseW(calculatePowerOf(calculatePowerOf(w.get(), 0.5).get(), -1));
 		const auto pOfW(calculatePMatrixOf(sqrtInverseW.get()));
+		// a gyokvonas feleslegesnek tunik
 		const auto xMultipliedpOfW(*pOfW * *this->x_);
 
 		return move(*xMultipliedpOfW / sqrt(this->mu_));
@@ -306,14 +341,11 @@ namespace OPLibrary
 		using namespace std;
 
 		// A_ = sqrt(mu) * A * P(w^1/2)
+
 		const auto AMultipliedMu(*this->problem_->getConstraints() * sqrt(this->mu_));
-		cout << *AMultipliedMu << endl;
 		const auto w(calculateW());
-		cout << *w << endl;
 		const auto sqrtW(calculatePowerOf(w.get(), 0.5));
-		cout << *sqrtW << endl;
 		const auto pOfW(calculatePMatrixOf(sqrtW.get()));
-		cout << *pOfW << endl;
 
 		return move(*AMultipliedMu * *pOfW);
 	}
@@ -326,6 +358,300 @@ namespace OPLibrary
 
 		const auto pv(calculatePv());
 		return sqrt(2) * pv->norm() / 2;
+	}
+
+	template <typename T> requires std::floating_point<T>
+	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualB() const
+	{
+		// Ax - b
+		const auto& A(this->problem_->getConstraints());
+		const auto& b(this->problem_->getConstraintsObjectives());
+
+		return std::move(*(*A * *x_) - *b);
+	}
+
+	template <typename T> requires std::floating_point<T>
+	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualC() const
+	{
+		// AT * y + s - c
+
+		const auto AT(this->problem_->getConstraints()->transpose());
+		const auto& c(this->problem_->getObjectives());
+
+		return std::move(*(*(*AT * y_) + *s_) - *c);
+	}
+
+	template <typename T> requires std::floating_point<T>
+	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualC_() const
+	{
+		// 1/sqrt(mu) * P(w)^1/2 * rc
+
+		const auto mu(1.0 / sqrt(mu_));
+		const auto w(calculatePowerOf(calculateW().get(), 0.5));
+		const auto pOfW(calculatePMatrixOf(w.get()));
+		const auto rc(calculateResidualC());
+
+		return std::move(*(*pOfW * mu) * *rc);
+	}
+
+	template <typename T> requires std::floating_point<T>
+	SolutionStatus SOCPSolver<T>::classicSolver()
+	{
+		/*
+				  * Egyenletrendszer:
+				  *	[ A_	0		0 ]		[ dx ]		[ 0 ]
+				  *	[ 0		A_T		I ]	 *	[ dy ]	=	[ 0 ]
+				  *	[ I		0		I ]		[ ds ]		[ pv ]
+				  */
+
+		using namespace std;
+
+		const MatrixFactory<T> matrixFactory(MatrixType::DENSE);
+
+		const unique_ptr<Matrix<T>> I(matrixFactory.createMatrix());
+		I->setValues(vector<T>(static_cast<size_t>(pow(n_, 2)), 0), n_, n_);
+		I->setDiagonalValues(vector<T>(n_, 1));
+
+		size_t iters(0);
+
+		while (checkIsTermination())
+		{
+			++iters;
+
+			Logger::getInstance().info(format("{}. iteration ----------------------", iters));
+
+			const auto lhs(matrixFactory.createMatrix());
+			const auto rhs(matrixFactory.createMatrix());
+
+			const auto A_(calculateA_());
+			const auto A_T(A_->transpose());
+			const auto pv(calculatePv());
+
+			const auto rows(A_->getRows() + A_T->getRows() + pv->getRows());
+			const auto cols(A_->getCols() + A_T->getCols() + pv->getCols() * n_);
+
+			// lhs
+			{
+				lhs->setValues(vector<T>(rows * cols, 0), rows, cols);
+
+				lhs->block(0, 0, A_->getRows() - 1, A_->getCols() - 1, A_);
+
+				lhs->block(A_->getRows(), A_->getCols(), A_->getRows() + A_T->getRows() - 1,
+					A_->getCols() + A_T->getCols() - 1, A_T);
+
+				lhs->block(A_->getRows() + A_T->getRows(), 0,
+					A_->getRows() + A_T->getRows() + I->getRows() - 1, I->getCols() - 1, I);
+
+				lhs->block(A_->getRows(), A_->getCols() + A_T->getCols(),
+					A_->getRows() + A_T->getRows() - 1, A_->getCols() + A_T->getCols() + I->getCols() - 1, I);
+
+				lhs->block(A_->getRows() + A_T->getRows(), A_->getCols() + A_T->getCols(),
+					A_->getRows() + A_T->getRows() + I->getRows() - 1, A_->getCols() + A_T->getCols() + I->getCols() - 1, I);
+			}
+
+			// rhs
+			{
+				const auto rb(calculateResidualB());
+				const auto rc_(calculateResidualC_());
+
+				/*rhs->setValues(vector<T>(rows, 0), rows, 1);
+				rhs->block(A_->getRows() + A_T->getRows(), 0, rows - 1, 0, pv);*/
+
+				rhs->setValues(vector<T>(rows, 0), rows, 1);
+
+				rhs->block(0, 0, n_ - 1, 0, rc_);
+				rhs->block(n_, 0, n_ + nn_ - 1, 0, rb);
+
+				rhs->block(n_ + nn_, 0, rows - 1, 0, pv);
+			}
+
+			const auto sol = lhs->solve(rhs);
+
+			cout << *rhs << endl;
+			cout << *lhs << endl;
+			cout << *sol << endl;
+
+			const auto w(calculateW());
+			const auto sqrtw(calculatePowerOf(w.get(), 0.5));
+			const auto invsqrtw(calculatePowerOf(sqrtw.get(), -1));
+
+			const auto dx(sol->block(0, 0, n_ - 1, 0));
+			const auto dy(sol->block(n_, 0, n_ + nn_ - 1, 0));
+			const auto ds(sol->block(n_ + nn_, 0, 2 * n_ + nn_ - 1, 0));
+
+			cout << *dx << endl;
+			cout << *dy << endl;
+			cout << *ds << endl;
+
+			// deltay
+			unique_ptr<Matrix<T>> deltay;// (matrixFactory.createMatrix());
+			//*deltay = *dy;
+			{
+				deltay = *dy * mu_;
+			}
+
+			cout << *deltay << endl;
+
+			// deltax
+			unique_ptr<Matrix<T>> deltax;
+			{
+				deltax = *(*calculatePMatrixOf(sqrtw.get()) * sqrt(mu_)) * *dx;
+			}
+
+			cout << *deltax << endl;
+
+			// deltas
+			unique_ptr<Matrix<T>> deltas;
+			{
+				deltas = *(*calculatePMatrixOf(invsqrtw.get()) * sqrt(mu_)) * *ds;
+			}
+
+			cout << *deltas << endl;
+
+			const auto step(this->alpha_);
+
+			*x_ += *(*deltax * step);
+			*s_ += *(*deltas * step);
+			*y_ += *(*deltay * step);
+
+			cout << *x_ << endl;
+			cout << *s_ << endl;
+			cout << *y_ << endl;
+
+			this->mu_ *= (1 - this->beta_);
+
+			Logger::getInstance().info(format("Value is: {}", (*this->problem_->getObjectives()->transpose() * this->x_)->toString()));
+			Logger::getInstance().info(format("END ----------------------", iters));
+		}
+
+		Logger::getInstance().info(format("Solved in {} iterations.", iters));
+
+		return SolutionStatus::OPTIMAL;
+	}
+
+	template <typename T> requires std::floating_point<T>
+	SolutionStatus SOCPSolver<T>::optimizedSolver()
+	{
+		using namespace std;
+
+		const MatrixFactory<T> matrixFactory(MatrixType::DENSE);
+
+		size_t iters(0);
+
+		while (checkIsTermination())
+		{
+			++iters;
+
+			Logger::getInstance().info(format("{}. iteration ----------------------", iters));
+
+			this->mu_ = calculateMu();
+			cout << this->mu_ << endl;
+
+			const auto rb(calculateResidualB());
+			const auto rc(calculateResidualC());
+
+			cout << *rb << endl;
+			cout << *rc << endl;
+
+			const auto w(calculateW());
+			const auto v(calculateV());
+
+			cout << *w << endl;
+			cout << *v << endl;
+
+			const auto pv(calculatePv());
+
+			cout << *pv << endl;
+
+			const auto A_(calculateA_());
+			const auto A_T(A_->transpose());
+
+			cout << *A_ << endl;
+			cout << *A_T << endl;
+
+			const auto rc_(calculateResidualC_());
+
+			cout << *rc_ << endl;
+
+			// dy
+			unique_ptr<Matrix<T>> dy;
+			{
+				// A_ * A_T * dy = -A_ * rc_ - rb - A_ * pv
+
+				const auto lhs(matrixFactory.createMatrix());
+				const auto rhs(matrixFactory.createMatrix());
+
+				*lhs = *(*A_ * *A_T);
+				*rhs = *(*(*(*(*A_ * -1) * *rc_) - *rb) - *(*A_ * *pv));
+
+				dy = lhs->solve(rhs);
+			}
+
+			cout << *dy << endl;
+
+			// ds
+			unique_ptr<Matrix<T>> ds;
+			{
+				// A_T * dy + ds = -rc_ => ds = -rc_ - A_T * dy
+				ds = *(*rc_ * -1) - *(*A_T * *dy);
+			}
+
+			cout << *ds << endl;
+
+			//dx
+			unique_ptr<Matrix<T>> dx;
+			{
+				// dx + ds = pv => dx = pv - ds
+				dx = *pv - *ds;
+			}
+
+			cout << *dx << endl;
+
+			// deltay
+			unique_ptr<Matrix<T>> deltay;
+			{
+				deltay = *dy * mu_;
+			}
+
+			cout << *deltay << endl;
+
+			const auto sqrtw(calculatePowerOf(calculateW().get(), 0.5));
+
+			// deltax
+			unique_ptr<Matrix<T>> deltax;
+			{
+				deltax = *(*calculatePMatrixOf(sqrtw.get()) * sqrt(mu_)) * *dx;
+			}
+
+			cout << *deltax << endl;
+
+			// deltas
+			unique_ptr<Matrix<T>> deltas;
+			{
+				const auto invsqrtw(calculatePowerOf(sqrtw.get(), -1));
+
+				deltas = *(*calculatePMatrixOf(invsqrtw.get()) * sqrt(mu_)) * *ds;
+			}
+
+			cout << *deltas << endl;
+
+			const auto step(this->alpha_);
+
+			*x_ += *(*deltax * step);
+			*s_ += *(*deltas * step);
+			*y_ += *(*deltay * step);
+
+			cout << *x_ << endl;
+			cout << *s_ << endl;
+			cout << *y_ << endl;
+
+			Logger::getInstance().info(format("Value is: {}", (*this->problem_->getObjectives()->transpose() * this->x_)->toString()));
+			Logger::getInstance().info(format("END ----------------------", iters));
+		}
+
+		Logger::getInstance().info(format("Solved in {} iterations.", iters));
+
+		return SolutionStatus::OPTIMAL;
 	}
 
 	template <typename T>
@@ -367,107 +693,32 @@ namespace OPLibrary
 				"Cannot solve optimization problem without correctly setting the constraints, objectives and constraint objectives.");
 		}
 
+		const auto n(this->problem_->getObjectives()->getRows());
+		this->n_ = n;
+
+		const auto nn(this->problem_->getConstraintsObjectives()->getRows());
+		this->nn_ = nn;
+
 		const MatrixFactory<T> matrixFactory(MatrixType::DENSE);
 
-		[this, &matrixFactory]
-		{
-			const auto rows(this->problem_->getObjectives()->getRows());
-
-			x_ = matrixFactory.createMatrix(rows, 1);
-			y_ = matrixFactory.createMatrix(rows, 1);
-			s_ = matrixFactory.createMatrix(rows, 1);
-		}();
-
-		const auto n(this->x_->getRows());
-
-		const unique_ptr<Matrix<T>> I(matrixFactory.createMatrix());
-		I->setValues(vector<T>(static_cast<size_t>(pow(n, 2)), 0), n, n);
-		I->setDiagonalValues(vector<T>(n, 1));
+		x_ = matrixFactory.createMatrix(n, 1);
+		y_ = matrixFactory.createMatrix(nn, 1);
+		s_ = matrixFactory.createMatrix(n, 1);
 
 		init_->initialize(x_.get(), y_.get(), s_.get());
 
-		size_t iters(0);
+		const auto ret(optimizedSolver());
 
-		while (checkIsTermination())
-		{
-			++iters;
+		solution_ = make_shared<Solution<T>>(Solution<T>(x_, y_, s_));
 
-			[this, &matrixFactory, &n, &I]
-			{
-				/*
-				 * Egyenletrendszer:
-				 *	[ A_	0		0 ]		[ dx ]			[ 0 ]
-				 *	[ 0		A_T		I ]		[ dy ]		=	[ 0 ]
-				 *	[ I		0		I ]		[ ds ]			[ pv ]
-				 */
-
-				const auto lhs(matrixFactory.createMatrix());
-				const auto rhs(matrixFactory.createMatrix());
-
-				// szorzas eredmeny dimenzioi nem helyesek.
-				const auto A_(calculateA_());
-				cout << *A_ << endl;
-				const auto A_T(A_->transpose());
-				cout << *A_T << endl;
-				const auto pv(calculatePv());
-
-				const auto w(calculateW());
-				cout << *w << endl;
-				cout << *calculatePMatrixOf(w.get()) << endl;
-
-				const auto rows(A_->getRows() + A_T->getRows() + pv->getRows());
-				const auto cols(A_->getCols() + A_T->getCols() + pv->getCols() * n);
-
-				lhs->setValues(vector<T>(rows * cols, 0), rows, cols);
-
-				lhs->block(0, 0, A_->getRows() - 1, A_->getCols() - 1, A_);
-				lhs->block(A_->getRows(), A_->getCols(), A_->getRows() + A_T->getRows() - 1,
-					A_->getCols() + A_T->getCols() - 1, A_T);
-
-				lhs->block(2 * n, 0, 3 * n - 1, n - 1, I);
-				lhs->block(n, 2 * n, 2 * n - 1, 3 * n - 1, I);
-				lhs->block(2 * n, 2 * n, 3 * n - 1, 3 * n - 1, I);
-
-				rhs->setValues(vector<T>(rows, 0), rows, 1);
-				rhs->block(A_->getRows() + A_T->getRows(), 0, rows - 1, 0, pv);
-
-				const auto sol(lhs->solve(rhs.get(), DecompositionType::JACOBISVD));
-
-				cout << *sol << endl;
-
-				const auto v(calculateV());
-
-				const auto sqrtw(calculatePowerOf(w.get(), 0.5));
-				const auto invsqrtw(calculatePowerOf(sqrtw.get(), -1));
-
-				const auto dx(sol->block(0, 0, n - 1, 0));
-				//const auto deltay(sol->block(n, 0, 2 * n - 1, 0));
-				const auto dy(sol->block(n, 0, 2 * n - 1, 0));
-				const auto ds(sol->block(2 * n, 0, 3 * n - 1, 0));
-
-				//*this->y_ += deltay;
-				*this->y_ += *(*dy * this->mu_);
-				this->x_ = *(*calculatePMatrixOf(sqrtw.get()) * sqrt(this->mu_)) * *(*v + *dx);
-				this->s_ = *(*calculatePMatrixOf(invsqrtw.get()) * sqrt(this->mu_)) * *(*v + *ds);
-
-				this->mu_ *= (1 - this->beta_);
-			}();
-		}
-
-		Logger::getInstance().info(format("Solved in {} iterations.", iters));
-
-		cout << *this->y_ << endl;
-		cout << *this->x_ << endl;
-		cout << *this->s_ << endl;
-
-		return SolutionStatus::OPTIMAL;
+		return ret;
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	Solution SOCPSolver<T>::getSolution()
+	Solution<T> SOCPSolver<T>::getSolution()
 	{
-		return {};
+		return *solution_;
 	}
 
 	template <typename T>
@@ -482,18 +733,17 @@ namespace OPLibrary
 
 		const auto rows(x->getRows());
 
-		const vector<T> allZero(rows, 0);
-
-		x->setValues(allZero, rows, 1);
+		x->setValues(vector<T>(x->getRows(), 0), x->getRows(), 1);
 		x->set(0, 0, 1);
 
-		y->setValues(allZero, rows, 1);
+		y->setValues(vector<T>(y->getRows(), 0), y->getRows(), 1);
 
-		s->setValues(allZero, rows, 1);
+		s->setValues(vector<T>(s->getRows(), 0), s->getRows(), 1);
 		s->set(0, 0, 1);
 	}
 
-	template <typename T> requires std::floating_point<T>
+	template <typename T>
+		requires std::floating_point<T>
 	void SOCPSolver<T>::Classic2Initializator::initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s)
 	{
 		using namespace std;
@@ -502,17 +752,31 @@ namespace OPLibrary
 			throw SolverException(
 				"Wrong arguments for initializer, matrices have to be allocated before initializing them.");
 
-		const auto rows(x->getRows());
-
-		const vector<T> allZero(rows, 0);
-		const vector<T> allOne(rows, 1);
-
-		x->setValues(allZero, rows, 1);
+		x->setValues(vector<T>(x->getRows(), 0), x->getRows(), 1);
 		x->set(0, 0, 1);
 
-		y->setValues(allOne, rows, 1);
+		y->setValues(vector<T>(y->getRows(), 1), y->getRows(), 1);
 
-		s->setValues(allZero, rows, 1);
+		s->setValues(vector<T>(s->getRows(), 0), s->getRows(), 1);
 		s->set(0, 0, 2);
+	}
+
+	template <typename T>
+		requires std::floating_point<T>
+	void SOCPSolver<T>::Classic3Initializator::initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s)
+	{
+		using namespace std;
+
+		if (x == nullptr || y == nullptr || s == nullptr)
+			throw SolverException(
+				"Wrong arguments for initializer, matrices have to be allocated before initializing them.");
+
+		x->setValues(vector<T>(x->getRows(), 0), x->getRows(), 1);
+		x->set(0, 0, 1);
+
+		y->setValues(vector<T>(y->getRows(), 1), y->getRows(), 1);
+
+		s->setValues(vector<T>(s->getRows(), 0), s->getRows(), 1);
+		s->set(0, 0, 1);
 	}
 }
