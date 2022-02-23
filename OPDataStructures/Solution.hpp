@@ -34,6 +34,8 @@ namespace OPLibrary
 
 			return out;
 		}
+
+		[[nodiscard]] std::string toString() const;
 	};
 
 	template <typename T>
@@ -55,5 +57,16 @@ namespace OPLibrary
 	std::shared_ptr<Matrix<T>> Solution<T>::getS() const
 	{
 		return s_;
+	}
+
+	template <typename T>
+		requires std::floating_point<T>
+	std::string Solution<T>::toString() const
+	{
+		if (this->x_ == nullptr || this->y_ == nullptr || this->s_ == nullptr) throw MatrixException("Tried to print a solution with null matrices.");
+
+		std::stringstream output;
+		output << *this;
+		return output.str();
 	}
 }

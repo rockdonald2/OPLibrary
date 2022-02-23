@@ -58,6 +58,15 @@ namespace OPLibrary
 			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
 		};
 
+		/**
+		 * \brief Classic initializator, where for x0 and s0 vector their first value is 2, second value is 1, all other 0; for y all the values are 0.
+		 */
+		class Classic4Initializator final : public Initializator
+		{
+		public:
+			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
+		};
+
 		long double theta_;
 		long double epsilon_;
 		long double tau_;
@@ -242,8 +251,8 @@ namespace OPLibrary
 		SolutionStatus optimizedSolver();
 
 	public:
-		SOCPSolver() : theta_(std::numbers::pi_v<long double> / 4), epsilon_(1.0e-6), tau_(1.0 / 2), alpha_(1.0 / 10),
-			mu_(1.0), beta_(1.0 / 2), n_(0), nn_(0), init_(new Classic2Initializator()), x_(nullptr),
+		SOCPSolver() : theta_(std::numbers::pi_v<long double> / 4), epsilon_(1.0e-8), tau_(2.0), alpha_(1.0 / 10),
+			mu_(1.0), beta_(1.0 / 2), n_(0), nn_(0), init_(new Classic3Initializator()), x_(nullptr),
 			y_(nullptr), s_(nullptr), solution_(nullptr)
 		{
 			using namespace std;
@@ -420,6 +429,8 @@ namespace OPLibrary
 
 			Logger::getInstance().info(format("{}. iteration ----------------------", iters));
 
+			this->mu_ = calculateMu();
+
 			const auto lhs(matrixFactory.createMatrix());
 			const auto rhs(matrixFactory.createMatrix());
 
@@ -427,11 +438,11 @@ namespace OPLibrary
 			const auto A_T(A_->transpose());
 			const auto pv(calculatePv());
 
-			const auto rows(A_->getRows() + A_T->getRows() + pv->getRows());
-			const auto cols(A_->getCols() + A_T->getCols() + pv->getCols() * n_);
-
 			// lhs
 			{
+				const auto rows(A_->getRows() + A_T->getRows() + pv->getRows());
+				const auto cols(A_->getCols() + A_T->getCols() + pv->getCols() * n_);
+
 				lhs->setValues(vector<T>(rows * cols, 0), rows, cols);
 
 				lhs->block(0, 0, A_->getRows() - 1, A_->getCols() - 1, A_);
@@ -451,28 +462,17 @@ namespace OPLibrary
 
 			// rhs
 			{
-				const auto rb(calculateResidualB());
-				const auto rc_(calculateResidualC_());
-
-				/*rhs->setValues(vector<T>(rows, 0), rows, 1);
-				rhs->block(A_->getRows() + A_T->getRows(), 0, rows - 1, 0, pv);*/
-
-				rhs->setValues(vector<T>(rows, 0), rows, 1);
-
-				rhs->block(0, 0, n_ - 1, 0, rc_);
-				rhs->block(n_, 0, n_ + nn_ - 1, 0, rb);
-
-				rhs->block(n_ + nn_, 0, rows - 1, 0, pv);
+				rhs->setValues(vector<T>(2 * n_ + nn_, 0), 2 * n_ + nn_, 1);
+				rhs->block(n_ + nn_, 0, 2 * n_ + nn_ - 1, 0, pv);
 			}
 
-			const auto sol = lhs->solve(rhs);
+			const auto sol = lhs->solve(rhs, DecompositionType::JACOBISVD);
 
 			cout << *rhs << endl;
 			cout << *lhs << endl;
 			cout << *sol << endl;
 
-			const auto w(calculateW());
-			const auto sqrtw(calculatePowerOf(w.get(), 0.5));
+			const auto sqrtw(calculatePowerOf(calculateW().get(), 0.5));
 			const auto invsqrtw(calculatePowerOf(sqrtw.get(), -1));
 
 			const auto dx(sol->block(0, 0, n_ - 1, 0));
@@ -484,8 +484,7 @@ namespace OPLibrary
 			cout << *ds << endl;
 
 			// deltay
-			unique_ptr<Matrix<T>> deltay;// (matrixFactory.createMatrix());
-			//*deltay = *dy;
+			unique_ptr<Matrix<T>> deltay;
 			{
 				deltay = *dy * mu_;
 			}
@@ -518,18 +517,20 @@ namespace OPLibrary
 			cout << *s_ << endl;
 			cout << *y_ << endl;
 
-			this->mu_ *= (1 - this->beta_);
-
 			Logger::getInstance().info(format("Value is: {}", (*this->problem_->getObjectives()->transpose() * this->x_)->toString()));
 			Logger::getInstance().info(format("END ----------------------", iters));
+			Logger::getInstance().info("---------------");
 		}
 
 		Logger::getInstance().info(format("Solved in {} iterations.", iters));
 
+		cout << *(*this->problem_->getConstraints() * *this->x_) << endl;
+
 		return SolutionStatus::OPTIMAL;
 	}
 
-	template <typename T> requires std::floating_point<T>
+	template <typename T>
+		requires std::floating_point<T>
 	SolutionStatus SOCPSolver<T>::optimizedSolver()
 	{
 		using namespace std;
@@ -584,7 +585,7 @@ namespace OPLibrary
 				*lhs = *(*A_ * *A_T);
 				*rhs = *(*(*(*(*A_ * -1) * *rc_) - *rb) - *(*A_ * *pv));
 
-				dy = lhs->solve(rhs);
+				dy = lhs->solve(rhs, DecompositionType::JACOBISVD);
 			}
 
 			cout << *dy << endl;
@@ -651,6 +652,8 @@ namespace OPLibrary
 
 		Logger::getInstance().info(format("Solved in {} iterations.", iters));
 
+		cout << *(*this->problem_->getConstraints() * *this->x_) << endl;
+
 		return SolutionStatus::OPTIMAL;
 	}
 
@@ -707,7 +710,7 @@ namespace OPLibrary
 
 		init_->initialize(x_.get(), y_.get(), s_.get());
 
-		const auto ret(optimizedSolver());
+		const auto ret(classicSolver());
 
 		solution_ = make_shared<Solution<T>>(Solution<T>(x_, y_, s_));
 
@@ -778,5 +781,26 @@ namespace OPLibrary
 
 		s->setValues(vector<T>(s->getRows(), 0), s->getRows(), 1);
 		s->set(0, 0, 1);
+	}
+
+	template <typename T>
+		requires std::floating_point<T>
+	void SOCPSolver<T>::Classic4Initializator::initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s)
+	{
+		using namespace std;
+
+		if (x == nullptr || y == nullptr || s == nullptr)
+			throw SolverException(
+				"Wrong arguments for initializer, matrices have to be allocated before initializing them.");
+
+		x->setValues(vector<T>(x->getRows(), 0), x->getRows(), 1);
+		x->set(0, 0, 2);
+		x->set(1, 0, 1);
+
+		y->setValues(vector<T>(y->getRows(), 0), y->getRows(), 1);
+
+		s->setValues(vector<T>(s->getRows(), 0), s->getRows(), 1);
+		s->set(0, 0, 2);
+		s->set(1, 0, 1);
 	}
 }

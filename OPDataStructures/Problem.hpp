@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Matrix.hpp"
+#include "MatrixException.hpp"
 
 namespace OPLibrary
 {
@@ -74,6 +75,8 @@ namespace OPLibrary
 
 			return out;
 		}
+
+		[[nodiscard]] std::string toString() const;
 	};
 
 	template <typename T>
@@ -137,5 +140,16 @@ namespace OPLibrary
 	std::shared_ptr<Matrix<T>> Problem<T>::getObjectives() const
 	{
 		return this->objectives_;
+	}
+
+	template <typename T>
+		requires std::floating_point<T>
+	std::string Problem<T>::toString() const
+	{
+		if (this->constraintObjectives_ == nullptr || this->objectives_ == nullptr || this->constraints_ == nullptr) throw MatrixException("Tried to print a problem with null matrices.");
+
+		std::stringstream output;
+		output << *this;
+		return output.str();
 	}
 }

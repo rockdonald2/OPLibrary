@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 
 		reader->readProblem(problem);
 
-		cout << *problem;
+		Logger::getInstance().blank(problem->toString());
 
 		inFile.close();
 
@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
 
 		const auto solution(solver->getSolution());
 
-		cout << solution << endl;
+		Logger::getInstance().blank(solution.toString());
 	}
 	catch (const ReaderException& e)
 	{
