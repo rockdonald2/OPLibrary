@@ -17,6 +17,7 @@ namespace OPLibrary
 		{
 			CONFIG,
 			INPUT_FILE,
+			OUTPUT_FILE,
 			SOLVER_TYPE,
 			THETA,
 			EPSILON,
@@ -26,20 +27,22 @@ namespace OPLibrary
 		};
 
 	private:
-		const static inline std::vector<Args> PARAMETERIZED_ARGS_VALS = { Args::CONFIG, Args::INPUT_FILE, Args::SOLVER_TYPE, Args::EPSILON, Args::THETA, Args::ALPHA, Args::TAU, Args::MU };
+		const static inline std::vector<Args> PARAMETERIZED_ARGS_VALS = { Args::CONFIG, Args::INPUT_FILE, Args::OUTPUT_FILE, Args::SOLVER_TYPE, Args::EPSILON, Args::THETA, Args::ALPHA, Args::TAU, Args::MU };
 		static inline std::unordered_map<Args, std::vector<std::string>> options_ = []
 		{
 			using namespace std;
 			unordered_map<Args, vector<string>> options;
 
-			options.insert(make_pair(Args::CONFIG, vector<string>({ "-c", "--config" })));
-			options.insert(make_pair(Args::INPUT_FILE, vector<string>({ "-f", "--file" })));
-			options.insert(make_pair(Args::SOLVER_TYPE, vector<string>({ "-s", "--solver" })));
-			options.insert(make_pair(Args::EPSILON, vector<string>({ "-e", "--epsilon" })));
-			options.insert(make_pair(Args::THETA, vector<string>({ "-t", "--theta" })));
-			options.insert(make_pair(Args::ALPHA, vector<string>({ "-a", "--alpha" })));
-			options.insert(make_pair(Args::TAU, vector<string>({ "--tau" })));
-			options.insert(make_pair(Args::MU, vector<string>({ "-m", "--mu" })));
+			options.try_emplace(Args::CONFIG, vector<string>({ "-c", "--config" }));
+			options.try_emplace(Args::INPUT_FILE, vector<string>({ "-f", "--file" }));
+			options.try_emplace(Args::OUTPUT_FILE, vector<string>({ "-o", "--out" }));
+			options.try_emplace(Args::SOLVER_TYPE, vector<string>({ "-s", "--solver" }));
+			options.try_emplace(Args::EPSILON, vector<string>({ "-e", "--epsilon" }));
+			options.try_emplace(Args::THETA, vector<string>({ "-t", "--theta" }));
+			options.try_emplace(Args::ALPHA, vector<string>({ "-a", "--alpha" }));
+			options.try_emplace(Args::TAU, vector<string>({ "--tau" }));
+			options.try_emplace(Args::MU, vector<string>({ "-m", "--mu" }));
+
 
 			return options;
 		}();
@@ -48,14 +51,15 @@ namespace OPLibrary
 			using namespace std;
 			unordered_map<string, Args> strToArg;
 
-			strToArg.insert(make_pair("config", Args::CONFIG));
-			strToArg.insert(make_pair("input_file", Args::INPUT_FILE));
-			strToArg.insert(make_pair("solver_type", Args::SOLVER_TYPE));
-			strToArg.insert(make_pair("epsilon", Args::EPSILON));
-			strToArg.insert(make_pair("theta", Args::THETA));
-			strToArg.insert(make_pair("alpha", Args::ALPHA));
-			strToArg.insert(make_pair("mu", Args::MU));
-			strToArg.insert(make_pair("tau", Args::TAU));
+			strToArg.try_emplace("config", Args::CONFIG);
+			strToArg.try_emplace("input_file", Args::INPUT_FILE);
+			strToArg.try_emplace("output_file", Args::INPUT_FILE);
+			strToArg.try_emplace("solver_type", Args::SOLVER_TYPE);
+			strToArg.try_emplace("epsilon", Args::EPSILON);
+			strToArg.try_emplace("theta", Args::THETA);
+			strToArg.try_emplace("alpha", Args::ALPHA);
+			strToArg.try_emplace("mu", Args::MU);
+			strToArg.try_emplace("tau", Args::TAU);
 
 			return strToArg;
 		}();

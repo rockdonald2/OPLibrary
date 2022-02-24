@@ -3,13 +3,15 @@
 #include <iostream>
 #include <string>
 
+#define LOG Logger::getInstance()
+
 /**
  * \brief Logger singleton utility class.
  */
 class Logger
 {
-	std::ostream& info_;
-	std::ostream& err_;
+	std::ostream* info_;
+	std::ostream* err_;
 
 public:
 	/**
@@ -35,9 +37,24 @@ public:
 	 */
 	void blank(const std::string_view&) const;
 
+	/**
+	 * \brief Sets the output stream for the INFO level.
+	 */
+	void setInfoHandler(std::ostream* stream);
+
+	/**
+	 * \brief Sets the output stream for the ERROR level.
+	 */
+	void setErrorHandler(std::ostream* stream);
+
+	/**
+	 * \brief Sets the output stream to default.
+	 */
+	void resetHandlers();
+
 private:
 	// regular constructor
-	Logger() : info_(std::cout), err_(std::cerr) {}
+	Logger() : info_(&std::cout), err_(&std::cerr) {}
 
 public:
 	Logger(const Logger&) = delete;

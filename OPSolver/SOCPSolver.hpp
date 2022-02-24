@@ -252,7 +252,7 @@ namespace OPLibrary
 
 	public:
 		SOCPSolver() : theta_(std::numbers::pi_v<long double> / 4), epsilon_(1.0e-8), tau_(2.0), alpha_(1.0 / 10),
-			mu_(1.0), beta_(1.0 / 2), n_(0), nn_(0), init_(new Classic3Initializator()), x_(nullptr),
+			mu_(1.0), beta_(1.0 / 2), n_(0), nn_(0), init_(new Classic2Initializator()), x_(nullptr),
 			y_(nullptr), s_(nullptr), solution_(nullptr)
 		{
 			using namespace std;
@@ -408,8 +408,8 @@ namespace OPLibrary
 	{
 		/*
 				  * Egyenletrendszer:
-				  *	[ A_	0		0 ]		[ dx ]		[ 0 ]
-				  *	[ 0		A_T		I ]	 *	[ dy ]	=	[ 0 ]
+				  *	[ A_	0		0 ]		[ dx ]		[ rb ]
+				  *	[ 0		A_T		I ]	 *	[ dy ]	=	[ rc_ ]
 				  *	[ I		0		I ]		[ ds ]		[ pv ]
 				  */
 
@@ -427,7 +427,7 @@ namespace OPLibrary
 		{
 			++iters;
 
-			Logger::getInstance().info(format("{}. iteration ----------------------", iters));
+			LOG.info(format("{}. iteration ----------------------", iters));
 
 			this->mu_ = calculateMu();
 
@@ -462,7 +462,13 @@ namespace OPLibrary
 
 			// rhs
 			{
+				const auto rb(calculateResidualB());
+				const auto rc_(calculateResidualC_());
+
 				rhs->setValues(vector<T>(2 * n_ + nn_, 0), 2 * n_ + nn_, 1);
+
+				rhs->block(0, 0, nn_ - 1, 0, rb);
+				rhs->block(nn_, 0, nn_ + n_ - 1, 0, rc_);
 				rhs->block(n_ + nn_, 0, 2 * n_ + nn_ - 1, 0, pv);
 			}
 
@@ -517,12 +523,12 @@ namespace OPLibrary
 			cout << *s_ << endl;
 			cout << *y_ << endl;
 
-			Logger::getInstance().info(format("Value is: {}", (*this->problem_->getObjectives()->transpose() * this->x_)->toString()));
-			Logger::getInstance().info(format("END ----------------------", iters));
-			Logger::getInstance().info("---------------");
+			LOG.info(format("Value is: {}", (*this->problem_->getObjectives()->transpose() * this->x_)->toString()));
+			LOG.info(format("END ----------------------", iters));
+			LOG.info("---------------");
 		}
 
-		Logger::getInstance().info(format("Solved in {} iterations.", iters));
+		LOG.info(format("Solved in {} iterations.", iters));
 
 		cout << *(*this->problem_->getConstraints() * *this->x_) << endl;
 
@@ -543,7 +549,7 @@ namespace OPLibrary
 		{
 			++iters;
 
-			Logger::getInstance().info(format("{}. iteration ----------------------", iters));
+			LOG.info(format("{}. iteration ----------------------", iters));
 
 			this->mu_ = calculateMu();
 			cout << this->mu_ << endl;
@@ -646,11 +652,11 @@ namespace OPLibrary
 			cout << *s_ << endl;
 			cout << *y_ << endl;
 
-			Logger::getInstance().info(format("Value is: {}", (*this->problem_->getObjectives()->transpose() * this->x_)->toString()));
-			Logger::getInstance().info(format("END ----------------------", iters));
+			LOG.info(format("Value is: {}", (*this->problem_->getObjectives()->transpose() * this->x_)->toString()));
+			LOG.info(format("END ----------------------", iters));
 		}
 
-		Logger::getInstance().info(format("Solved in {} iterations.", iters));
+		LOG.info(format("Solved in {} iterations.", iters));
 
 		cout << *(*this->problem_->getConstraints() * *this->x_) << endl;
 
@@ -710,7 +716,7 @@ namespace OPLibrary
 
 		init_->initialize(x_.get(), y_.get(), s_.get());
 
-		const auto ret(classicSolver());
+		const auto ret(optimizedSolver());
 
 		solution_ = make_shared<Solution<T>>(Solution<T>(x_, y_, s_));
 

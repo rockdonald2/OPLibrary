@@ -98,7 +98,7 @@ namespace OPLibrary
 		}
 		else
 		{
-			Logger::getInstance().error(format("Tried to set an invalid initializable arg {} to value {}, skipping.",
+			LOG.error(format("Tried to set an invalid initializable arg {} to value {}, skipping.",
 				arg, val));
 		}
 	}

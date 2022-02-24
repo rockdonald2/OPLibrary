@@ -154,8 +154,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="FileWriter.hpp" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Writer.hpp" />
+    <ClInclude Include="WriterBuilder.hpp" />
+    <ClInclude Include="WriterException.hpp" />
     <ClInclude Include="WriterFactory.h" />
   </ItemGroup>
   <ItemGroup>

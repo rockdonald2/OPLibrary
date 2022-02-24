@@ -28,7 +28,7 @@ namespace OPLibrary
 	public:
 		explicit FileReader(std::ifstream* input) : rows_(0), cols_(0), input_(input) {}
 
-		void readProblem(Problem<T>* problem) override;
+		void readProblem(const Problem<T>* problem) override;
 		void readProblem(const std::shared_ptr<Problem<T>>& problem) override;
 	};
 
@@ -51,7 +51,7 @@ namespace OPLibrary
 			}
 			catch (...)
 			{
-				Logger::getInstance().info(std::format("Failed to use {} as a number, skipping.\n", placeholder));
+				LOG.info(std::format("Failed to use {} as a number, skipping.\n", placeholder));
 			}
 		} while (true);
 	}
@@ -79,7 +79,7 @@ namespace OPLibrary
 					}
 					catch (...)
 					{
-						Logger::getInstance().info(std::format("Failed to use {} as a number, skipping.\n", placeholder));
+						LOG.info(std::format("Failed to use {} as a number, skipping.\n", placeholder));
 						--j;
 					}
 				}
@@ -93,7 +93,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	void FileReader<T>::readProblem(Problem<T>* problem)
+	void FileReader<T>::readProblem(const Problem<T>* problem)
 	{
 		using namespace std;
 

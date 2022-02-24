@@ -47,23 +47,24 @@ namespace OPLibrary
 		}
 		else
 		{
-			Logger::getInstance().error("Cannot find to specified config file, skipping.");
+			LOG.error("Cannot find to specified config file, skipping.");
 		}
 	}
 
 	void ArgsParser::printHelp()
 	{
-		Logger::getInstance().blank("Command line interface for OPLibrary.");
-		Logger::getInstance().blank("Usage:");
-		Logger::getInstance().blank("\t -c | --config <config file path> \t -- specifies config file path, replaces any CLI arguments");
-		Logger::getInstance().blank("\t -f | --file <input file path> \t\t -- specifies input");
-		Logger::getInstance().blank("\t -s | --solver <solver type> \t\t -- specifies the solver type");
-		Logger::getInstance().blank("\t -e | --epsilon <value> \t\t -- specifies epsilon");
-		Logger::getInstance().blank("\t -t | --theta <value> \t\t\t -- specifies theta");
-		Logger::getInstance().blank("\t -a | --alpha <value> \t\t\t -- specifies alpha");
-		Logger::getInstance().blank("\t -m | --mu <value> \t\t\t -- specifies mu");
-		Logger::getInstance().blank("\t --tau <value> \t\t\t\t -- specifies tau");
-		Logger::getInstance().blank("\t -h | --help \t\t\t\t -- prints help message");
+		LOG.blank("Command line interface for OPLibrary.");
+		LOG.blank("Usage:");
+		LOG.blank("\t -c | --config <config file path> \t -- specifies config file path, replaces any CLI arguments");
+		LOG.blank("\t -f | --file <input file path> \t\t -- specifies input");
+		LOG.blank("\t -o | --output <output file path> \t\t -- specifies output");
+		LOG.blank("\t -s | --solver <solver type> \t\t -- specifies the solver type");
+		LOG.blank("\t -e | --epsilon <value> \t\t -- specifies epsilon");
+		LOG.blank("\t -t | --theta <value> \t\t\t -- specifies theta");
+		LOG.blank("\t -a | --alpha <value> \t\t\t -- specifies alpha");
+		LOG.blank("\t -m | --mu <value> \t\t\t -- specifies mu");
+		LOG.blank("\t --tau <value> \t\t\t\t -- specifies tau");
+		LOG.blank("\t -h | --help \t\t\t\t -- prints help message");
 	}
 
 	bool ArgsParser::parseArguments(int argc, char** argv)
@@ -85,7 +86,7 @@ namespace OPLibrary
 		{
 			if (const auto config = getOptionVal("-c"); config.empty())
 			{
-				Logger::getInstance().error("Config argument was used, but no config path was specified, skipping.");
+				LOG.error("Config argument was used, but no config path was specified, skipping.");
 			}
 			else
 			{
@@ -96,7 +97,7 @@ namespace OPLibrary
 		{
 			if (const auto config = getOptionVal("--config"); config.empty())
 			{
-				Logger::getInstance().error("Config argument was used, but no config path was specified, skipping.");
+				LOG.error("Config argument was used, but no config path was specified, skipping.");
 			}
 			else
 			{
@@ -117,7 +118,7 @@ namespace OPLibrary
 					}
 					else
 					{
-						Logger::getInstance().error(format("Invalid value {} for argument {}.", val, option));
+						LOG.error(format("Invalid value {} for argument {}.", val, option));
 						return false;
 					}
 				}

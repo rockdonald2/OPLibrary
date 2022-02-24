@@ -6,7 +6,7 @@
 namespace OPLibrary
 {
 	/**
-	 * \brief Representation of Reader.
+	 * \brief Representation of Readers, abstract.
 	 */
 	template <typename T>
 		requires std::floating_point<T>
@@ -18,7 +18,7 @@ namespace OPLibrary
 		/**
 		 * \brief Reads in the optimization problem in order of: constraints, constraints objectives and objectives.
 		 */
-		virtual void readProblem(Problem<T>* problem) = 0;
+		virtual void readProblem(const Problem<T>* problem) = 0;
 		/**
 		 * \brief Reads in the optimization problem in order of: constraints, constraints objectives and objectives.
 		 */

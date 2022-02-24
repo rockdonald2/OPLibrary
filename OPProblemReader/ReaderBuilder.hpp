@@ -16,7 +16,7 @@ namespace OPLibrary
 	 */
 	template <typename T>
 		requires std::floating_point<T>
-	class ReaderBuilder
+	class ReaderBuilder final
 	{
 		ReaderType type_;
 		void* input_;
