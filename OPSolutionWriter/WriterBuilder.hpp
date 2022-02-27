@@ -3,7 +3,7 @@
 #include <concepts>
 #include <memory>
 
-#include "FileWriter.hpp"
+#include "CSVWriter.hpp"
 #include "Writer.hpp"
 #include "WriterException.hpp"
 
@@ -11,7 +11,7 @@ namespace OPLibrary
 {
 	enum class WriterType
 	{
-		FILE
+		CSV
 	};
 
 	template <typename T>
@@ -36,13 +36,13 @@ namespace OPLibrary
 			return *this;
 		}
 
-		[[nodiscard]] std::unique_ptr<Writer<T>> build() const
+		[[nodiscard]] std::shared_ptr<Writer<T>> build() const
 		{
 			if (output_ == nullptr) throw WriterException("Cannot build Writer with null output.");
 
 			switch (type_)
 			{
-			case WriterType::FILE: return std::move(std::make_unique<FileWriter<T>>(static_cast<std::ofstream*>(output_)));
+			case WriterType::CSV: return std::move(std::make_shared<CSVWriter<T>>(static_cast<std::ofstream*>(output_)));
 			}
 
 			throw WriterException("Unsupported writer type.");

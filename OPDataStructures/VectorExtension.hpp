@@ -6,9 +6,9 @@
 #include <unsupported/Eigen/Polynomials>
 
 /**
- * \brief Computes the roots of a polynom.
+ * \brief Computes the real roots of a polynom.
  * \param coeff should respect the following rule: A, B, C in row, respectively for higher polynoms. E.g., Ax^2 + Bx + C = 0.
- * \return the roots
+ * \return real roots
  */
 template <typename T>
 	requires std::floating_point<T>

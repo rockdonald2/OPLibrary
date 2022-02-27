@@ -26,11 +26,12 @@ namespace OPLibrary
 		{
 			assert(sol.x_ != nullptr && sol.y_ != nullptr && sol.s_ != nullptr && "Tried to output solution without data.");
 
-			out << "The x solution is for the original primal problem:\n";
-			out << *sol.x_ << "\n";
-			out << "The y and s solutions are for the dual problem:\n";
-			out << *sol.y_ << "\n";
-			out << *sol.s_ << "\n";
+			out << "xT\n";
+			out << *sol.x_->transpose() << "\n";
+			out << "yT\n";
+			out << *sol.y_->transpose() << "\n";
+			out << "sT\n";
+			out << *sol.s_->transpose() << "\n";
 
 			return out;
 		}

@@ -36,8 +36,13 @@ namespace OPLibrary
 		virtual void writeSolution(const std::shared_ptr<Solution<T>>& solution) = 0;
 
 		/**
+		 * \brief Writes an iteration to the output of choice.
+		 */
+		virtual void writeIteration(const size_t& iter, std::initializer_list<T> args) = 0;
+
+		/**
 		 * \brief Returns the current output of choice, for other writers to use, e.g., Logger.
 		 */
-		virtual std::ostream* getWriter() const = 0;
+		virtual std::ostream* getOutput() const = 0;
 	};
 }

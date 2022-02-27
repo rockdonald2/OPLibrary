@@ -8,6 +8,7 @@
 
 #include "Solution.hpp"
 #include "Problem.hpp"
+#include "Writer.hpp"
 
 namespace OPLibrary
 {
@@ -32,9 +33,10 @@ namespace OPLibrary
 		std::map<std::string, long double*> INITIALIZATOR;
 
 		std::shared_ptr<Problem<T>> problem_;
+		std::shared_ptr<Writer<T>> writer_;
 
 	public:
-		Solver() : problem_(nullptr)
+		Solver() : problem_(nullptr), writer_(nullptr)
 		{
 		}
 
@@ -65,6 +67,19 @@ namespace OPLibrary
 		 * \return problem instance
 		 */
 		[[nodiscard]] virtual std::shared_ptr<Problem<T>> getProblem() const = 0;
+
+		/**
+		 * \brief Sets the writer for this solver.
+		 */
+		virtual void setWriter(Writer<T>* writer) = 0;
+		/**
+		 * \brief Sets the writer for this solver.
+		 */
+		virtual void setWriter(std::shared_ptr<Writer<T>> writer) = 0;
+		/**
+		 * \brief Returns the writer for this solver.
+		 */
+		[[nodiscard]] virtual std::shared_ptr<Writer<T>> getWriter() const = 0;
 
 		/**
 		 * \brief Solves the optimization problem with the set parameters.

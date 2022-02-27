@@ -80,6 +80,7 @@ namespace OPLibrary
 		size_t n_;
 		size_t nn_;
 
+		size_t currIter_;
 		size_t maxIters_;
 
 		std::unique_ptr<Initializator> init_;
@@ -90,7 +91,7 @@ namespace OPLibrary
 
 		std::shared_ptr<Solution<T>> solution_;
 
-		[[nodiscard]] bool checkIsTermination(const size_t& currIter) const;
+		[[nodiscard]] bool checkIsTermination() const;
 
 		static T calculateEigenMinOf(Matrix<T>* vec)
 		{
@@ -237,6 +238,32 @@ namespace OPLibrary
 			return move(ret);
 		}
 
+		static std::unique_ptr<Matrix<T>> oOperation(Matrix<T>* lhs, Matrix<T>* rhs)
+		{
+			assert(lhs->getCols() == 1 && rhs->getCols() == 1 && "Bilinear operator o can only be calculated for vectors.");
+			assert(lhs->getRows() == rhs->getRows() && "Bilinear operator o can only be calculated for same dimensional vectors.");
+
+			using namespace std;
+
+			const auto n(lhs->getRows());
+
+			const MatrixFactory<T> factory;
+
+			unique_ptr<Matrix<T>> ret(factory.createMatrix(n, 1));
+
+			ret->set(0, 0, (*lhs->transpose() * *rhs)->get(0, 0));
+
+			const auto x1(lhs->get(0, 0));
+			const auto s1(rhs->get(0, 0));
+
+			for (size_t i = 1; i < n; ++i)
+			{
+				ret->set(i, 0, x1 * rhs->get(i, 0) + s1 * lhs->get(i, 0));
+			}
+
+			return ret;
+		}
+
 		[[nodiscard]] T calculateMu() const;
 		[[nodiscard]] T calculateAlpha(const Matrix<T>* vec, const Matrix<T>* delta) const;
 		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateW() const;
@@ -257,7 +284,9 @@ namespace OPLibrary
 	public:
 		SOCPSolver() : epsilon_(1.0e-6), tau_(2.0), alphaPrimal_(1.0 / 10),
 			alphaDual_(1.0 / 10), mu_(1.0), beta_(1.0 / 2), rho_(0.95), sigma_(1.0 / 10), n_(0), nn_(0),
-			maxIters_(3000), init_(new Classic4Initializator()), x_(nullptr), y_(nullptr), s_(nullptr), solution_(nullptr)
+			currIter_(0),
+			maxIters_(3000), init_(new Classic4Initializator()), x_(nullptr),
+			y_(nullptr), s_(nullptr), solution_(nullptr)
 		{
 			using namespace std;
 
@@ -278,18 +307,21 @@ namespace OPLibrary
 		SolutionStatus solve() override;
 
 		[[nodiscard]] Solution<T> getSolution() override;
+		void setWriter(Writer<T>* writer) override;
+		void setWriter(std::shared_ptr<Writer<T>> writer) override;
+		[[nodiscard]] std::shared_ptr<Writer<T>> getWriter() const override;
 	};
 
 	template <typename T>
 		requires std::floating_point<T>
-	bool SOCPSolver<T>::checkIsTermination(const size_t& currIter) const
+	bool SOCPSolver<T>::checkIsTermination() const
 	{
 		// mu < epsilon; az x minden erteke pozitiv; s minden erteke pozitiv; kupfeltetel ellenorzes
 		// tehat megkell nezni azt, hogy lambda_min(x) > 0
 		// lambda_min(s) > 0
 		// kupfeltetel -- most eltekintunk rola, ennel az atlagosabb implementacional biztos, hogy bent maradunk
 
-		return currIter <= maxIters_ && (mu_ >= epsilon_) && (calculateEigenMinOf(x_.get()) > 0) && (calculateEigenMinOf(s_.get()) > 0);
+		return currIter_ <= maxIters_ && (mu_ >= epsilon_) && (calculateEigenMinOf(x_.get()) > 0) && (calculateEigenMinOf(s_.get()) > 0);
 	}
 
 	template <typename T>
@@ -495,7 +527,7 @@ namespace OPLibrary
 
 		size_t iters(0);
 
-		while (checkIsTermination(iters))
+		while (checkIsTermination())
 		{
 			++iters;
 
@@ -613,59 +645,23 @@ namespace OPLibrary
 	{
 		using namespace std;
 
+		auto hr(SolutionStatus::OPTIMAL);
+
 		const MatrixFactory<T> matrixFactory(MatrixType::DENSE);
 
-		size_t iters(0);
+		this->currIter_ = 0;
 
-		while (checkIsTermination(iters))
+		while (checkIsTermination())
 		{
-			++iters;
-
-			LOG.info(format("{}. iteration ----------------------", iters));
+			++this->currIter_;
 
 			this->mu_ = calculateMu();
 
-#ifdef _DEBUG
-			cout << this->mu_ << endl;
-#endif
-
 			const auto rb(calculateResidualB());
-
-#ifdef _DEBUG
-			const auto rc(calculateResidualC());
-
-			cout << *rb << endl;
-			cout << *rc << endl;
-#endif
-
-#ifdef _DEBUG
-			const auto w(calculateW());
-			const auto v(calculateV());
-
-			cout << *w << endl;
-			cout << *v << endl;
-#endif
-
 			const auto pv(calculatePv());
-
-#ifdef _DEBUG
-			cout << *pv << endl;
-
-#endif
-
 			const auto A_(calculateA_());
 			const auto A_T(A_->transpose());
-
-#ifdef _DEBUG
-			cout << *A_ << endl;
-			cout << *A_T << endl;
-#endif
-
 			const auto rc_(calculateResidualC_());
-
-#ifdef _DEBUG
-			cout << *rc_ << endl;
-#endif
 
 			// dy
 			unique_ptr<Matrix<T>> dy;
@@ -678,12 +674,8 @@ namespace OPLibrary
 				*lhs = *(*A_ * *A_T);
 				*rhs = *(*(*(*(*A_ * -1) * *rc_) - *rb) - *(*A_ * *pv));
 
-				dy = lhs->solve(rhs, DecompositionType::JACOBISVD);
+				dy = lhs->solve(rhs);
 			}
-
-#ifdef _DEBUG
-			cout << *dy << endl;
-#endif
 
 			// ds
 			unique_ptr<Matrix<T>> ds;
@@ -692,10 +684,6 @@ namespace OPLibrary
 				ds = *(*rc_ * -1) - *(*A_T * *dy);
 			}
 
-#ifdef _DEBUG
-			cout << *ds << endl;
-#endif
-
 			//dx
 			unique_ptr<Matrix<T>> dx;
 			{
@@ -703,19 +691,11 @@ namespace OPLibrary
 				dx = *pv - *ds;
 			}
 
-#ifdef _DEBUG
-			cout << *dx << endl;
-#endif
-
 			// deltay
 			unique_ptr<Matrix<T>> deltay;
 			{
 				deltay = *dy * mu_;
 			}
-
-#ifdef _DEBUG
-			cout << *deltay << endl;
-#endif
 
 			const auto sqrtw(calculatePowerOf(calculateW().get(), 0.5));
 
@@ -725,10 +705,6 @@ namespace OPLibrary
 				deltax = *(*calculatePMatrixOf(sqrtw.get()) * sqrt(mu_)) * *dx;
 			}
 
-#ifdef _DEBUG
-			cout << *deltax << endl;
-#endif
-
 			// deltas
 			unique_ptr<Matrix<T>> deltas;
 			{
@@ -737,10 +713,6 @@ namespace OPLibrary
 				deltas = *(*calculatePMatrixOf(invsqrtw.get()) * sqrt(mu_)) * *ds;
 			}
 
-#ifdef _DEBUG
-			cout << *deltas << endl;
-#endif
-
 			this->alphaPrimal_ = calculateAlpha(x_.get(), deltax.get());
 			this->alphaDual_ = calculateAlpha(s_.get(), deltas.get());
 
@@ -748,26 +720,13 @@ namespace OPLibrary
 			*s_ += *(*(*deltas * this->alphaDual_) * this->rho_);
 			*y_ += *(*(*deltay * this->alphaDual_) * this->rho_);
 
-#ifdef _DEBUG
-			cout << *x_ << endl;
-			cout << *s_ << endl;
-			cout << *y_ << endl;
-#endif
-
-			LOG.info(format("Value is: {}", (*this->problem_->getObjectives()->transpose() * this->x_)->toString()));
-			LOG.info(format("END ----------------------", iters));
+			this->writer_->writeIteration(this->currIter_,
+				{ (*this->problem_->getObjectives()->transpose() * *this->x_)->get(0, 0),
+				(*this->problem_->getConstraintsObjectives()->transpose() * *this->y_)->get(0, 0),
+				(*this->x_->transpose() * *this->s_)->get(0, 0) });
 		}
 
-		LOG.info(format("Solved in {} iterations.", iters));
-
-#ifdef _DEBUG
-		cout << "Primal feltetel: \n";
-		cout << *(*this->problem_->getConstraints() * *this->x_) << endl;
-		cout << "Dual feltetel: \n";
-		cout << *(*(*this->problem_->getConstraints()->transpose() * *this->y_) + *this->s_) << endl;
-#endif
-
-		return SolutionStatus::OPTIMAL;
+		return hr;
 	}
 
 	template <typename T>
@@ -809,6 +768,11 @@ namespace OPLibrary
 				"Cannot solve optimization problem without correctly setting the constraints, objectives and constraint objectives.");
 		}
 
+		if (this->writer_ == nullptr)
+		{
+			throw SolverException("No writer was set, aborting.");
+		}
+
 		const auto n(this->problem_->getObjectives()->getRows());
 		this->n_ = n;
 
@@ -835,6 +799,24 @@ namespace OPLibrary
 	Solution<T> SOCPSolver<T>::getSolution()
 	{
 		return *solution_;
+	}
+
+	template <typename T> requires std::floating_point<T>
+	void SOCPSolver<T>::setWriter(Writer<T>* writer)
+	{
+		this->writer_ = std::shared_ptr<Writer<T>>(writer);
+	}
+
+	template <typename T> requires std::floating_point<T>
+	void SOCPSolver<T>::setWriter(std::shared_ptr<Writer<T>> writer)
+	{
+		this->writer_ = writer;
+	}
+
+	template <typename T> requires std::floating_point<T>
+	std::shared_ptr<Writer<T>> SOCPSolver<T>::getWriter() const
+	{
+		return this->writer_;
 	}
 
 	template <typename T>

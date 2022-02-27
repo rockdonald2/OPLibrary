@@ -66,12 +66,12 @@ namespace OPLibrary
 		{
 			assert(problem.constraints_ != nullptr && problem.constraintObjectives_ != nullptr && problem.objectives_ != nullptr && "Tried to output null problem.");
 
-			out << "The set A matrix for the problem is:\n";
+			out << "A\n";
 			out << *problem.constraints_ << "\n";
-			out << "The set b vector for the problem is:\n";
-			out << *problem.constraintObjectives_ << "\n";
-			out << "The set c vector for the problem is:\n";
-			out << *problem.objectives_ << "\n";
+			out << "bT\n";
+			out << *problem.constraintObjectives_->transpose() << "\n";
+			out << "cT\n";
+			out << *problem.objectives_->transpose() << "\n";
 
 			return out;
 		}

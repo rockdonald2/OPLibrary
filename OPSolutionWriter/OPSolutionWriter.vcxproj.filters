@@ -30,7 +30,7 @@
     <ClInclude Include="WriterException.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FileWriter.hpp">
+    <ClInclude Include="CSVWriter.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WriterBuilder.hpp">

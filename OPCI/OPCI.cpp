@@ -29,10 +29,7 @@ int main(int argc, char* argv[])
 		if (!inFile.is_open()) throw ArgumentException("Invalid input file.");
 
 		const auto reader(ReaderBuilder<TYPE>().setType(ReaderType::FILE).setInput(&inFile).build());
-		const auto writer(WriterBuilder<TYPE>().setType(WriterType::FILE).setOutput(&outFile).build());
-
-		//LOG.setInfoHandler(writer->getWriter());
-		//LOG.setErrorHandler(writer->getWriter());
+		const auto writer(WriterBuilder<TYPE>().setType(WriterType::CSV).setOutput(&outFile).build());
 
 		const MatrixFactory<TYPE> matrixFactory(MatrixType::DENSE);
 
@@ -50,6 +47,7 @@ int main(int argc, char* argv[])
 		const auto solver(
 			SolverFactory::createSolver<TYPE>(ArgsParser::getStringArgument(ArgsParser::Args::SOLVER_TYPE)));
 
+		solver->setWriter(writer);
 		solver->setProblem(problem);
 
 		for (const auto args(solver->getInitializableArgs()); const auto & arg : args)
@@ -67,7 +65,10 @@ int main(int argc, char* argv[])
 		solver->solve();
 
 		const auto solution(solver->getSolution());
+
 		writer->writeSolution(&solution);
+
+		LOG.info("Optimization problem successfully resolved.");
 	}
 	catch (const ReaderException& e)
 	{
