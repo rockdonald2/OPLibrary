@@ -34,9 +34,10 @@ namespace OPLibrary
 
 		std::shared_ptr<Problem<T>> problem_;
 		std::shared_ptr<Writer<T>> writer_;
+		std::shared_ptr<Solution<T>> solution_;
 
 	public:
-		Solver() : problem_(nullptr), writer_(nullptr)
+		Solver() : problem_(nullptr), writer_(nullptr), solution_(nullptr)
 		{
 		}
 
@@ -86,7 +87,6 @@ namespace OPLibrary
 		 * \return the status of the solution
 		 */
 		virtual SolutionStatus solve() = 0;
-
 		/**
 		 * \brief Returns the representation of the solution for the set problem.
 		 * \return Solution

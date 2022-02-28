@@ -10,14 +10,14 @@
 
 int main(int argc, char* argv[])
 {
-	using TYPE = long double;
+	using TYPE = double;
 
 	using namespace OPLibrary;
 	using namespace std;
 
 	auto hr(EXIT_SUCCESS);
 
-	if (!ArgsParser::parseArguments(argc, argv)) return hr;
+	if (!ArgsParser::parseArguments(argc, argv)) return EXIT_FAILURE;
 
 	try
 	{
@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 		const auto reader(ReaderBuilder<TYPE>().setType(ReaderType::FILE).setInput(&inFile).build());
 		const auto writer(WriterBuilder<TYPE>().setType(WriterType::CSV).setOutput(&outFile).build());
 
-		const MatrixFactory<TYPE> matrixFactory(MatrixType::DENSE);
+		const MatrixFactory<TYPE> matrixFactory;
 
 		auto matrix(matrixFactory.createMatrix());
 		auto vector1(matrixFactory.createMatrix());
@@ -40,6 +40,7 @@ int main(int argc, char* argv[])
 		const auto problem(make_shared<Problem<TYPE>>(Problem(matrix, vector1, vector2)));
 
 		reader->readProblem(problem);
+
 		writer->writeProblem(problem);
 
 		inFile.close();
@@ -67,6 +68,8 @@ int main(int argc, char* argv[])
 		const auto solution(solver->getSolution());
 
 		writer->writeSolution(&solution);
+
+		outFile.close();
 
 		LOG.info("Optimization problem successfully resolved.");
 	}

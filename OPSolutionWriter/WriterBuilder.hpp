@@ -42,7 +42,7 @@ namespace OPLibrary
 
 			switch (type_)
 			{
-			case WriterType::CSV: return std::move(std::make_shared<CSVWriter<T>>(static_cast<std::ofstream*>(output_)));
+			case WriterType::CSV: return std::move(std::make_shared<CSVWriter<T>>(static_cast<std::ostream*>(output_)));
 			}
 
 			throw WriterException("Unsupported writer type.");

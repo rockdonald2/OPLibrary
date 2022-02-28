@@ -14,7 +14,12 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	class Writer
 	{
+	protected:
+		std::ostream* output_;
+
 	public:
+		Writer() : output_(nullptr) {}
+		Writer(std::ostream* output) : output_(output) {}
 		virtual ~Writer() = default;
 
 		/**
@@ -43,6 +48,13 @@ namespace OPLibrary
 		/**
 		 * \brief Returns the current output of choice, for other writers to use, e.g., Logger.
 		 */
-		virtual std::ostream* getOutput() const = 0;
+		[[nodiscard]] virtual std::ostream* getOutput() const;
 	};
+
+	template <typename T>
+		requires std::floating_point<T>
+	std::ostream* Writer<T>::getOutput() const
+	{
+		return output_;
+	}
 }

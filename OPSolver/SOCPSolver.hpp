@@ -4,6 +4,7 @@
 #include <numbers>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 #include "framework.h"
 #include "Solver.hpp"
@@ -88,8 +89,6 @@ namespace OPLibrary
 		std::unique_ptr<Matrix<T>> x_;
 		std::unique_ptr<Matrix<T>> y_;
 		std::unique_ptr<Matrix<T>> s_;
-
-		std::shared_ptr<Solution<T>> solution_;
 
 		[[nodiscard]] bool checkIsTermination() const;
 
@@ -283,10 +282,10 @@ namespace OPLibrary
 
 	public:
 		SOCPSolver() : epsilon_(1.0e-6), tau_(2.0), alphaPrimal_(1.0 / 10),
-			alphaDual_(1.0 / 10), mu_(1.0), beta_(1.0 / 2), rho_(0.95), sigma_(1.0 / 10), n_(0), nn_(0),
+			alphaDual_(1.0 / 10), mu_(1.0), beta_(1.0 / 2), rho_(0.98), sigma_(1.0 / 10), n_(0), nn_(0),
 			currIter_(0),
-			maxIters_(3000), init_(new Classic4Initializator()), x_(nullptr),
-			y_(nullptr), s_(nullptr), solution_(nullptr)
+			maxIters_(3000), init_(new Classic2Initializator()), x_(nullptr),
+			y_(nullptr), s_(nullptr)
 		{
 			using namespace std;
 
@@ -301,12 +300,11 @@ namespace OPLibrary
 
 		void setProblem(std::shared_ptr<Problem<T>> problem) override;
 		void setProblem(Problem<T>* problem) override;
-
 		[[nodiscard]] std::shared_ptr<Problem<T>> getProblem() const override;
 
 		SolutionStatus solve() override;
-
 		[[nodiscard]] Solution<T> getSolution() override;
+
 		void setWriter(Writer<T>* writer) override;
 		void setWriter(std::shared_ptr<Writer<T>> writer) override;
 		[[nodiscard]] std::shared_ptr<Writer<T>> getWriter() const override;
@@ -350,7 +348,7 @@ namespace OPLibrary
 		const auto deltax1(delta->get(0, 0));
 		const auto deltax2n(delta->block(1, 0, delta->getRows() - 1, 0)->getValues());
 
-		long double A;
+		T A;
 		{
 			T sum(0);
 			for_each(deltax2n->begin(), deltax2n->end(), [&sum](T n)
@@ -364,7 +362,7 @@ namespace OPLibrary
 		const auto x1(vec->get(0, 0));
 		const auto x2n(vec->block(1, 0, vec->getRows() - 1, 0)->getValues());
 
-		long double B;
+		T B;
 		{
 			T sum(0);
 			for (size_t i = 0; i < x2n->size(); ++i)
@@ -376,7 +374,7 @@ namespace OPLibrary
 			B *= 2;
 		}
 
-		long double C;
+		T C;
 		{
 			T sum(0);
 			for_each(x2n->begin(), x2n->end(), [&sum](T n)
@@ -395,7 +393,20 @@ namespace OPLibrary
 				return n <= 0.0;
 			}), roots.end());
 
-		return *min_element(roots.begin(), roots.end());
+		const auto alphaP(*min_element(roots.begin(), roots.end()));
+
+		// osszehasonlitjuk az alphaK-val, ami az x1 + alphaK * deltax1 >= 0 osszefuggesbol jon
+		// ha, deltax1 >= 0, akkor alphaK = 1
+		// ha, deltax1 < 0, akkor alphaK = -x1/deltax1
+
+		T alphaK = 1;
+		if (deltax1 < 0.0)
+		{
+			alphaK = -x1 / deltax1;
+		}
+
+		// vegso alpha = min{alphaP, alphaK}
+		return min(alphaP, alphaK);
 	}
 
 	template <typename T>
@@ -647,7 +658,7 @@ namespace OPLibrary
 
 		auto hr(SolutionStatus::OPTIMAL);
 
-		const MatrixFactory<T> matrixFactory(MatrixType::DENSE);
+		const MatrixFactory<T> matrixFactory;
 
 		this->currIter_ = 0;
 
@@ -716,9 +727,9 @@ namespace OPLibrary
 			this->alphaPrimal_ = calculateAlpha(x_.get(), deltax.get());
 			this->alphaDual_ = calculateAlpha(s_.get(), deltas.get());
 
-			*x_ += *(*(*deltax * this->alphaPrimal_) * this->rho_);
-			*s_ += *(*(*deltas * this->alphaDual_) * this->rho_);
-			*y_ += *(*(*deltay * this->alphaDual_) * this->rho_);
+			*x_ += *(*deltax * (this->alphaPrimal_ * this->rho_));
+			*s_ += *(*deltas * (this->alphaDual_ * this->rho_));
+			*y_ += *(*deltay * (this->alphaDual_ * this->rho_));
 
 			this->writer_->writeIteration(this->currIter_,
 				{ (*this->problem_->getObjectives()->transpose() * *this->x_)->get(0, 0),
@@ -779,7 +790,7 @@ namespace OPLibrary
 		const auto nn(this->problem_->getConstraintsObjectives()->getRows());
 		this->nn_ = nn;
 
-		const MatrixFactory<T> matrixFactory(MatrixType::DENSE);
+		const MatrixFactory<T> matrixFactory;
 
 		x_ = matrixFactory.createMatrix(n, 1);
 		y_ = matrixFactory.createMatrix(nn, 1);
@@ -789,7 +800,7 @@ namespace OPLibrary
 
 		const auto ret(optimizedSolver());
 
-		solution_ = make_shared<Solution<T>>(Solution<T>(x_, y_, s_));
+		this->solution_ = make_shared<Solution<T>>(Solution<T>(x_, y_, s_));
 
 		return ret;
 	}
@@ -798,7 +809,7 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	Solution<T> SOCPSolver<T>::getSolution()
 	{
-		return *solution_;
+		return *this->solution_;
 	}
 
 	template <typename T> requires std::floating_point<T>

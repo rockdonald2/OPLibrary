@@ -160,7 +160,6 @@
     <ClInclude Include="Writer.hpp" />
     <ClInclude Include="WriterBuilder.hpp" />
     <ClInclude Include="WriterException.hpp" />
-    <ClInclude Include="WriterFactory.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

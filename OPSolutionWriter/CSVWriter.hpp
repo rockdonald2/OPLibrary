@@ -18,19 +18,16 @@ namespace OPLibrary
 		const std::string SEPARATOR = ",";
 		const std::vector<std::string> HEADERS = { "Iteration", "cTx", "bTy", "Duality Gap" };
 
-		std::ofstream* output_;
-
 		template <typename E>
 		void internalRowWrite(E elem);
 	public:
-		explicit CSVWriter(std::ofstream* output) : output_(output) {}
+		CSVWriter(std::ostream* output) : Writer<T>(output) {}
 
 		void writeProblem(const Problem<T>* problem) override;
 		void writeProblem(const std::shared_ptr<Problem<T>>& problem) override;
 		void writeSolution(const Solution<T>* solution) override;
 		void writeSolution(const std::shared_ptr<Solution<T>>& solution) override;
 		void writeIteration(const size_t& iter, std::initializer_list<T> args) override;
-		[[nodiscard]] std::ostream* getOutput() const override;
 	};
 
 	template <typename T> requires std::floating_point<T>
@@ -48,21 +45,21 @@ namespace OPLibrary
 		const auto b(problem->getConstraintsObjectives()->getValues());
 		const auto c(problem->getObjectives()->getValues());
 
-		*output_ << "bT" + SEPARATOR;
+		*this->output_ << "bT" + SEPARATOR;
 		std::for_each(b->begin(), b->end(), [this](auto n)
 			{
 				internalRowWrite(n);
 			});
-		*output_ << "\n";
+		*this->output_ << "\n";
 
-		*output_ << "cT" + SEPARATOR;
+		*this->output_ << "cT" + SEPARATOR;
 		std::for_each(c->begin(), c->end(), [this](auto n)
 			{
 				internalRowWrite(n);
 			});
-		*output_ << "\n";
+		*this->output_ << "\n";
 
-		*output_ << "A" + SEPARATOR;
+		*this->output_ << "A" + SEPARATOR;
 		for (size_t i = 0; i < A->getRows(); ++i)
 		{
 			const auto currRow(A->getRow(i));
@@ -70,10 +67,10 @@ namespace OPLibrary
 				{
 					internalRowWrite(n);
 				});
-			*output_ << SEPARATOR;
+			*this->output_ << SEPARATOR;
 		}
 
-		*output_ << std::endl;
+		*this->output_ << std::endl;
 	}
 
 	template <typename T>
@@ -91,28 +88,28 @@ namespace OPLibrary
 		const auto y(solution->getY()->getValues());
 		const auto s(solution->getS()->getValues());
 
-		*output_ << "xT" + SEPARATOR;
+		*this->output_ << "xT" + SEPARATOR;
 		std::for_each(x->begin(), x->end(), [this](auto n)
 			{
 				internalRowWrite(n);
 			});
-		*output_ << "\n";
+		*this->output_ << "\n";
 
-		*output_ << "yT" + SEPARATOR;
+		*this->output_ << "yT" + SEPARATOR;
 		std::for_each(y->begin(), y->end(), [this](auto n)
 			{
 				internalRowWrite(n);
 			});
-		*output_ << "\n";
+		*this->output_ << "\n";
 
-		*output_ << "sT" + SEPARATOR;
+		*this->output_ << "sT" + SEPARATOR;
 		std::for_each(s->begin(), s->end(), [this](auto n)
 			{
 				internalRowWrite(n);
 			});
-		*output_ << "\n";
+		*this->output_ << "\n";
 
-		*output_ << std::endl;
+		*this->output_ << std::endl;
 	}
 
 	template <typename T>
@@ -131,23 +128,16 @@ namespace OPLibrary
 				{
 					internalRowWrite(n);
 				});
-			*output_ << "\n";
+			*this->output_ << "\n";
 		}
 
-		*output_ << std::to_string(iter) + SEPARATOR;
+		internalRowWrite(iter);
 
 		std::for_each(args.begin(), args.end(), [this](auto n)
 			{
 				internalRowWrite(n);
 			});
 
-		*output_ << std::endl;
-	}
-
-	template <typename T>
-		requires std::floating_point<T>
-	std::ostream* CSVWriter<T>::getOutput() const
-	{
-		return output_;
+		*this->output_ << std::endl;
 	}
 }

@@ -34,9 +34,12 @@ namespace OPLibrary
 		static std::unique_ptr<Solver<T>> createSolver(const std::string& type)
 		{
 			std::string temp(type);
-			std::ranges::transform(temp, temp.begin(), [](const unsigned char c) { return std::tolower(c); });
+			std::ranges::transform(temp, temp.begin(), [](const unsigned char c) { return std::toupper(c); });
 
-			switch (map_Str_To_Solver_[temp])
+			if (!map_Str_To_Solver_.contains(temp))
+				throw SolverException("Unsupported solver type.");
+
+			switch (map_Str_To_Solver_.at(temp))
 			{
 			case SolverType::SOCP: return std::move(std::make_unique<SOCPSolver<T>>());
 			}
