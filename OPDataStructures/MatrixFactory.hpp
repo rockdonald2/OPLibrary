@@ -92,7 +92,7 @@ namespace OPLibrary
 		 * \param matrix to make a copy of
 		 * \return Matrix
 		 */
-		[[nodiscard]] std::unique_ptr<Matrix<T>> createMatrix(const std::unique_ptr<Matrix<T>> matrix) const
+		[[nodiscard]] std::unique_ptr<Matrix<T>> createMatrix(const std::unique_ptr<Matrix<T>>& matrix) const
 		{
 			switch (type_)
 			{

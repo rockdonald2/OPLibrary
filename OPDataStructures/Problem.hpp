@@ -31,7 +31,7 @@ namespace OPLibrary
 		/**
 		 * \brief Sets the constraints matrix, but releases the original pointer, transfers ownership.
 		 */
-		void setConstraints(std::unique_ptr<Matrix<T>> cnstrs);
+		void setConstraints(std::unique_ptr<Matrix<T>>& cnstrs);
 		/**
 		 * \brief Sets the constraint objectives vector.
 		 */
@@ -39,7 +39,7 @@ namespace OPLibrary
 		/**
 		 * \brief Sets the constraints objectives vector, but releases the original pointer, transfers ownership.
 		 */
-		void setConstraintsObjectives(std::unique_ptr<Matrix<T>> cnstrsObjs);
+		void setConstraintsObjectives(std::unique_ptr<Matrix<T>>& cnstrsObjs);
 		/**
 		 * \brief Sets the objectives vector.
 		 */
@@ -88,7 +88,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	void Problem<T>::setConstraints(std::unique_ptr<Matrix<T>> cnstrs)
+	void Problem<T>::setConstraints(std::unique_ptr<Matrix<T>>& cnstrs)
 	{
 		this->setConstraints(cnstrs.release());
 	}
@@ -102,7 +102,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	void Problem<T>::setConstraintsObjectives(std::unique_ptr<Matrix<T>> cnstrsObjs)
+	void Problem<T>::setConstraintsObjectives(std::unique_ptr<Matrix<T>>& cnstrsObjs)
 	{
 		this->setConstraintsObjectives(cnstrsObjs.release());
 	}

@@ -18,9 +18,6 @@ template <typename T>
 	requires std::floating_point<T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& rhs);
 
-
-/* ========================================= */
-
 template <typename T>
 	requires std::floating_point<T>
 [[nodiscard]] std::vector<T> solvePolynomial(const std::vector<T>& coeff)

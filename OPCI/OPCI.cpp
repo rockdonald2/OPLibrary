@@ -40,10 +40,7 @@ int main(int argc, char* argv[])
 		const auto problem(make_shared<Problem<TYPE>>(Problem(matrix, vector1, vector2)));
 
 		reader->readProblem(problem);
-
 		writer->writeProblem(problem);
-
-		inFile.close();
 
 		const auto solver(
 			SolverFactory::createSolver<TYPE>(ArgsParser::getStringArgument(ArgsParser::Args::SOLVER_TYPE)));
@@ -68,8 +65,6 @@ int main(int argc, char* argv[])
 		const auto solution(solver->getSolution());
 
 		writer->writeSolution(&solution);
-
-		outFile.close();
 
 		LOG.info("Optimization problem successfully resolved.");
 	}
