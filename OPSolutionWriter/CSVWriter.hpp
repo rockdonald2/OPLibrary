@@ -20,8 +20,10 @@ namespace OPLibrary
 
 		template <typename E>
 		void internalRowWrite(E elem);
+
+		bool wasIterationWritten_;
 	public:
-		CSVWriter(std::ostream* output) : Writer<T>(output) {}
+		CSVWriter(std::ostream* output) : Writer<T>(output), wasIterationWritten_(false) {}
 
 		void writeProblem(const Problem<T>* problem) override;
 		void writeProblem(const std::shared_ptr<Problem<T>>& problem) override;
@@ -70,6 +72,7 @@ namespace OPLibrary
 			*this->output_ << SEPARATOR;
 		}
 
+		*this->output_ << "\n";
 		*this->output_ << std::endl;
 	}
 
@@ -84,6 +87,10 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	void CSVWriter<T>::writeSolution(const Solution<T>* solution)
 	{
+		if (wasIterationWritten_) {
+			*this->output_ << "\n";
+		}
+
 		const auto x(solution->getX()->getValues());
 		const auto y(solution->getY()->getValues());
 		const auto s(solution->getS()->getValues());
@@ -108,7 +115,6 @@ namespace OPLibrary
 				internalRowWrite(n);
 			});
 		*this->output_ << "\n";
-
 		*this->output_ << std::endl;
 	}
 
@@ -129,6 +135,8 @@ namespace OPLibrary
 					internalRowWrite(n);
 				});
 			*this->output_ << "\n";
+
+			wasIterationWritten_ = true;
 		}
 
 		internalRowWrite(iter);

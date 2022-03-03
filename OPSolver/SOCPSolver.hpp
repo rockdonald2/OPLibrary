@@ -449,7 +449,6 @@ namespace OPLibrary
 	{
 		// ahol v = P(w^-1/2) * x / sqrt(mu) = v / sqrt(mu)
 		// pv = v^-1 - v, klasszikus phi(t) = t fuggveny eseten
-
 		using namespace std;
 
 		const auto v(calculateV());
