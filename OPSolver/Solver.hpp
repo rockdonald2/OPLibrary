@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include <Logger.h>
 #include <string>
 #include <vector>
 #include <ranges>
@@ -9,6 +8,7 @@
 #include "Solution.hpp"
 #include "Problem.hpp"
 #include "Writer.hpp"
+#include "Logger.hpp"
 
 namespace OPLibrary
 {

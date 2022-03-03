@@ -4,7 +4,7 @@
 #include "ArgumentException.hpp"
 #include "ReaderBuilder.hpp"
 #include "SolverFactory.hpp"
-#include "Logger.h"
+#include "Logger.hpp"
 #include "MatrixFactory.hpp"
 #include "WriterBuilder.hpp"
 

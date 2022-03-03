@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include "ArgsParser.h"
-#include "Logger.h"
+#include "Logger.hpp"
 
 namespace OPLibrary
 {

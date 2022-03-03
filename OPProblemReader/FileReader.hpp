@@ -6,7 +6,7 @@
 
 #include "Reader.hpp"
 #include "ReaderException.hpp"
-#include "Logger.h"
+#include "Logger.hpp"
 
 namespace OPLibrary
 {
