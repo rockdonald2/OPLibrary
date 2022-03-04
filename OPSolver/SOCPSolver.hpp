@@ -303,7 +303,7 @@ namespace OPLibrary
 		[[nodiscard]] std::shared_ptr<Problem<T>> getProblem() const override;
 
 		SolutionStatus solve() override;
-		[[nodiscard]] Solution<T> getSolution() override;
+		[[nodiscard]] std::shared_ptr<Solution<T>> getSolution() override;
 
 		void setWriter(Writer<T>* writer) override;
 		void setWriter(std::shared_ptr<Writer<T>> writer) override;
@@ -806,9 +806,9 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	Solution<T> SOCPSolver<T>::getSolution()
+	std::shared_ptr<Solution<T>> SOCPSolver<T>::getSolution()
 	{
-		return *this->solution_;
+		return this->solution_;
 	}
 
 	template <typename T> requires std::floating_point<T>

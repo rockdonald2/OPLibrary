@@ -91,7 +91,7 @@ namespace OPLibrary
 		 * \brief Returns the representation of the solution for the set problem.
 		 * \return Solution
 		 */
-		[[nodiscard]] virtual Solution<T> getSolution() = 0;
+		[[nodiscard]] virtual std::shared_ptr<Solution<T>> getSolution() = 0;
 	};
 
 	template <typename T>

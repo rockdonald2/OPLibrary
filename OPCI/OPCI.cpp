@@ -64,7 +64,7 @@ int optimize(int argc, char* argv[])
 
 		const auto solution(solver->getSolution());
 
-		writer->writeSolution(&solution);
+		writer->writeSolution(solution);
 
 		LOG.info("Optimization problem successfully resolved.");
 	}
