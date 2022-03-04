@@ -8,10 +8,10 @@
 #include "MatrixFactory.hpp"
 #include "WriterBuilder.hpp"
 
-int main(int argc, char* argv[])
-{
-	using TYPE = double;
+using TYPE = double;
 
+int optimize(int argc, char* argv[])
+{
 	using namespace OPLibrary;
 	using namespace std;
 
@@ -106,4 +106,9 @@ int main(int argc, char* argv[])
 	}
 
 	return hr;
+}
+
+int main(int argc, char* argv[])
+{
+	return optimize(argc, argv);
 }
