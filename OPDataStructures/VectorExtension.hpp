@@ -38,12 +38,12 @@ template <typename T>
 	vector<T> ret;
 	for (size_t i = 0; i < static_cast<size_t>(r.size()); ++i)
 	{
-		const auto curr(r[i]);
+		const complex<T>* curr = &r[i];
 
 		// csak a valos szamokat tartsuk meg
-		if (curr.imag() != 0.0) continue;
+		if (curr->imag() != 0.0) continue;
 
-		ret.push_back(curr.real());
+		ret.push_back(curr->real());
 	}
 
 	return ret;
