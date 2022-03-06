@@ -23,7 +23,8 @@ namespace OPLibrary
 			EPSILON,
 			ALPHA,
 			MU,
-			TAU
+			TAU,
+			NONEXISTING
 		};
 
 	private:
@@ -64,7 +65,7 @@ namespace OPLibrary
 			return strToArg;
 		}();
 
-		static inline std::map<Args, std::string> args_;
+		static inline std::map<Args, std::vector<std::string>> args_;
 		static inline std::vector<std::string> tokens_;
 
 		/**
@@ -74,11 +75,22 @@ namespace OPLibrary
 		 */
 		static bool doesOptionExist(const std::string&);
 		/**
+		 * \brief Internal usage only, private member. Returns if any given option exists inside the already parsed tokens.
+		 * \return boolean
+		 */
+		static bool doesOptionExist(const std::vector<std::string>&);
+		/**
 		 * \brief Internal usage only, private member. Returns the value of an option, if it exists, otherwise empty string.
 		 * \param option the option to search for
 		 * \return string
 		 */
-		static std::string getOptionVal(const std::string&);
+		static std::vector<std::string> getOptionVal(const std::string&);
+		/**
+		 * \brief Internal usage only, private member. Returns the value of an option, which firstly exists in the given list, if it exists, otherwise empty string.
+		 * \param option the option to search for
+		 * \return string
+		 */
+		static std::vector<std::string> getOptionVal(const std::vector<std::string>&);
 		/**
 		 * \brief Internal usage only, private member. Replaces the parsed tokens to other tokens from an input config file. Erases the existing tokens.
 		 * \param path on which the config file can be found
@@ -113,36 +125,41 @@ namespace OPLibrary
 		 * \param option to search for
 		 * \return string
 		 */
-		static std::string getStringArgument(const Args&);
+		static std::shared_ptr<std::string> getStringArgument(const Args&);
 		/**
 		 * \brief Returns value of CLI argument as integer. Can throw.
 		 * \param option to search for
 		 * \return integer
 		 */
-		static int getIntegerArgument(const Args&);
+		static std::shared_ptr<int> getIntegerArgument(const Args&);
 		/**
 		 * \brief Returns value of CLI argument as double. Can throw.
 		 * \param option to search for
 		 * \return double
 		 */
-		static double getDoubleArgument(const Args&);
+		static std::shared_ptr<double> getDoubleArgument(const Args&);
 		/**
 		 * \brief Returns value of CLI argument as long. Can throw.
 		 * \param option to search for
 		 * \return long
 		 */
-		static long getLongArgument(const Args&);
+		static std::shared_ptr<long> getLongArgument(const Args&);
 		/**
 		 * \brief Returns value of CLI argument as long double. Can throw.
 		 * \param option to search for
 		 * \return long double
 		 */
-		static long double getLongDoubleArgument(const Args&);
+		static std::shared_ptr<long double> getLongDoubleArgument(const Args&);
 		/**
 		 * \brief Returns value of CLI argument as boolean. Can throw.
 		 * \param option to search for
 		 * \return long double
 		 */
-		static bool getBooleanArgument(const Args&);
+		static std::shared_ptr<bool> getBooleanArgument(const Args&);
+		/**
+		 * \brief Returns value of a CLI argument which contained multiple elements
+		 * \return vector of strings
+		 */
+		static std::shared_ptr<std::vector<std::string>> getListArgument(const Args&);
 	};
 }

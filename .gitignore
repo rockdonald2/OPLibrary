@@ -5,7 +5,7 @@
 **/Debug/
 **/Release/
 packages
-**/problem.txt
+**/problem*.txt
 OPLibrary.sln.DotSettings.user
-**/solution.txt
-**/solution.csv
+**/solution*.txt
+**/solution*.csv

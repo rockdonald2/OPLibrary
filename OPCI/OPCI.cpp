@@ -1,4 +1,7 @@
 #include <format>
+#include <boost/range/combine.hpp>
+#include <set>
+#include <vector>
 
 #include "ArgsParser.h"
 #include "ArgumentException.hpp"
@@ -10,21 +13,19 @@
 
 using TYPE = double;
 
-int optimize(int argc, char* argv[])
+int runOptimizer(const std::string& in, const std::string& out)
 {
-	using namespace OPLibrary;
 	using namespace std;
+	using namespace OPLibrary;
 
 	auto hr(EXIT_SUCCESS);
-
-	if (!ArgsParser::parseArguments(argc, argv)) return EXIT_FAILURE;
 
 	try
 	{
 		ifstream inFile;
-		inFile.open(ArgsParser::getStringArgument(ArgsParser::Args::INPUT_FILE));
+		inFile.open(in);
 		ofstream outFile;
-		outFile.open(ArgsParser::getStringArgument(ArgsParser::Args::OUTPUT_FILE), ios::trunc);
+		outFile.open(out, ios::trunc);
 
 		if (!inFile.is_open()) throw ArgumentException("Invalid input file.");
 
@@ -43,21 +44,20 @@ int optimize(int argc, char* argv[])
 		writer->writeProblem(problem);
 
 		const auto solver(
-			SolverFactory::createSolver<TYPE>(ArgsParser::getStringArgument(ArgsParser::Args::SOLVER_TYPE)));
+			SolverFactory::createSolver<TYPE>(*ArgsParser::getStringArgument(ArgsParser::Args::SOLVER_TYPE)));
 
 		solver->setWriter(writer);
 		solver->setProblem(problem);
 
 		for (const auto args(solver->getInitializableArgs()); const auto & arg : args)
 		{
-			const auto argE(ArgsParser::getArgByString(arg));
-
-			try
+			if (const auto argE(ArgsParser::getArgByString(arg)); argE != ArgsParser::Args::NONEXISTING)
 			{
-				const auto argVal(ArgsParser::getLongDoubleArgument(argE));
-				solver->setInitializableArg(arg, argVal);
+				if (const auto argVal(ArgsParser::getDoubleArgument(argE)); argVal)
+				{
+					solver->setInitializableArg(arg, *argVal);
+				}
 			}
-			catch (...) {}
 		}
 
 		solver->solve();
@@ -103,6 +103,37 @@ int optimize(int argc, char* argv[])
 		LOG.resetHandlers();
 		LOG.error("Unknown error.");
 		hr = EXIT_FAILURE;
+	}
+
+	return hr;
+}
+
+int optimize(int argc, char* argv[])
+{
+	using namespace OPLibrary;
+
+	auto hr(EXIT_SUCCESS);
+
+	if (!ArgsParser::parseArguments(argc, argv)) return EXIT_FAILURE;
+
+	const auto inputs(ArgsParser::getListArgument(ArgsParser::Args::INPUT_FILE));
+	const auto outputs(ArgsParser::getListArgument(ArgsParser::Args::OUTPUT_FILE));
+
+	// validation
+	{
+		assert(inputs->size() == outputs->size() && "Individual outputs should be applied to inputs.");
+
+		const std::set setInputs(inputs->begin(), inputs->end());
+		assert(setInputs.size() == inputs->size() && "Unique inputs are asserted.");
+
+		const std::set setOutputs(inputs->begin(), inputs->end());
+		assert(setOutputs.size() == outputs->size() && "Unique outputs are asserted.");
+	}
+
+
+	for (const auto& [input, output] : boost::combine(*inputs, *outputs))
+	{
+		runOptimizer(input, output);
 	}
 
 	return hr;

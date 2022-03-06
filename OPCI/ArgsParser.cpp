@@ -2,6 +2,7 @@
 #include <format>
 #include <fstream>
 #include <sstream>
+#include <cassert>
 
 #include "ArgsParser.h"
 #include "Logger.hpp"
@@ -13,17 +14,38 @@ namespace OPLibrary
 		return std::ranges::find(tokens_, option) != tokens_.end();
 	}
 
-	std::string ArgsParser::getOptionVal(const std::string& option)
+	bool ArgsParser::doesOptionExist(const std::vector<std::string>& options)
+	{
+		return std::ranges::any_of(options.begin(), options.end(), [](const auto& option)
+			{
+				return doesOptionExist(option);
+			});
+	}
+
+	std::vector<std::string> ArgsParser::getOptionVal(const std::string& option)
 	{
 		using namespace std;
-		string ret;
+		vector<string> ret;
 
-		if (auto it = ranges::find(tokens_, option); it != tokens_.end() && ++it != tokens_.end())
+		if (auto it = ranges::find(tokens_, option); it != tokens_.end())
 		{
-			ret = *it;
+			while (++it != tokens_.end() && !it->starts_with("-") && !it->starts_with("/"))
+			{
+				ret.push_back(*it);
+			}
 		}
 
 		return ret;
+	}
+
+	std::vector<std::string> ArgsParser::getOptionVal(const std::vector<std::string>& options)
+	{
+		for (const auto& option : options)
+		{
+			if (const auto & val(getOptionVal(option)); !val.empty()) return val;
+		}
+
+		return {};
 	}
 
 	void ArgsParser::replaceTokensFromConfig(const std::string& path)
@@ -76,32 +98,23 @@ namespace OPLibrary
 			tokens_.emplace_back(argv[i]);
 		}
 
-		if (doesOptionExist("-h") || doesOptionExist("--help"))
+		// help option
+		if (doesOptionExist(vector<string>{"-h", "--help"}))
 		{
 			printHelp();
 			return false;
 		}
 
-		if (doesOptionExist("-c"))
+		// config option
+		if (doesOptionExist(vector<string>{"-c", "--config"}))
 		{
-			if (const auto config = getOptionVal("-c"); config.empty())
+			if (const auto config = getOptionVal(vector<string>{"-c", "--config"}); config.empty())
 			{
 				LOG.error("Config argument was used, but no config path was specified, skipping.");
 			}
 			else
 			{
-				replaceTokensFromConfig(config);
-			}
-		}
-		else if (doesOptionExist("--config"))
-		{
-			if (const auto config = getOptionVal("--config"); config.empty())
-			{
-				LOG.error("Config argument was used, but no config path was specified, skipping.");
-			}
-			else
-			{
-				replaceTokensFromConfig(config);
+				replaceTokensFromConfig(*config.begin());
 			}
 		}
 
@@ -113,14 +126,11 @@ namespace OPLibrary
 				{
 					if (const auto val(getOptionVal(option)); !val.empty())
 					{
-						args_.insert(make_pair(arg, val));
-						continue;
+						args_.insert(make_pair(arg, val)); break;
 					}
-					else
-					{
-						LOG.error(format("Invalid value {} for argument {}.", val, option));
-						return false;
-					}
+
+					LOG.error(format("Invalid value for argument {}.", option));
+					return false;
 				}
 			}
 		}
@@ -136,48 +146,98 @@ namespace OPLibrary
 
 	ArgsParser::Args ArgsParser::getArgByString(const std::string& argStr)
 	{
-		return STR_TO_ARG[argStr];
+		if (STR_TO_ARG.contains(argStr)) return STR_TO_ARG.at(argStr);
+		return Args::NONEXISTING;
 	}
 
-	std::string ArgsParser::getStringArgument(const Args& option)
+	std::shared_ptr<std::string> ArgsParser::getStringArgument(const Args& option)
 	{
-		return args_[option];
+		if (args_.contains(option))
+		{
+			return std::make_shared<std::string>(*args_.at(option).begin());
+		}
+
+		return nullptr;
 	}
 
-	int ArgsParser::getIntegerArgument(const Args& option)
+	std::shared_ptr<int> ArgsParser::getIntegerArgument(const Args& option)
 	{
-		const auto val = args_[option];
-		return std::stoi(val);
+		if (!args_.contains(option)) return nullptr;
+
+		const auto val(args_[option]);
+		const auto castedVal(std::stoi(*val.begin()));
+		const auto ptrVal(new int);
+		*ptrVal = castedVal;
+
+		return std::shared_ptr<int>(ptrVal);
 	}
 
-	double ArgsParser::getDoubleArgument(const Args& option)
+	std::shared_ptr<double> ArgsParser::getDoubleArgument(const Args& option)
 	{
-		const auto val = args_[option];
-		return std::stod(val);
+		if (!args_.contains(option)) return nullptr;
+
+		const auto val(args_[option]);
+		const auto castedVal(std::stod(*val.begin()));
+		const auto ptrVal(new double);
+		*ptrVal = castedVal;
+
+		return std::shared_ptr<double>(ptrVal);
 	}
 
-	long ArgsParser::getLongArgument(const Args& option)
+	std::shared_ptr<long> ArgsParser::getLongArgument(const Args& option)
 	{
-		const auto val = args_[option];
-		return std::stol(val);
+		if (!args_.contains(option)) return nullptr;
+
+		const auto val(args_[option]);
+		const auto castedVal(std::stol(*val.begin()));
+		const auto ptrVal(new long);
+		*ptrVal = castedVal;
+
+		return std::shared_ptr<long>(ptrVal);
 	}
 
-	long double ArgsParser::getLongDoubleArgument(const Args& option)
+	std::shared_ptr<long double> ArgsParser::getLongDoubleArgument(const Args& option)
 	{
-		const auto val = args_[option];
-		return std::stold(val);
+		if (!args_.contains(option)) return nullptr;
+
+		const auto val(args_[option]);
+		const auto castedVal(std::stold(*val.begin()));
+		const auto ptrVal(new long double);
+		*ptrVal = castedVal;
+
+		return std::shared_ptr<long double>(ptrVal);
 	}
 
-	bool ArgsParser::getBooleanArgument(const Args& option)
+	std::shared_ptr<bool> ArgsParser::getBooleanArgument(const Args& option)
 	{
-		auto val = args_[option];
+		if (!args_.contains(option)) return nullptr;
+
+		auto val(*args_[option].begin());
 		std::ranges::transform(val, val.begin(), [](const unsigned char c) { return std::tolower(c); });
-
 		std::istringstream is(val);
-
 		bool ret;
 		is >> std::boolalpha >> ret;
 
-		return ret;
+		const auto ptrVal(new bool);
+		*ptrVal = ret;
+
+		return std::shared_ptr<bool>(ptrVal);
+	}
+
+	std::shared_ptr<std::vector<std::string>> ArgsParser::getListArgument(const Args& option)
+	{
+		using namespace std;
+
+		if (!args_.contains(option)) return nullptr;
+
+		const auto vals(args_[option]);
+		auto heapVals = make_shared<vector<string>>();
+
+		ranges::for_each(vals, [&heapVals](const auto& val)
+			{
+				heapVals->push_back(val);
+			});
+
+		return heapVals;
 	}
 }
