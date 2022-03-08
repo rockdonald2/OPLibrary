@@ -125,7 +125,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>..y\OPDataStructures;..\OPProblemReader;..\OPSolutionWriter;..\OPSolver;..\OPUtility;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\OPDataStructures;..\OPProblemReader;..\OPSolutionWriter;..\OPSolver;..\OPUtility;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
