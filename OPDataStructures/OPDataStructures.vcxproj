@@ -126,7 +126,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Workspace\repos\github\OPLibrary\OPDataStructures;C:\Workspace\repos\github\OPLibrary\OPProblemReader;C:\Workspace\repos\github\OPLibrary\OPSolutionWriter;C:\Workspace\repos\github\OPLibrary\OPSolver;C:\Workspace\repos\github\OPLibrary\OPUtility;$(MSBuildThisFileDirectory)../..//lib/native/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\OPDataStructures;..\OPProblemReader;..\OPSolver;..\OPUtility;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
