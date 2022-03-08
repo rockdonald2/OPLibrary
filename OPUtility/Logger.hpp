@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include <thread>
+#include <syncstream>
 
 #define LOG Logger::getInstance()
 
@@ -70,20 +72,22 @@ public:
 inline void Logger::info(const std::string_view& msg) const
 {
 	using namespace std::chrono;
+	using namespace std::this_thread;
 	const auto local = zoned_time{ current_zone(), system_clock::now() };
-	*info_ << "[" << local << "] [info] --- " << msg << std::endl;
+	std::osyncstream(*info_) << "[" << local << "] [" << get_id() << "] [info] \t " << msg << std::endl;
 }
 
 inline void Logger::error(const std::string_view& errMsg) const
 {
 	using namespace std::chrono;
+	using namespace std::this_thread;
 	const auto local = zoned_time{ current_zone(), system_clock::now() };
-	*err_ << "[" << local << "] [error] --- " << errMsg << std::endl;
+	std::osyncstream(*err_) << "[" << local << "] [" << get_id() << "] [error] \t " << errMsg << std::endl;
 }
 
 inline void Logger::blank(const std::string_view& msg) const
 {
-	*info_ << msg << std::endl;
+	std::osyncstream(*info_) << msg << std::endl;
 }
 
 inline void Logger::setInfoHandler(std::ostream* stream)

@@ -15,21 +15,22 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	class CSVWriter final : public Writer<T>
 	{
-		const std::string SEPARATOR = ",";
-		const std::vector<std::string> HEADERS = { "Iteration", "cTx", "bTy", "Duality Gap" };
+		const inline static std::string SEPARATOR = ",";
 
 		template <typename E>
 		void internalRowWrite(E elem);
 
 		bool wasIterationWritten_;
+		std::vector<std::string> headers_;
 	public:
-		CSVWriter(std::ostream* output) : Writer<T>(output), wasIterationWritten_(false) {}
+		explicit CSVWriter(std::ostream* output) : Writer<T>(output), wasIterationWritten_(false) {}
 
 		void writeProblem(const Problem<T>* problem) override;
 		void writeProblem(const std::shared_ptr<Problem<T>>& problem) override;
 		void writeSolution(const Solution<T>* solution) override;
 		void writeSolution(const std::shared_ptr<Solution<T>>& solution) override;
 		void writeIteration(const size_t& iter, std::initializer_list<T> args) override;
+		void setIterationHeaders(const std::vector<std::string>& headers) override;
 	};
 
 	template <typename T> requires std::floating_point<T>
@@ -130,7 +131,7 @@ namespace OPLibrary
 	{
 		if (iter == 1)
 		{
-			std::for_each(HEADERS.begin(), HEADERS.end(), [this](auto n)
+			std::for_each(headers_.begin(), headers_.end(), [this](auto n)
 				{
 					internalRowWrite(n);
 				});
@@ -147,5 +148,12 @@ namespace OPLibrary
 			});
 
 		*this->output_ << std::endl;
+	}
+
+	template <typename T> requires std::floating_point<T>
+	void CSVWriter<T>::setIterationHeaders(const std::vector<std::string>& headers)
+	{
+		this->headers_ = std::vector(headers.begin(), headers.end());
+		this->headers_.insert(this->headers_.begin(), "Iteration");
 	}
 }

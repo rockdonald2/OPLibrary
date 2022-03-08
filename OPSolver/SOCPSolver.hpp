@@ -6,9 +6,9 @@
 #include <string>
 #include <algorithm>
 
-#include "framework.h"
 #include "Solver.hpp"
 #include "MatrixFactory.hpp"
+#include "MatrixUtils.hpp"
 #include "Solution.hpp"
 #include "SolverException.hpp"
 #include "VectorExtension.hpp"
@@ -30,7 +30,13 @@ namespace OPLibrary
 		public:
 			Initializator() = default;
 			virtual ~Initializator() = default;
+
 			virtual void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) = 0;
+
+			Initializator(const Initializator&) = delete;
+			void operator=(const Initializator&) = delete;
+			Initializator(const Initializator&&) = delete;
+			void operator=(const Initializator&&) = delete;
 		};
 
 		/**
@@ -89,6 +95,8 @@ namespace OPLibrary
 		std::unique_ptr<Matrix<T>> x_;
 		std::unique_ptr<Matrix<T>> y_;
 		std::unique_ptr<Matrix<T>> s_;
+
+		SolutionStatus status_;
 
 		[[nodiscard]] bool checkIsTermination() const;
 
@@ -285,7 +293,7 @@ namespace OPLibrary
 			alphaDual_(1.0 / 10), mu_(1.0), beta_(1.0 / 2), rho_(0.98), sigma_(1.0 / 10), n_(0), nn_(0),
 			currIter_(0),
 			maxIters_(3000), init_(new Classic2Initializator()), x_(nullptr),
-			y_(nullptr), s_(nullptr)
+			y_(nullptr), s_(nullptr), status_(SolutionStatus::FEASIBLE)
 		{
 			using namespace std;
 
@@ -304,6 +312,7 @@ namespace OPLibrary
 
 		SolutionStatus solve() override;
 		[[nodiscard]] std::shared_ptr<Solution<T>> getSolution() override;
+		[[nodiscard]] std::string getStatus() override;
 
 		void setWriter(Writer<T>* writer) override;
 		void setWriter(std::shared_ptr<Writer<T>> writer) override;
@@ -646,7 +655,7 @@ namespace OPLibrary
 
 		cout << *(*this->problem_->getConstraints() * *this->x_) << endl;
 
-		return SolutionStatus::OPTIMAL;
+		return SolutionStatus::FEASIBLE;
 	}
 
 	template <typename T>
@@ -655,7 +664,7 @@ namespace OPLibrary
 	{
 		using namespace std;
 
-		auto hr(SolutionStatus::OPTIMAL);
+		auto hr(SolutionStatus::FEASIBLE);
 
 		const MatrixFactory<T> matrixFactory;
 
@@ -736,6 +745,10 @@ namespace OPLibrary
 				(*this->x_->transpose() * *this->s_)->get(0, 0) });
 		}
 
+		if (currIter_ > maxIters_) hr = SolutionStatus::UNFEASIBLE;
+		if (status_ == SolutionStatus::FEASIBLE &&
+			containsNaN(x_.get()) || containsNaN(y_.get()) || containsNaN(s_.get())) hr = SolutionStatus::UNFEASIBLE;
+
 		return hr;
 	}
 
@@ -797,11 +810,13 @@ namespace OPLibrary
 
 		init_->initialize(x_.get(), y_.get(), s_.get());
 
-		const auto ret(optimizedSolver());
+		this->writer_->setIterationHeaders({ "cTx", "bTy", "Duality Gap" });
+
+		status_ = optimizedSolver();
 
 		this->solution_ = make_shared<Solution<T>>(Solution<T>(x_, y_, s_));
 
-		return ret;
+		return status_;
 	}
 
 	template <typename T>
@@ -809,6 +824,20 @@ namespace OPLibrary
 	std::shared_ptr<Solution<T>> SOCPSolver<T>::getSolution()
 	{
 		return this->solution_;
+	}
+
+	template <typename T> requires std::floating_point<T>
+	std::string SOCPSolver<T>::getStatus()
+	{
+		switch (status_)
+		{
+		case SolutionStatus::FEASIBLE:
+			return "feasible";
+		case SolutionStatus::UNFEASIBLE:
+			return "unfeasible";
+		}
+
+		throw SolverException("Unknown final status.");
 	}
 
 	template <typename T> requires std::floating_point<T>

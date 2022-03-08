@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <map>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -17,6 +18,7 @@ namespace OPLibrary
 		{
 			CONFIG,
 			INPUT_FILE,
+			PARALLEL,
 			OUTPUT_FILE,
 			SOLVER_TYPE,
 			THETA,
@@ -28,7 +30,8 @@ namespace OPLibrary
 		};
 
 	private:
-		const static inline std::vector<Args> PARAMETERIZED_ARGS_VALS = { Args::CONFIG, Args::INPUT_FILE, Args::OUTPUT_FILE, Args::SOLVER_TYPE, Args::EPSILON, Args::THETA, Args::ALPHA, Args::TAU, Args::MU };
+		const static inline std::vector<Args> PARAMETERIZED_ARGS_VALS = { Args::INPUT_FILE, Args::OUTPUT_FILE, Args::SOLVER_TYPE, Args::EPSILON, Args::THETA, Args::ALPHA, Args::TAU, Args::MU };
+		const static inline std::vector<Args> NONPARAMETERIZED_ARGS_VALS = { Args::PARALLEL };
 		static inline std::unordered_map<Args, std::vector<std::string>> options_ = []
 		{
 			using namespace std;
@@ -36,6 +39,7 @@ namespace OPLibrary
 
 			options.try_emplace(Args::CONFIG, vector<string>({ "-c", "--config" }));
 			options.try_emplace(Args::INPUT_FILE, vector<string>({ "-f", "--file" }));
+			options.try_emplace(Args::PARALLEL, vector<string>({ "-p", "--parallel" }));
 			options.try_emplace(Args::OUTPUT_FILE, vector<string>({ "-o", "--out" }));
 			options.try_emplace(Args::SOLVER_TYPE, vector<string>({ "-s", "--solver" }));
 			options.try_emplace(Args::EPSILON, vector<string>({ "-e", "--epsilon" }));
@@ -54,6 +58,7 @@ namespace OPLibrary
 
 			strToArg.try_emplace("config", Args::CONFIG);
 			strToArg.try_emplace("input_file", Args::INPUT_FILE);
+			strToArg.try_emplace("parallel", Args::INPUT_FILE);
 			strToArg.try_emplace("output_file", Args::INPUT_FILE);
 			strToArg.try_emplace("solver_type", Args::SOLVER_TYPE);
 			strToArg.try_emplace("epsilon", Args::EPSILON);
@@ -125,41 +130,41 @@ namespace OPLibrary
 		 * \param option to search for
 		 * \return string
 		 */
-		static std::shared_ptr<std::string> getStringArgument(const Args&);
+		static std::optional<std::string> getStringArgument(const Args&);
 		/**
 		 * \brief Returns value of CLI argument as integer. Can throw.
 		 * \param option to search for
 		 * \return integer
 		 */
-		static std::shared_ptr<int> getIntegerArgument(const Args&);
+		static std::optional<int> getIntegerArgument(const Args&);
 		/**
 		 * \brief Returns value of CLI argument as double. Can throw.
 		 * \param option to search for
 		 * \return double
 		 */
-		static std::shared_ptr<double> getDoubleArgument(const Args&);
+		static std::optional<double> getDoubleArgument(const Args&);
 		/**
 		 * \brief Returns value of CLI argument as long. Can throw.
 		 * \param option to search for
 		 * \return long
 		 */
-		static std::shared_ptr<long> getLongArgument(const Args&);
+		static std::optional<long> getLongArgument(const Args&);
 		/**
 		 * \brief Returns value of CLI argument as long double. Can throw.
 		 * \param option to search for
 		 * \return long double
 		 */
-		static std::shared_ptr<long double> getLongDoubleArgument(const Args&);
+		static std::optional<long double> getLongDoubleArgument(const Args&);
 		/**
 		 * \brief Returns value of CLI argument as boolean. Can throw.
 		 * \param option to search for
 		 * \return long double
 		 */
-		static std::shared_ptr<bool> getBooleanArgument(const Args&);
+		static std::optional<bool> getBooleanArgument(const Args&);
 		/**
 		 * \brief Returns value of a CLI argument which contained multiple elements
 		 * \return vector of strings
 		 */
-		static std::shared_ptr<std::vector<std::string>> getListArgument(const Args&);
+		static std::optional<std::vector<std::string>> getListArgument(const Args&);
 	};
 }

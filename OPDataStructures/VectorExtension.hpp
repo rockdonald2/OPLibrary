@@ -15,8 +15,13 @@ template <typename T>
 [[nodiscard]] std::vector<T> solvePolynomial(const std::vector<T>& coeff);
 
 template <typename T>
-	requires std::floating_point<T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& rhs);
+
+template <typename T>
+std::string toString(const std::vector<T>& rhs, const std::string& delimiter);
+
+
+
 
 template <typename T>
 	requires std::floating_point<T>
@@ -50,7 +55,6 @@ template <typename T>
 }
 
 template <typename T>
-	requires std::floating_point<T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& rhs)
 {
 	using namespace std;
@@ -64,3 +68,23 @@ std::ostream& operator<<(std::ostream& out, const std::vector<T>& rhs)
 
 	return out;
 }
+
+template <typename T>
+std::string toString(const std::vector<T>& rhs, const std::string& delimiter)
+{
+	using namespace std;
+
+	if (rhs.empty()) return "";
+
+	stringstream ss;
+	auto first(true);
+	for (const auto& elem : rhs)
+	{
+		if (!first) ss << delimiter;
+		ss << elem;
+		if (first) first = false;
+	}
+
+	return ss.str();
+}
+

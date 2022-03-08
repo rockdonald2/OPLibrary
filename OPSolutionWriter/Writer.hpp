@@ -19,8 +19,13 @@ namespace OPLibrary
 
 	public:
 		Writer() : output_(nullptr) {}
-		Writer(std::ostream* output) : output_(output) {}
+		explicit Writer(std::ostream* output) : output_(output) {}
 		virtual ~Writer() = default;
+
+		/**
+		 * \brief Sets the iteration headers, the name of the values which will be given on each iteration. Important: iteration header don't have to be specified.
+		 */
+		virtual void setIterationHeaders(const std::vector<std::string>& headers) = 0;
 
 		/**
 		 * \brief Writes Problem in a stylized format to the output of choice.

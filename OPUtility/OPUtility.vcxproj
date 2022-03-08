@@ -162,6 +162,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="Logger.hpp" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="ThreadUtils.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

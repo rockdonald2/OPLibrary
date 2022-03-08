@@ -2,6 +2,7 @@
 #include <boost/range/combine.hpp>
 #include <set>
 #include <vector>
+#include <thread>
 
 #include "ArgsParser.h"
 #include "ArgumentException.hpp"
@@ -10,8 +11,10 @@
 #include "Logger.hpp"
 #include "MatrixFactory.hpp"
 #include "WriterBuilder.hpp"
+#include "ThreadUtils.hpp"
 
 using TYPE = double;
+ExecutorContainer<NamedJThread> gexecutors;
 
 int runOptimizer(const std::string& in, const std::string& out)
 {
@@ -53,7 +56,7 @@ int runOptimizer(const std::string& in, const std::string& out)
 		{
 			if (const auto argE(ArgsParser::getArgByString(arg)); argE != ArgsParser::Args::NONEXISTING)
 			{
-				if (const auto argVal(ArgsParser::getDoubleArgument(argE)); argVal)
+				if (const auto argVal(ArgsParser::getDoubleArgument(argE)); argVal.has_value())
 				{
 					solver->setInitializableArg(arg, *argVal);
 				}
@@ -66,7 +69,9 @@ int runOptimizer(const std::string& in, const std::string& out)
 
 		writer->writeSolution(solution);
 
-		LOG.info("Optimization problem successfully resolved.");
+		const auto currThread(gexecutors.getById(this_thread::get_id()));
+		LOG.info(std::format("[{}] - Optimization problem successfully resolved. It is {}.",
+			currThread.has_value() ? currThread.value()->getName() : "Sequential (main) Optimizer", solver->getStatus()));
 	}
 	catch (const ReaderException& e)
 	{
@@ -98,10 +103,16 @@ int runOptimizer(const std::string& in, const std::string& out)
 		LOG.error(e.what());
 		hr = EXIT_FAILURE;
 	}
+	catch (const exception& e)
+	{
+		LOG.resetHandlers();
+		LOG.error(e.what());
+		hr = EXIT_FAILURE;
+	}
 	catch (...)
 	{
 		LOG.resetHandlers();
-		LOG.error("Unknown error.");
+		LOG.error("Unknown exception.");
 		hr = EXIT_FAILURE;
 	}
 
@@ -111,32 +122,54 @@ int runOptimizer(const std::string& in, const std::string& out)
 int optimize(int argc, char* argv[])
 {
 	using namespace OPLibrary;
-
-	auto hr(EXIT_SUCCESS);
+	using namespace std;
 
 	if (!ArgsParser::parseArguments(argc, argv)) return EXIT_FAILURE;
 
 	const auto inputs(ArgsParser::getListArgument(ArgsParser::Args::INPUT_FILE));
 	const auto outputs(ArgsParser::getListArgument(ArgsParser::Args::OUTPUT_FILE));
+	const auto parallel(ArgsParser::getBooleanArgument(ArgsParser::Args::PARALLEL));
 
-	// validation
 	{
+		if (!inputs.has_value() || !outputs.has_value())
+		{
+			LOG.blank("Inputs/Outputs unspecified.");
+			ArgsParser::printHelp();
+			return EXIT_FAILURE;
+		}
+
 		assert(inputs->size() == outputs->size() && "Individual outputs should be applied to inputs.");
 
-		const std::set setInputs(inputs->begin(), inputs->end());
-		assert(setInputs.size() == inputs->size() && "Unique inputs are asserted.");
+		if (parallel) {
+			const set setInputs(inputs->begin(), inputs->end());
+			assert(setInputs.size() == inputs->size() && "Unique inputs are asserted.");
 
-		const std::set setOutputs(inputs->begin(), inputs->end());
-		assert(setOutputs.size() == outputs->size() && "Unique outputs are asserted.");
+			const set setOutputs(inputs->begin(), inputs->end());
+			assert(setOutputs.size() == outputs->size() && "Unique outputs are asserted.");
+		}
 	}
 
+	const auto combined(boost::combine(inputs.value(), outputs.value()));
 
-	for (const auto& [input, output] : boost::combine(*inputs, *outputs))
+	if (parallel.has_value() && parallel.value() == true)
 	{
-		runOptimizer(input, output);
+		for (const auto& [input, output] : combined)
+		{
+			gexecutors.createExecutor(runOptimizer, input, output);
+		}
+
+		gexecutors.waitForExecutors();
+		gexecutors.clearExecutors();
+	}
+	else
+	{
+		for (const auto& [input, output] : combined)
+		{
+			runOptimizer(input, output);
+		}
 	}
 
-	return hr;
+	return EXIT_SUCCESS;
 }
 
 int main(int argc, char* argv[])

@@ -17,8 +17,8 @@ namespace OPLibrary
 	 */
 	enum class SolutionStatus
 	{
-		OPTIMAL,
-		NONOPTIMAL
+		FEASIBLE,
+		UNFEASIBLE
 	};
 
 	/**
@@ -92,6 +92,10 @@ namespace OPLibrary
 		 * \return Solution
 		 */
 		[[nodiscard]] virtual std::shared_ptr<Solution<T>> getSolution() = 0;
+		/**
+		 * \brief Returns the final status of the problem.
+		 */
+		[[nodiscard]] virtual std::string getStatus() = 0;
 	};
 
 	template <typename T>

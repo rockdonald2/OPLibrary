@@ -6,6 +6,7 @@
 
 #include "ArgsParser.h"
 #include "Logger.hpp"
+#include "VectorExtension.hpp"
 
 namespace OPLibrary
 {
@@ -27,12 +28,18 @@ namespace OPLibrary
 		using namespace std;
 		vector<string> ret;
 
-		if (auto it = ranges::find(tokens_, option); it != tokens_.end())
+		const auto bIt(ranges::find(tokens_, option));
+
+		if (auto it = bIt; it != tokens_.end())
 		{
 			while (++it != tokens_.end() && !it->starts_with("-") && !it->starts_with("/"))
 			{
 				ret.push_back(*it);
 			}
+
+			const auto eIt = it;
+
+			tokens_.erase(bIt, eIt);
 		}
 
 		return ret;
@@ -78,8 +85,9 @@ namespace OPLibrary
 		LOG.blank("Command line interface for OPLibrary.");
 		LOG.blank("Usage:");
 		LOG.blank("\t -c | --config <config file path> \t -- specifies config file path, replaces any CLI arguments");
-		LOG.blank("\t -f | --file <input file path> \t\t -- specifies input");
-		LOG.blank("\t -o | --output <output file path> \t\t -- specifies output");
+		LOG.blank("\t -f | --file <input(s) file path> \t\t -- specifies input(s)");
+		LOG.blank("\t -p | --parallel \t\t\t -- multiple file inputs should run parallel, otherwise sequentially");
+		LOG.blank("\t -o | --output <output(s) file path> \t\t -- specifies output(s)");
 		LOG.blank("\t -s | --solver <solver type> \t\t -- specifies the solver type");
 		LOG.blank("\t -e | --epsilon <value> \t\t -- specifies epsilon");
 		LOG.blank("\t -t | --theta <value> \t\t\t -- specifies theta");
@@ -95,11 +103,15 @@ namespace OPLibrary
 
 		for (auto i = 1; i < argc; ++i)
 		{
+			// by convention options should start with / or -
+			// we do not have any options with "/"
+			if (argv[i][0] == '/') continue;
+
 			tokens_.emplace_back(argv[i]);
 		}
 
 		// help option
-		if (doesOptionExist(vector<string>{"-h", "--help"}))
+		if (doesOptionExist(vector<string>{"-h", "--help"}) || tokens_.empty())
 		{
 			printHelp();
 			return false;
@@ -135,6 +147,29 @@ namespace OPLibrary
 			}
 		}
 
+		for (const auto& arg : NONPARAMETERIZED_ARGS_VALS)
+		{
+			for (const auto& option : options_[arg])
+			{
+				if (doesOptionExist(option))
+				{
+					if (const auto val(getOptionVal(option)); val.empty())
+					{
+						args_.insert(make_pair(arg, vector<string>{"true"})); break;
+					}
+
+					LOG.error(format("Invalid value for argument {}, should be left empty.", option));
+					return false;
+				}
+			}
+		}
+
+		if (!tokens_.empty())
+		{
+			LOG.error(format("Unresolved parameters: {}.", toString(tokens_, " ")));
+			return false;
+		}
+
 		if (args_.empty())
 		{
 			printHelp();
@@ -150,67 +185,59 @@ namespace OPLibrary
 		return Args::NONEXISTING;
 	}
 
-	std::shared_ptr<std::string> ArgsParser::getStringArgument(const Args& option)
+	std::optional<std::string> ArgsParser::getStringArgument(const Args& option)
 	{
 		if (args_.contains(option))
 		{
-			return std::make_shared<std::string>(*args_.at(option).begin());
+			return { *args_.at(option).begin() };
 		}
 
-		return nullptr;
+		return std::nullopt;
 	}
 
-	std::shared_ptr<int> ArgsParser::getIntegerArgument(const Args& option)
+	std::optional<int> ArgsParser::getIntegerArgument(const Args& option)
 	{
-		if (!args_.contains(option)) return nullptr;
+		if (!args_.contains(option)) return std::nullopt;
 
 		const auto val(args_[option]);
 		const auto castedVal(std::stoi(*val.begin()));
-		const auto ptrVal(new int);
-		*ptrVal = castedVal;
 
-		return std::shared_ptr<int>(ptrVal);
+		return { castedVal };
 	}
 
-	std::shared_ptr<double> ArgsParser::getDoubleArgument(const Args& option)
+	std::optional<double> ArgsParser::getDoubleArgument(const Args& option)
 	{
-		if (!args_.contains(option)) return nullptr;
+		if (!args_.contains(option)) return std::nullopt;
 
 		const auto val(args_[option]);
 		const auto castedVal(std::stod(*val.begin()));
-		const auto ptrVal(new double);
-		*ptrVal = castedVal;
 
-		return std::shared_ptr<double>(ptrVal);
+		return { castedVal };
 	}
 
-	std::shared_ptr<long> ArgsParser::getLongArgument(const Args& option)
+	std::optional<long> ArgsParser::getLongArgument(const Args& option)
 	{
-		if (!args_.contains(option)) return nullptr;
+		if (!args_.contains(option)) return std::nullopt;
 
 		const auto val(args_[option]);
 		const auto castedVal(std::stol(*val.begin()));
-		const auto ptrVal(new long);
-		*ptrVal = castedVal;
 
-		return std::shared_ptr<long>(ptrVal);
+		return { castedVal };
 	}
 
-	std::shared_ptr<long double> ArgsParser::getLongDoubleArgument(const Args& option)
+	std::optional<long double> ArgsParser::getLongDoubleArgument(const Args& option)
 	{
-		if (!args_.contains(option)) return nullptr;
+		if (!args_.contains(option)) return std::nullopt;
 
 		const auto val(args_[option]);
 		const auto castedVal(std::stold(*val.begin()));
-		const auto ptrVal(new long double);
-		*ptrVal = castedVal;
 
-		return std::shared_ptr<long double>(ptrVal);
+		return { castedVal };
 	}
 
-	std::shared_ptr<bool> ArgsParser::getBooleanArgument(const Args& option)
+	std::optional<bool> ArgsParser::getBooleanArgument(const Args& option)
 	{
-		if (!args_.contains(option)) return nullptr;
+		if (!args_.contains(option)) return std::nullopt;
 
 		auto val(*args_[option].begin());
 		std::ranges::transform(val, val.begin(), [](const unsigned char c) { return std::tolower(c); });
@@ -218,26 +245,18 @@ namespace OPLibrary
 		bool ret;
 		is >> std::boolalpha >> ret;
 
-		const auto ptrVal(new bool);
-		*ptrVal = ret;
-
-		return std::shared_ptr<bool>(ptrVal);
+		return { ret };
 	}
 
-	std::shared_ptr<std::vector<std::string>> ArgsParser::getListArgument(const Args& option)
+	std::optional<std::vector<std::string>> ArgsParser::getListArgument(const Args& option)
 	{
 		using namespace std;
 
-		if (!args_.contains(option)) return nullptr;
+		if (!args_.contains(option)) return std::nullopt;
+		if (args_.at(option).empty()) return std::nullopt;
 
 		const auto vals(args_[option]);
-		auto heapVals = make_shared<vector<string>>();
 
-		ranges::for_each(vals, [&heapVals](const auto& val)
-			{
-				heapVals->push_back(val);
-			});
-
-		return heapVals;
+		return { vals };
 	}
 }
