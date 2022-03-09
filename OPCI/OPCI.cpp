@@ -41,7 +41,7 @@ int runOptimizer(const std::string& in, const std::string& out)
 		auto vector1(matrixFactory.createMatrix());
 		auto vector2(matrixFactory.createMatrix());
 
-		const auto problem(make_shared<Problem<TYPE>>(Problem(matrix, vector1, vector2)));
+		const auto problem(make_shared<Problem<TYPE>>(matrix, vector1, vector2));
 
 		reader->readProblem(problem);
 		writer->writeProblem(problem);
