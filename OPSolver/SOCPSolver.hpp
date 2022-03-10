@@ -147,7 +147,6 @@ namespace OPLibrary
 
 			// det(x) * En-1 + 2 * x2n * x2T:n
 			// det(x) = x1^2 - norm(x2:n)^2
-			//const auto detx(pow(x1, 2) - pow(x2n->norm(), 2));
 			const auto detx(calculateEigenMaxOf(vec) * calculateEigenMinOf(vec));
 
 			const unique_ptr<Matrix<T>> E(factory.createMatrix(n - 1, n - 1));
@@ -271,6 +270,12 @@ namespace OPLibrary
 			return ret;
 		}
 
+		static bool isInCone(Matrix<T>* vec)
+		{
+			assert(vec->getCols() == 1 && "Is In Cone method can only be applied to vectors.");
+			return calculateEigenMinOf(vec) > 0;
+		}
+
 		[[nodiscard]] T calculateMu() const;
 		[[nodiscard]] T calculateAlpha(const Matrix<T>* vec, const Matrix<T>* delta) const;
 		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateW() const;
@@ -285,7 +290,9 @@ namespace OPLibrary
 		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateResidualC() const;
 		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateResidualC_() const;
 
-		SolutionStatus classicSolver();
+		[[nodiscard]] bool checkPrimalFeasibility() const;
+		[[nodiscard]] bool checkDualFeasibility() const;
+
 		SolutionStatus optimizedSolver();
 
 	public:
@@ -323,12 +330,11 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	bool SOCPSolver<T>::checkIsTermination() const
 	{
-		// mu < epsilon; az x minden erteke pozitiv; s minden erteke pozitiv; kupfeltetel ellenorzes
-		// tehat megkell nezni azt, hogy lambda_min(x) > 0
-		// lambda_min(s) > 0
-		// kupfeltetel -- most eltekintunk rola, ennel az atlagosabb implementacional biztos, hogy bent maradunk
-
-		return currIter_ <= maxIters_ && (mu_ >= epsilon_) && (calculateEigenMinOf(x_.get()) > 0) && (calculateEigenMinOf(s_.get()) > 0);
+		return
+			currIter_ <= maxIters_ &&
+			(mu_ >= epsilon_) &&
+			isInCone(x_->get()) && isInCone(s_->get()) &&
+			!checkPrimalFeasibility() && !checkDualFeasibility();
 	}
 
 	template <typename T>
@@ -526,136 +532,26 @@ namespace OPLibrary
 		return std::move(*(*pOfW * mu) * *rc);
 	}
 
-	template <typename T> requires std::floating_point<T>
-	SolutionStatus SOCPSolver<T>::classicSolver()
+	template <typename T>
+		requires std::floating_point<T>
+	bool SOCPSolver<T>::checkPrimalFeasibility() const
 	{
-		/*
-				  * Egyenletrendszer:
-				  *	[ A_	0		0 ]		[ dx ]		[ rb ]
-				  *	[ 0		A_T		I ]	 *	[ dy ]	=	[ rc_ ]
-				  *	[ I		0		I ]		[ ds ]		[ pv ]
-				  */
+		// ||rb|| / (1 + ||b||) < epsilon
+		const auto rb(calculateResidualB());
+		const auto b(this->problem_->getConstraintsObjectives());
 
-		using namespace std;
+		return rb->norm() / (1 + b->norm()) < this->epsilon_;
+	}
 
-		const MatrixFactory<T> matrixFactory(MatrixType::DENSE);
+	template <typename T>
+		requires std::floating_point<T>
+	bool SOCPSolver<T>::checkDualFeasibility() const
+	{
+		// ||rc|| / (1 + ||c||)
+		const auto rc(calculateResidualC());
+		const auto c(this->problem_->getObjectives());
 
-		const unique_ptr<Matrix<T>> I(matrixFactory.createMatrix());
-		I->setValues(vector<T>(static_cast<size_t>(pow(n_, 2)), 0), n_, n_);
-		I->setDiagonalValues(vector<T>(n_, 1));
-
-		size_t iters(0);
-
-		while (checkIsTermination())
-		{
-			++iters;
-
-			LOG.info(format("{}. iteration ----------------------", iters));
-
-			this->mu_ = calculateMu();
-
-			const auto lhs(matrixFactory.createMatrix());
-			const auto rhs(matrixFactory.createMatrix());
-
-			const auto A_(calculateA_());
-			const auto A_T(A_->transpose());
-			const auto pv(calculatePv());
-
-			// lhs
-			{
-				const auto rows(A_->getRows() + A_T->getRows() + pv->getRows());
-				const auto cols(A_->getCols() + A_T->getCols() + pv->getCols() * n_);
-
-				lhs->setValues(vector<T>(rows * cols, 0), rows, cols);
-
-				lhs->block(0, 0, A_->getRows() - 1, A_->getCols() - 1, A_);
-
-				lhs->block(A_->getRows(), A_->getCols(), A_->getRows() + A_T->getRows() - 1,
-					A_->getCols() + A_T->getCols() - 1, A_T);
-
-				lhs->block(A_->getRows() + A_T->getRows(), 0,
-					A_->getRows() + A_T->getRows() + I->getRows() - 1, I->getCols() - 1, I);
-
-				lhs->block(A_->getRows(), A_->getCols() + A_T->getCols(),
-					A_->getRows() + A_T->getRows() - 1, A_->getCols() + A_T->getCols() + I->getCols() - 1, I);
-
-				lhs->block(A_->getRows() + A_T->getRows(), A_->getCols() + A_T->getCols(),
-					A_->getRows() + A_T->getRows() + I->getRows() - 1, A_->getCols() + A_T->getCols() + I->getCols() - 1, I);
-			}
-
-			// rhs
-			{
-				const auto rb(calculateResidualB());
-				const auto rc_(calculateResidualC_());
-
-				rhs->setValues(vector<T>(2 * n_ + nn_, 0), 2 * n_ + nn_, 1);
-
-				rhs->block(0, 0, nn_ - 1, 0, rb);
-				rhs->block(nn_, 0, nn_ + n_ - 1, 0, rc_);
-				rhs->block(n_ + nn_, 0, 2 * n_ + nn_ - 1, 0, pv);
-			}
-
-			const auto sol = lhs->solve(rhs, DecompositionType::JACOBISVD);
-
-			cout << *rhs << endl;
-			cout << *lhs << endl;
-			cout << *sol << endl;
-
-			const auto sqrtw(calculatePowerOf(calculateW().get(), 0.5));
-			const auto invsqrtw(calculatePowerOf(sqrtw.get(), -1));
-
-			const auto dx(sol->block(0, 0, n_ - 1, 0));
-			const auto dy(sol->block(n_, 0, n_ + nn_ - 1, 0));
-			const auto ds(sol->block(n_ + nn_, 0, 2 * n_ + nn_ - 1, 0));
-
-			cout << *dx << endl;
-			cout << *dy << endl;
-			cout << *ds << endl;
-
-			// deltay
-			unique_ptr<Matrix<T>> deltay;
-			{
-				deltay = *dy * mu_;
-			}
-
-			cout << *deltay << endl;
-
-			// deltax
-			unique_ptr<Matrix<T>> deltax;
-			{
-				deltax = *(*calculatePMatrixOf(sqrtw.get()) * sqrt(mu_)) * *dx;
-			}
-
-			cout << *deltax << endl;
-
-			// deltas
-			unique_ptr<Matrix<T>> deltas;
-			{
-				deltas = *(*calculatePMatrixOf(invsqrtw.get()) * sqrt(mu_)) * *ds;
-			}
-
-			cout << *deltas << endl;
-
-			const auto step(this->alphaPrimal_);
-
-			*x_ += *(*deltax * step);
-			*s_ += *(*deltas * step);
-			*y_ += *(*deltay * step);
-
-			cout << *x_ << endl;
-			cout << *s_ << endl;
-			cout << *y_ << endl;
-
-			LOG.info(format("Value is: {}", (*this->problem_->getObjectives()->transpose() * this->x_)->toString()));
-			LOG.info(format("END ----------------------", iters));
-			LOG.info("---------------");
-		}
-
-		LOG.info(format("Solved in {} iterations.", iters));
-
-		cout << *(*this->problem_->getConstraints() * *this->x_) << endl;
-
-		return SolutionStatus::FEASIBLE;
+		return rc->norm() / (1 + c->norm()) < this->epsilon_;
 	}
 
 	template <typename T>
@@ -670,7 +566,7 @@ namespace OPLibrary
 
 		this->currIter_ = 0;
 
-		while (checkIsTermination())
+		do
 		{
 			++this->currIter_;
 
@@ -743,7 +639,7 @@ namespace OPLibrary
 				{ (*this->problem_->getObjectives()->transpose() * *this->x_)->get(0, 0),
 				(*this->problem_->getConstraintsObjectives()->transpose() * *this->y_)->get(0, 0),
 				(*this->x_->transpose() * *this->s_)->get(0, 0) });
-		}
+		} while (checkIsTermination());
 
 		if (currIter_ > maxIters_) hr = SolutionStatus::UNFEASIBLE;
 		if (status_ == SolutionStatus::FEASIBLE &&
@@ -804,19 +700,19 @@ namespace OPLibrary
 
 		const MatrixFactory<T> matrixFactory;
 
-		x_ = matrixFactory.createMatrix(n, 1);
-		y_ = matrixFactory.createMatrix(nn, 1);
-		s_ = matrixFactory.createMatrix(n, 1);
+		this->x_ = matrixFactory.createMatrix(n, 1);
+		this->y_ = matrixFactory.createMatrix(nn, 1);
+		this->s_ = matrixFactory.createMatrix(n, 1);
 
-		init_->initialize(x_.get(), y_.get(), s_.get());
+		this->init_->initialize(x_.get(), y_.get(), s_.get());
 
 		this->writer_->setIterationHeaders({ "cTx", "bTy", "Duality Gap" });
 
-		status_ = optimizedSolver();
+		this->status_ = optimizedSolver();
 
 		this->solution_ = make_shared<Solution<T>>(Solution<T>(x_, y_, s_));
 
-		return status_;
+		return this->status_;
 	}
 
 	template <typename T>

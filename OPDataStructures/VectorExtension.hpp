@@ -38,7 +38,7 @@ template <typename T>
 	PolynomialSolver<T, Dynamic> solver;
 	solver.compute(eCoeff);
 
-	const auto& r = solver.roots();
+	const auto& r(solver.roots());
 
 	vector<T> ret;
 	for (size_t i = 0; i < static_cast<size_t>(r.size()); ++i)
