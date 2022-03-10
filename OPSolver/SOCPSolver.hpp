@@ -333,7 +333,7 @@ namespace OPLibrary
 		return
 			currIter_ <= maxIters_ &&
 			(mu_ >= epsilon_) &&
-			isInCone(x_->get()) && isInCone(s_->get()) &&
+			isInCone(x_.get()) && isInCone(s_.get()) &&
 			!checkPrimalFeasibility() && !checkDualFeasibility();
 	}
 
