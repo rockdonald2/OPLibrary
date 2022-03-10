@@ -85,9 +85,9 @@ namespace OPLibrary
 		LOG.blank("Command line interface for OPLibrary.");
 		LOG.blank("Usage:");
 		LOG.blank("\t -c | --config <config file path> \t -- specifies config file path, replaces any CLI arguments");
-		LOG.blank("\t -f | --file <input(s) file path> \t\t -- specifies input(s)");
+		LOG.blank("\t -f | --file <input(s) file path> \t -- specifies input(s)");
 		LOG.blank("\t -p | --parallel \t\t\t -- multiple file inputs should run parallel, otherwise sequentially");
-		LOG.blank("\t -o | --output <output(s) file path> \t\t -- specifies output(s)");
+		LOG.blank("\t -o | --output <output(s) file path> \t -- specifies output(s)");
 		LOG.blank("\t -s | --solver <solver type> \t\t -- specifies the solver type");
 		LOG.blank("\t -e | --epsilon <value> \t\t -- specifies epsilon");
 		LOG.blank("\t -t | --theta <value> \t\t\t -- specifies theta");

@@ -480,7 +480,7 @@ namespace OPLibrary
 		 */
 		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> solve(Matrix<T>& rhs,
 			const DecompositionType& decomposition =
-			DecompositionType::JACOBISVD) = 0;
+			DecompositionType::BDCSVD) = 0;
 		/**
 		 * \brief Solves a system of equations with lhs as this and the given rhs, clients can decide which decomposition type is used.
 		 * \param rhs the right-hand side of the equation
@@ -489,7 +489,7 @@ namespace OPLibrary
 		 */
 		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> solve(Matrix<T>* rhs,
 			const DecompositionType& decomposition =
-			DecompositionType::JACOBISVD) = 0;
+			DecompositionType::BDCSVD) = 0;
 		/**
 		 * \brief Solves a system of equations with lhs as this and the given rhs, clients can decide which decomposition type is used.
 		 * \param rhs the right-hand side of the equation
@@ -498,7 +498,7 @@ namespace OPLibrary
 		 */
 		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> solve(const std::unique_ptr<Matrix<T>>& rhs,
 			const DecompositionType& decomposition =
-			DecompositionType::JACOBISVD) = 0;
+			DecompositionType::BDCSVD) = 0;
 		/**
 		 * \brief Solves a system of equations with lhs as this and the given rhs, clients can decide which decomposition type is used.
 		 * \param rhs the right-hand side of the equation
@@ -507,7 +507,7 @@ namespace OPLibrary
 		 */
 		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> solve(const std::shared_ptr<Matrix<T>>& rhs,
 			const DecompositionType& decomposition =
-			DecompositionType::JACOBISVD) = 0;
+			DecompositionType::BDCSVD) = 0;
 	};
 
 	template <typename T>
