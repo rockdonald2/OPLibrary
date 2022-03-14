@@ -49,7 +49,7 @@ namespace OPLibrary
 		};
 
 		/**
-		 * \brief Classic initializator, where for x0 vector first value is 1, s0 vector fist value is 2, all other 0; for y all the values are 1.
+		 * \brief Classic initializator, where for x0 vector first value is 1, s0 vector first value is 2, all other 0; for y all the values are 1.
 		 */
 		class Classic2Initializator final : public Initializator
 		{
@@ -70,6 +70,18 @@ namespace OPLibrary
 		 * \brief Classic initializator, where for x0 and s0 vector their first value is 2, second value is 1, all other 0; for y all the values are 0.
 		 */
 		class Classic4Initializator final : public Initializator
+		{
+		public:
+			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
+		};
+
+		class Classic5Initializator final : public Initializator
+		{
+		public:
+			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
+		};
+
+		class ManualInitializator final : public Initializator
 		{
 		public:
 			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
@@ -273,7 +285,17 @@ namespace OPLibrary
 		static bool isInCone(Matrix<T>* vec)
 		{
 			assert(vec->getCols() == 1 && "Is In Cone method can only be applied to vectors.");
-			return calculateEigenMinOf(vec) > 0;
+			return calculateEigenMinOf(vec) >= 0;
+		}
+
+		static bool isAllPositive(Matrix<T>* vec)
+		{
+			assert(vec->getCols() == 1 && "Is All Positive method can only be applied to vectors.");
+			const auto vals(vec->getValues());
+			return std::all_of(vals->begin(), vals->end(), [](const auto& val)
+				{
+					return val >= 0;
+				});
 		}
 
 		[[nodiscard]] T calculateMu() const;
@@ -299,7 +321,7 @@ namespace OPLibrary
 		SOCPSolver() : epsilon_(1.0e-6), tau_(2.0), alphaPrimal_(1.0 / 10),
 			alphaDual_(1.0 / 10), mu_(1.0), beta_(1.0 / 2), rho_(0.98), sigma_(1.0 / 10), n_(0), nn_(0),
 			currIter_(0),
-			maxIters_(3000), init_(new Classic2Initializator()), x_(nullptr),
+			maxIters_(3000), init_(new Classic5Initializator()), x_(nullptr),
 			y_(nullptr), s_(nullptr), status_(SolutionStatus::FEASIBLE)
 		{
 			using namespace std;
@@ -344,7 +366,8 @@ namespace OPLibrary
 		return (*(*this->x_->transpose() * (2.0 * this->sigma_ / static_cast<long double>(this->n_))) * *this->s_)->get(0, 0);
 	}
 
-	template <typename T> requires std::floating_point<T>
+	template <typename T>
+		requires std::floating_point<T>
 	T SOCPSolver<T>::calculateAlpha(const Matrix<T>* vec, const Matrix<T>* delta) const
 	{
 		using namespace std;
@@ -400,9 +423,21 @@ namespace OPLibrary
 			C = pow(x1, 2) - sum;
 		}
 
-		auto roots(solvePolynomial<T>(vector<T>({ A, B, C })));
-		roots.push_back(1.0);
+		vector<T> roots;
+		if (A == 0.0)
+		{
+			// Ax2 + Bx + C = 0
+			// Ha A == 0
+			// akkor Bx + C = 0 => x = -C/B;
 
+			roots.push_back(-C / B);
+		}
+		else
+		{
+			roots = solvePolynomial<T>(vector<T>({ A, B, C }));
+		}
+
+		roots.push_back(1.0);
 		roots.erase(remove_if(roots.begin(), roots.end(), [](T n)
 			{
 				return n <= 0.0;
@@ -540,7 +575,7 @@ namespace OPLibrary
 		const auto rb(calculateResidualB());
 		const auto b(this->problem_->getConstraintsObjectives());
 
-		return rb->norm() / (1 + b->norm()) < this->epsilon_;
+		return rb->norm() / (1.0 + b->norm()) < this->epsilon_;
 	}
 
 	template <typename T>
@@ -551,7 +586,7 @@ namespace OPLibrary
 		const auto rc(calculateResidualC());
 		const auto c(this->problem_->getObjectives());
 
-		return rc->norm() / (1 + c->norm()) < this->epsilon_;
+		return rc->norm() / (1.0 + c->norm()) < this->epsilon_;
 	}
 
 	template <typename T>
@@ -561,9 +596,8 @@ namespace OPLibrary
 		using namespace std;
 
 		auto hr(SolutionStatus::FEASIBLE);
-
 		const MatrixFactory<T> matrixFactory;
-
+		this->writer_->setIterationHeaders({ "cTx", "bTy", "Duality Gap" });
 		this->currIter_ = 0;
 
 		do
@@ -583,11 +617,8 @@ namespace OPLibrary
 			{
 				// A_ * A_T * dy = -A_ * rc_ - rb - A_ * pv
 
-				const auto lhs(matrixFactory.createMatrix());
-				const auto rhs(matrixFactory.createMatrix());
-
-				*lhs = *(*A_ * *A_T);
-				*rhs = *(*(*(*(*A_ * -1) * *rc_) - *rb) - *(*A_ * *pv));
+				const auto lhs = *A_ * *A_T;
+				const auto rhs = *(*(*(*A_ * -1) * *rc_) - *rb) - *(*A_ * *pv);
 
 				dy = lhs->solve(rhs);
 			}
@@ -705,8 +736,6 @@ namespace OPLibrary
 		this->s_ = matrixFactory.createMatrix(n, 1);
 
 		this->init_->initialize(x_.get(), y_.get(), s_.get());
-
-		this->writer_->setIterationHeaders({ "cTx", "bTy", "Duality Gap" });
 
 		this->status_ = optimizedSolver();
 
@@ -832,5 +861,35 @@ namespace OPLibrary
 		s->setValues(vector<T>(s->getRows(), 0), s->getRows(), 1);
 		s->set(0, 0, 2);
 		s->set(1, 0, 1);
+	}
+
+	template <typename T> requires std::floating_point<T>
+	void SOCPSolver<T>::Classic5Initializator::initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s)
+	{
+		using namespace std;
+
+		if (x == nullptr || y == nullptr || s == nullptr)
+			throw SolverException(
+				"Wrong arguments for initializer, matrices have to be allocated before initializing them.");
+
+		x->setValues(vector<T>(x->getRows(), 1), x->getRows(), 1);
+
+		y->setValues(vector<T>(y->getRows(), 1), y->getRows(), 1);
+
+		s->setValues(vector<T>(s->getRows(), 1), s->getRows(), 1);
+	}
+
+	template <typename T> requires std::floating_point<T>
+	void SOCPSolver<T>::ManualInitializator::initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s)
+	{
+		using namespace std;
+
+		if (x == nullptr || y == nullptr || s == nullptr)
+			throw SolverException(
+				"Wrong arguments for initializer, matrices have to be allocated before initializing them.");
+
+		x->setValues(vector<T>(x->getRows(), 0), x->getRows(), 1);
+		y->setValues(vector<T>(y->getRows(), 0), y->getRows(), 1);
+		s->setValues(vector<T>(s->getRows(), 0), s->getRows(), 1);
 	}
 }

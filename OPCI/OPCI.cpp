@@ -56,7 +56,7 @@ int runOptimizer(const std::string& in, const std::string& out)
 		{
 			if (const auto argE(ArgsParser::getArgByString(arg)); argE != ArgsParser::Args::NONEXISTING)
 			{
-				if (const auto argVal(ArgsParser::getDoubleArgument(argE)); argVal.has_value())
+				if (const auto argVal(ArgsParser::getDoubleArgument(argE)); argVal)
 				{
 					solver->setInitializableArg(arg, *argVal);
 				}
@@ -131,7 +131,7 @@ int optimize(int argc, char* argv[])
 	const auto parallel(ArgsParser::getBooleanArgument(ArgsParser::Args::PARALLEL));
 
 	{
-		if (!inputs.has_value() || !outputs.has_value())
+		if (!inputs || !outputs)
 		{
 			LOG.blank("Inputs/Outputs unspecified.");
 			ArgsParser::printHelp();
