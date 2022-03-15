@@ -126,7 +126,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>..\OPDataStructures;..\OPProblemReader;..\OPSolver;..\OPUtility;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\OPDataStructures;..\OPProblemReader;..\OPSolver;..\OPUtility;..\packages\Eigen3.3.3.9\build\native\../..//lib/native/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

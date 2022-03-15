@@ -108,10 +108,6 @@ namespace OPLibrary
 		std::unique_ptr<Matrix<T>> y_;
 		std::unique_ptr<Matrix<T>> s_;
 
-		SolutionStatus status_;
-
-		[[nodiscard]] bool checkIsTermination() const;
-
 		static T calculateEigenMinOf(Matrix<T>* vec)
 		{
 			using namespace std;
@@ -312,17 +308,18 @@ namespace OPLibrary
 		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateResidualC() const;
 		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateResidualC_() const;
 
+		[[nodiscard]] bool checkIsTermination() const;
 		[[nodiscard]] bool checkPrimalFeasibility() const;
 		[[nodiscard]] bool checkDualFeasibility() const;
 
-		SolutionStatus optimizedSolver();
+		SolutionStatus solver();
 
 	public:
-		SOCPSolver() : epsilon_(1.0e-6), tau_(2.0), alphaPrimal_(1.0 / 10),
+		SOCPSolver() : epsilon_(1.0e-9), tau_(2.0), alphaPrimal_(1.0 / 10),
 			alphaDual_(1.0 / 10), mu_(1.0), beta_(1.0 / 2), rho_(0.98), sigma_(1.0 / 10), n_(0), nn_(0),
 			currIter_(0),
-			maxIters_(3000), init_(new Classic5Initializator()), x_(nullptr),
-			y_(nullptr), s_(nullptr), status_(SolutionStatus::FEASIBLE)
+			maxIters_(3000), init_(new Classic4Initializator()), x_(nullptr),
+			y_(nullptr), s_(nullptr)
 		{
 			using namespace std;
 
@@ -335,17 +332,13 @@ namespace OPLibrary
 			this->INITIALIZATOR.insert(make_pair<string, long double*>("sigma", &sigma_));
 		}
 
-		void setProblem(std::shared_ptr<Problem<T>> problem) override;
-		void setProblem(Problem<T>* problem) override;
-		[[nodiscard]] std::shared_ptr<Problem<T>> getProblem() const override;
+		SOCPSolver(const SOCPSolver<T>&) = delete;
+		SOCPSolver<T>& operator=(const SOCPSolver<T>&) = delete;
+
+		SOCPSolver(SOCPSolver<T>&&) = delete;
+		SOCPSolver<T>& operator=(SOCPSolver<T>&&) = delete;
 
 		SolutionStatus solve() override;
-		[[nodiscard]] std::shared_ptr<Solution<T>> getSolution() override;
-		[[nodiscard]] std::string getStatus() override;
-
-		void setWriter(Writer<T>* writer) override;
-		void setWriter(std::shared_ptr<Writer<T>> writer) override;
-		[[nodiscard]] std::shared_ptr<Writer<T>> getWriter() const override;
 	};
 
 	template <typename T>
@@ -511,9 +504,8 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculateA_() const
 	{
-		using namespace std;
-
 		// A_ = sqrt(mu) * A * P(w^1/2)
+		using namespace std;
 
 		const auto AMultipliedMu(*this->problem_->getConstraints() * sqrt(this->mu_));
 		const auto w(calculateW());
@@ -537,6 +529,7 @@ namespace OPLibrary
 	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualB() const
 	{
 		// Ax - b
+
 		const auto& A(this->problem_->getConstraints());
 		const auto& b(this->problem_->getConstraintsObjectives());
 
@@ -572,6 +565,7 @@ namespace OPLibrary
 	bool SOCPSolver<T>::checkPrimalFeasibility() const
 	{
 		// ||rb|| / (1 + ||b||) < epsilon
+
 		const auto rb(calculateResidualB());
 		const auto b(this->problem_->getConstraintsObjectives());
 
@@ -591,7 +585,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	SolutionStatus SOCPSolver<T>::optimizedSolver()
+	SolutionStatus SOCPSolver<T>::solver()
 	{
 		using namespace std;
 
@@ -673,31 +667,12 @@ namespace OPLibrary
 		} while (checkIsTermination());
 
 		if (currIter_ > maxIters_) hr = SolutionStatus::UNFEASIBLE;
-		if (status_ == SolutionStatus::FEASIBLE &&
+		if (this->status_ == SolutionStatus::FEASIBLE &&
 			containsNaN(x_.get()) || containsNaN(y_.get()) || containsNaN(s_.get())) hr = SolutionStatus::UNFEASIBLE;
 
+		// bekell implementalni a feasible checkeket, primal, dual
+
 		return hr;
-	}
-
-	template <typename T>
-		requires std::floating_point<T>
-	void SOCPSolver<T>::setProblem(std::shared_ptr<Problem<T>> problem)
-	{
-		this->problem_ = problem;
-	}
-
-	template <typename T>
-		requires std::floating_point<T>
-	void SOCPSolver<T>::setProblem(Problem<T>* problem)
-	{
-		this->problem_ = std::shared_ptr<Problem<T>>(problem);
-	}
-
-	template <typename T>
-		requires std::floating_point<T>
-	std::shared_ptr<Problem<T>> SOCPSolver<T>::getProblem() const
-	{
-		return this->problem_;
 	}
 
 	template <typename T>
@@ -720,7 +695,7 @@ namespace OPLibrary
 
 		if (this->writer_ == nullptr)
 		{
-			throw SolverException("No writer was set, aborting.");
+			throw SolverException("No writer is set.");
 		}
 
 		const auto n(this->problem_->getObjectives()->getRows());
@@ -737,50 +712,11 @@ namespace OPLibrary
 
 		this->init_->initialize(x_.get(), y_.get(), s_.get());
 
-		this->status_ = optimizedSolver();
+		this->status_ = solver();
 
 		this->solution_ = make_shared<Solution<T>>(Solution<T>(x_, y_, s_));
 
 		return this->status_;
-	}
-
-	template <typename T>
-		requires std::floating_point<T>
-	std::shared_ptr<Solution<T>> SOCPSolver<T>::getSolution()
-	{
-		return this->solution_;
-	}
-
-	template <typename T> requires std::floating_point<T>
-	std::string SOCPSolver<T>::getStatus()
-	{
-		switch (status_)
-		{
-		case SolutionStatus::FEASIBLE:
-			return "feasible";
-		case SolutionStatus::UNFEASIBLE:
-			return "unfeasible";
-		}
-
-		throw SolverException("Unknown final status.");
-	}
-
-	template <typename T> requires std::floating_point<T>
-	void SOCPSolver<T>::setWriter(Writer<T>* writer)
-	{
-		this->writer_ = std::shared_ptr<Writer<T>>(writer);
-	}
-
-	template <typename T> requires std::floating_point<T>
-	void SOCPSolver<T>::setWriter(std::shared_ptr<Writer<T>> writer)
-	{
-		this->writer_ = writer;
-	}
-
-	template <typename T> requires std::floating_point<T>
-	std::shared_ptr<Writer<T>> SOCPSolver<T>::getWriter() const
-	{
-		return this->writer_;
 	}
 
 	template <typename T>

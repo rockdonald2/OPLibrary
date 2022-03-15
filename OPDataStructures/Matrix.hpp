@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-// Eigen-hez
 #include "Eigen/Dense"
 
 namespace OPLibrary
@@ -526,8 +525,6 @@ namespace OPLibrary
 	Matrix<T>& Matrix<T>::operator=(Matrix<T>&& rhs) noexcept
 	{
 		if (&rhs == this) return *this;
-
-		// TODO: better solution for this
 
 		this->setValues(*rhs.getValues(), rhs.getRows(), rhs.getCols());
 		rhs.setValues(std::vector<T>(), 0, 0);

@@ -19,7 +19,7 @@ namespace OPLibrary
 	 */
 	class SolverFactory final
 	{
-		inline static std::map<std::string, SolverType> map_Str_To_Solver_{ {"SOCP", SolverType::SOCP} };
+		inline static const std::map<std::string, SolverType> MAP_STR_TO_SOLVER{ {"SOCP", SolverType::SOCP} };
 
 	public:
 		SolverFactory() = delete;
@@ -36,10 +36,10 @@ namespace OPLibrary
 			std::string temp(type);
 			std::ranges::transform(temp, temp.begin(), [](const unsigned char c) { return std::toupper(c); });
 
-			if (!map_Str_To_Solver_.contains(temp))
+			if (!MAP_STR_TO_SOLVER.contains(temp))
 				throw SolverException("Unsupported solver type.");
 
-			switch (map_Str_To_Solver_.at(temp))
+			switch (MAP_STR_TO_SOLVER.at(temp))
 			{
 			case SolverType::SOCP: return std::move(std::make_unique<SOCPSolver<T>>());
 			}
