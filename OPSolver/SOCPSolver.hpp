@@ -312,7 +312,7 @@ namespace OPLibrary
 		[[nodiscard]] bool checkPrimalFeasibility() const;
 		[[nodiscard]] bool checkDualFeasibility() const;
 
-		SolutionStatus solver();
+		SolutionStatus internalSolver();
 
 	public:
 		SOCPSolver() : epsilon_(1.0e-9), tau_(2.0), alphaPrimal_(1.0 / 10),
@@ -585,7 +585,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	SolutionStatus SOCPSolver<T>::solver()
+	SolutionStatus SOCPSolver<T>::internalSolver()
 	{
 		using namespace std;
 
@@ -698,21 +698,19 @@ namespace OPLibrary
 			throw SolverException("No writer is set.");
 		}
 
-		const auto n(this->problem_->getObjectives()->getRows());
-		this->n_ = n;
+		this->n_ = this->problem_->getObjectives()->getRows();
 
-		const auto nn(this->problem_->getConstraintsObjectives()->getRows());
-		this->nn_ = nn;
+		this->nn_ = this->problem_->getConstraintsObjectives()->getRows();
 
 		const MatrixFactory<T> matrixFactory;
 
-		this->x_ = matrixFactory.createMatrix(n, 1);
-		this->y_ = matrixFactory.createMatrix(nn, 1);
-		this->s_ = matrixFactory.createMatrix(n, 1);
+		this->x_ = matrixFactory.createMatrix(n_, 1);
+		this->y_ = matrixFactory.createMatrix(nn_, 1);
+		this->s_ = matrixFactory.createMatrix(n_, 1);
 
 		this->init_->initialize(x_.get(), y_.get(), s_.get());
 
-		this->status_ = solver();
+		this->status_ = internalSolver();
 
 		this->solution_ = make_shared<Solution<T>>(Solution<T>(x_, y_, s_));
 
