@@ -142,8 +142,8 @@ namespace OPLibrary
 			retMatrix->set(0, 0, pow(vec->norm(), 2));
 
 			const auto x1(vec->get(0, 0));
-			const unique_ptr<Matrix<T>> x2n(vec->block(1, 0, vec->getRows() - 1, 0));
-			const unique_ptr<Matrix<T>> x2nT(x2n->transpose());
+			const auto x2n(vec->block(1, 0, vec->getRows() - 1, 0));
+			const auto x2nT(x2n->transpose());
 
 			// 2 * (x1 * x2:n)
 			retMatrix->block(1, 0, retMatrix->getRows() - 1, 0, *(*x2n * x1) * 2);
@@ -155,11 +155,11 @@ namespace OPLibrary
 			// det(x) = x1^2 - norm(x2:n)^2
 			const auto detx(calculateEigenMaxOf(vec) * calculateEigenMinOf(vec));
 
-			const unique_ptr<Matrix<T>> E(factory.createMatrix(n - 1, n - 1));
+			const auto E(factory.createMatrix(n - 1, n - 1));
 			E->setValues(vector<T>(static_cast<size_t>(pow((n - 1), 2)), 0), n - 1, n - 1);
 			E->setDiagonalValues(vector<T>(n - 1, 1));
 
-			const unique_ptr<Matrix<T>> helperTriangularMatrix(factory.createMatrix(n - 1, n - 1));
+			const auto helperTriangularMatrix(factory.createMatrix(n - 1, n - 1));
 			helperTriangularMatrix->setValues(vector<T>(static_cast<size_t>(pow(n - 1, 2)), 0), n - 1, n - 1);
 
 			for (size_t i = 0; i < (n - 1); ++i)
