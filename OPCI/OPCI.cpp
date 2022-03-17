@@ -75,44 +75,37 @@ int runOptimizer(const std::string& in, const std::string& out)
 	}
 	catch (const ReaderException& e)
 	{
-		LOG.resetHandlers();
 		LOG.error(e.what());
 		hr = EXIT_FAILURE;
 	}
 	catch (const MatrixException& e)
 	{
-		LOG.resetHandlers();
 		LOG.error(e.what());
 		hr = EXIT_FAILURE;
 	}
 	catch (const SolverException& e)
 	{
-		LOG.resetHandlers();
 		LOG.error(e.what());
 		hr = EXIT_FAILURE;
 	}
 	catch (const ArgumentException& e)
 	{
-		LOG.resetHandlers();
 		LOG.error(e.what());
 		hr = EXIT_FAILURE;
 	}
 	catch (const WriterException& e)
 	{
-		LOG.resetHandlers();
 		LOG.error(e.what());
 		hr = EXIT_FAILURE;
 	}
 	catch (const exception& e)
 	{
-		LOG.resetHandlers();
 		LOG.error(e.what());
 		hr = EXIT_FAILURE;
 	}
 	catch (...)
 	{
-		LOG.resetHandlers();
-		LOG.error("Unknown exception.");
+		LOG.error("Unknown exception, possibly from Eigen.");
 		hr = EXIT_FAILURE;
 	}
 

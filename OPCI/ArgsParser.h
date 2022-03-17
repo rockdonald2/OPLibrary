@@ -21,16 +21,15 @@ namespace OPLibrary
 			PARALLEL,
 			OUTPUT_FILE,
 			SOLVER_TYPE,
-			THETA,
 			EPSILON,
-			ALPHA,
 			MU,
-			TAU,
+			RHO,
+			SIGMA,
 			NONEXISTING
 		};
 
 	private:
-		const static inline std::vector<Args> PARAMETERIZED_ARGS_VALS = { Args::INPUT_FILE, Args::OUTPUT_FILE, Args::SOLVER_TYPE, Args::EPSILON, Args::THETA, Args::ALPHA, Args::TAU, Args::MU };
+		const static inline std::vector<Args> PARAMETERIZED_ARGS_VALS = { Args::INPUT_FILE, Args::OUTPUT_FILE, Args::SOLVER_TYPE, Args::EPSILON, Args::RHO, Args::SIGMA, Args::MU };
 		const static inline std::vector<Args> NONPARAMETERIZED_ARGS_VALS = { Args::PARALLEL };
 		static inline std::unordered_map<Args, std::vector<std::string>> options_ = []
 		{
@@ -42,11 +41,10 @@ namespace OPLibrary
 			options.try_emplace(Args::PARALLEL, vector<string>({ "-p", "--parallel" }));
 			options.try_emplace(Args::OUTPUT_FILE, vector<string>({ "-o", "--out" }));
 			options.try_emplace(Args::SOLVER_TYPE, vector<string>({ "-s", "--solver" }));
-			options.try_emplace(Args::EPSILON, vector<string>({ "-e", "--epsilon" }));
-			options.try_emplace(Args::THETA, vector<string>({ "-t", "--theta" }));
-			options.try_emplace(Args::ALPHA, vector<string>({ "-a", "--alpha" }));
-			options.try_emplace(Args::TAU, vector<string>({ "--tau" }));
-			options.try_emplace(Args::MU, vector<string>({ "-m", "--mu" }));
+			options.try_emplace(Args::EPSILON, vector<string>({ "--epsilon" }));
+			options.try_emplace(Args::RHO, vector<string>({ "--rho" }));
+			options.try_emplace(Args::SIGMA, vector<string>({ "--sigma" }));
+			options.try_emplace(Args::MU, vector<string>({ "--mu" }));
 
 
 			return options;
@@ -62,10 +60,9 @@ namespace OPLibrary
 			strToArg.try_emplace("output_file", Args::INPUT_FILE);
 			strToArg.try_emplace("solver_type", Args::SOLVER_TYPE);
 			strToArg.try_emplace("epsilon", Args::EPSILON);
-			strToArg.try_emplace("theta", Args::THETA);
-			strToArg.try_emplace("alpha", Args::ALPHA);
+			strToArg.try_emplace("rho", Args::RHO);
+			strToArg.try_emplace("sigma", Args::SIGMA);
 			strToArg.try_emplace("mu", Args::MU);
-			strToArg.try_emplace("tau", Args::TAU);
 
 			return strToArg;
 		}();

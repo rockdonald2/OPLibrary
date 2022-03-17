@@ -105,6 +105,11 @@ namespace OPLibrary
 		virtual void setValues(const std::vector<T>& values, const size_t& rows, const size_t& cols) = 0;
 
 		/**
+		 * \brief Clears a matrix.
+		 */
+		virtual void clear() = 0;
+
+		/**
 		 * \brief Returns all the values from diagonal.
 		 * \return vector of values
 		 */
@@ -527,7 +532,7 @@ namespace OPLibrary
 		if (&rhs == this) return *this;
 
 		this->setValues(*rhs.getValues(), rhs.getRows(), rhs.getCols());
-		rhs.setValues(std::vector<T>(), 0, 0);
+		rhs.clear();
 
 		return *this;
 	}

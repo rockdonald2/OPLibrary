@@ -126,7 +126,8 @@ namespace OPLibrary
 		return writeSolution(solution.get());
 	}
 
-	template <typename T> requires std::floating_point<T>
+	template <typename T>
+		requires std::floating_point<T>
 	void CSVWriter<T>::writeIteration(const size_t& iter, std::initializer_list<T> args)
 	{
 		if (iter == 1)
@@ -150,7 +151,8 @@ namespace OPLibrary
 		*this->output_ << std::endl;
 	}
 
-	template <typename T> requires std::floating_point<T>
+	template <typename T>
+		requires std::floating_point<T>
 	void CSVWriter<T>::setIterationHeaders(const std::vector<std::string>& headers)
 	{
 		this->headers_ = std::vector(headers.begin(), headers.end());

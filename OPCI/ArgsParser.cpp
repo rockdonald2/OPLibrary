@@ -84,17 +84,16 @@ namespace OPLibrary
 	{
 		LOG.blank("Command line interface for OPLibrary.");
 		LOG.blank("Usage:");
+		LOG.blank("\t -h | --help \t\t\t\t -- prints help message");
 		LOG.blank("\t -c | --config <config file path> \t -- specifies config file path, replaces any CLI arguments");
 		LOG.blank("\t -f | --file <input(s) file path> \t -- specifies input(s)");
 		LOG.blank("\t -p | --parallel \t\t\t -- multiple file inputs should run parallel, otherwise sequentially");
 		LOG.blank("\t -o | --output <output(s) file path> \t -- specifies output(s)");
 		LOG.blank("\t -s | --solver <solver type> \t\t -- specifies the solver type");
-		LOG.blank("\t -e | --epsilon <value> \t\t -- specifies epsilon");
-		LOG.blank("\t -t | --theta <value> \t\t\t -- specifies theta");
-		LOG.blank("\t -a | --alpha <value> \t\t\t -- specifies alpha");
-		LOG.blank("\t -m | --mu <value> \t\t\t -- specifies mu");
-		LOG.blank("\t --tau <value> \t\t\t\t -- specifies tau");
-		LOG.blank("\t -h | --help \t\t\t\t -- prints help message");
+		LOG.blank("\t --epsilon <value> \t\t\t -- specifies epsilon");
+		LOG.blank("\t --rho <value> \t\t\t\t -- specifies rho");
+		LOG.blank("\t --sigma <value> \t\t\t -- specifies sigma");
+		LOG.blank("\t --mu <value> \t\t\t\t -- specifies mu");
 	}
 
 	bool ArgsParser::parseArguments(int argc, char** argv)

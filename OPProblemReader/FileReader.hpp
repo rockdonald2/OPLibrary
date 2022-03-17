@@ -49,9 +49,9 @@ namespace OPLibrary
 
 				throw ReaderException("Reached end of file or suddenly closed while reading in matrices.");
 			}
-			catch (...)
+			catch (const exception& ignored)
 			{
-				LOG.info(std::format("Failed to use {} as a number, skipping.\n", placeholder));
+				LOG.error(std::format("Failed to use {} as a number, skipping.\n", placeholder));
 			}
 		} while (true);
 	}
@@ -77,9 +77,9 @@ namespace OPLibrary
 					{
 						holder->set(i, j, stold(placeholder));
 					}
-					catch (...)
+					catch (const std::exception& e)
 					{
-						LOG.info(std::format("Failed to use {} as a number, skipping.\n", placeholder));
+						LOG.error(std::format("Failed to use {} as a number, skipping.\n", placeholder));
 						--j;
 					}
 				}

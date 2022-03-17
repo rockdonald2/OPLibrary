@@ -23,6 +23,7 @@ namespace OPLibrary
 		 * \brief Creates a new Problem instance, but releases all argument pointers, transfers ownership.
 		 */
 		Problem(std::unique_ptr<Matrix<T>>& cnstrs, std::unique_ptr<Matrix<T>>& cnstrsObjs, std::unique_ptr<Matrix<T>>& objs) : constraints_(cnstrs.release()), constraintObjectives_(cnstrsObjs.release()), objectives_(objs.release()) {}
+		Problem(const std::shared_ptr<Matrix<T>>& cnstrs, const std::shared_ptr<Matrix<T>>& cnstrsObjs, const std::shared_ptr<Matrix<T>>& objs) : constraints_(cnstrs), constraintObjectives_(cnstrsObjs), objectives_(objs) {}
 
 		/**
 		 * \brief Sets the constraints matrix.

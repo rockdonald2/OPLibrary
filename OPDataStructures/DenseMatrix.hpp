@@ -48,6 +48,8 @@ namespace OPLibrary
 		[[nodiscard]] size_t getSize() const override;
 		void setSize(const size_t& rows, const size_t& cols) override;
 
+		void clear() override;
+
 		[[nodiscard]] T get(const size_t& rPos, const size_t& cPos) const override;
 		void set(const size_t& rPos, const size_t& cPos, const T& value) override;
 
@@ -308,6 +310,14 @@ namespace OPLibrary
 			T, Eigen::Dynamic, Eigen::Dynamic>>();
 
 		this->matrix_->conservativeResize(this->rows_, this->cols_);
+	}
+
+	template <typename T>
+		requires std::floating_point<T>
+	void DenseMatrix<T>::clear()
+	{
+		this->setValues(std::vector<T>(), 0, 0);
+		// we could also set the matrix_ reference to null, remains to be discussed
 	}
 
 	template <typename T>

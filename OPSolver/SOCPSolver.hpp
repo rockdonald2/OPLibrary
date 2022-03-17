@@ -88,11 +88,9 @@ namespace OPLibrary
 		};
 
 		long double epsilon_;
-		long double tau_;
 		long double alphaPrimal_;
 		long double alphaDual_;
 		long double mu_;
-		long double beta_;
 		long double rho_;
 		long double sigma_;
 
@@ -315,8 +313,8 @@ namespace OPLibrary
 		SolutionStatus internalSolver();
 
 	public:
-		SOCPSolver() : epsilon_(1.0e-9), tau_(2.0), alphaPrimal_(1.0 / 10),
-			alphaDual_(1.0 / 10), mu_(1.0), beta_(1.0 / 2), rho_(0.98), sigma_(1.0 / 10), n_(0), nn_(0),
+		SOCPSolver() : epsilon_(1.0e-9), alphaPrimal_(1.0 / 10),
+			alphaDual_(1.0 / 10), mu_(1.0), rho_(0.98), sigma_(1.0 / 10), n_(0), nn_(0),
 			currIter_(0),
 			maxIters_(3000), init_(new Classic4Initializator()), x_(nullptr),
 			y_(nullptr), s_(nullptr)
@@ -325,9 +323,7 @@ namespace OPLibrary
 
 			this->INITIALIZABLE_ARGS = { "epsilon", "tau", "mu", "beta", "rho", "sigma" };
 			this->INITIALIZATOR.insert(make_pair<string, long double*>("epsilon", &epsilon_));
-			this->INITIALIZATOR.insert(make_pair<string, long double*>("tau", &tau_));
 			this->INITIALIZATOR.insert(make_pair<string, long double*>("mu", &mu_));
-			this->INITIALIZATOR.insert(make_pair<string, long double*>("beta", &beta_));
 			this->INITIALIZATOR.insert(make_pair<string, long double*>("rho", &rho_));
 			this->INITIALIZATOR.insert(make_pair<string, long double*>("sigma", &sigma_));
 		}
