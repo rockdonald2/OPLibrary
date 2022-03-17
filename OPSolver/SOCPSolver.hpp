@@ -102,9 +102,9 @@ namespace OPLibrary
 
 		std::unique_ptr<Initializator> init_;
 
-		std::unique_ptr<Matrix<T>> x_;
-		std::unique_ptr<Matrix<T>> y_;
-		std::unique_ptr<Matrix<T>> s_;
+		std::shared_ptr<Matrix<T>> x_;
+		std::shared_ptr<Matrix<T>> y_;
+		std::shared_ptr<Matrix<T>> s_;
 
 		static T calculateEigenMinOf(Matrix<T>* vec)
 		{
@@ -112,7 +112,7 @@ namespace OPLibrary
 
 			assert(vec->getCols() == 1 && "Eigenvalue min can only be calculated for vectors.");
 
-			const unique_ptr<Matrix<T>> tmpBlock(vec->block(1, 0, vec->getRows() - 1, 0));
+			const auto tmpBlock(vec->block(1, 0, vec->getRows() - 1, 0));
 
 			return vec->get(0, 0) - tmpBlock->norm();
 		}
@@ -123,12 +123,12 @@ namespace OPLibrary
 
 			assert(vec->getCols() == 1 && "Eigenvalue max can only be calculated for vectors.");
 
-			const unique_ptr<Matrix<T>> tmpBlock(vec->block(1, 0, vec->getRows() - 1, 0));
+			const auto tmpBlock(vec->block(1, 0, vec->getRows() - 1, 0));
 
 			return vec->get(0, 0) + tmpBlock->norm();
 		}
 
-		static std::unique_ptr<Matrix<T>> calculatePMatrixOf(Matrix<T>* vec)
+		static std::shared_ptr<Matrix<T>> calculatePMatrixOf(Matrix<T>* vec)
 		{
 			using namespace std;
 
@@ -175,7 +175,7 @@ namespace OPLibrary
 			return move(retMatrix);
 		}
 
-		static std::unique_ptr<Matrix<T>> calculateC1(Matrix<T>* vec)
+		static std::shared_ptr<Matrix<T>> calculateC1(Matrix<T>* vec)
 		{
 			using namespace std;
 
@@ -187,7 +187,7 @@ namespace OPLibrary
 			auto c1(factory.createMatrix(n, 1));
 			c1->set(0, 0, 0.5);
 
-			const unique_ptr<Matrix<T>> x2n(vec->block(1, 0, n - 1, 0));
+			const auto x2n(vec->block(1, 0, n - 1, 0));
 			const auto normx2n(x2n->norm());
 
 			const auto zeroVector(vector<T>(n - 1, 0));
@@ -203,7 +203,7 @@ namespace OPLibrary
 			return move(c1);
 		}
 
-		static std::unique_ptr<Matrix<T>> calculateC2(Matrix<T>* vec)
+		static std::shared_ptr<Matrix<T>> calculateC2(Matrix<T>* vec)
 		{
 			using namespace std;
 
@@ -215,7 +215,7 @@ namespace OPLibrary
 			auto c2(factory.createMatrix(n, 1));
 			c2->set(0, 0, 0.5);
 
-			const unique_ptr<Matrix<T>> x2n(vec->block(1, 0, n - 1, 0));
+			const auto x2n(vec->block(1, 0, n - 1, 0));
 			const auto normx2n(x2n->norm());
 
 			const auto zeroVector(vector<T>(n - 1, 0));
@@ -231,7 +231,7 @@ namespace OPLibrary
 			return move(c2);
 		}
 
-		static std::unique_ptr<Matrix<T>> calculatePowerOf(Matrix<T>* vec, const double power)
+		static std::shared_ptr<Matrix<T>> calculatePowerOf(Matrix<T>* vec, const double power)
 		{
 			using namespace std;
 
@@ -250,7 +250,7 @@ namespace OPLibrary
 			return move(ret);
 		}
 
-		static std::unique_ptr<Matrix<T>> oOperation(Matrix<T>* lhs, Matrix<T>* rhs)
+		static std::shared_ptr<Matrix<T>> oOperation(Matrix<T>* lhs, Matrix<T>* rhs)
 		{
 			assert(lhs->getCols() == 1 && rhs->getCols() == 1 && "Bilinear operator o can only be calculated for vectors.");
 			assert(lhs->getRows() == rhs->getRows() && "Bilinear operator o can only be calculated for same dimensional vectors.");
@@ -261,7 +261,7 @@ namespace OPLibrary
 
 			const MatrixFactory<T> factory;
 
-			unique_ptr<Matrix<T>> ret(factory.createMatrix(n, 1));
+			auto ret(factory.createMatrix(n, 1));
 
 			ret->set(0, 0, (*lhs->transpose() * *rhs)->get(0, 0));
 
@@ -294,34 +294,35 @@ namespace OPLibrary
 
 		[[nodiscard]] T calculateMu() const;
 		[[nodiscard]] T calculateAlpha(const Matrix<T>* vec, const Matrix<T>* delta) const;
-		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateW() const;
-		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateV() const;
-		[[nodiscard]] std::unique_ptr<Matrix<T>> calculatePv() const;
+		[[nodiscard]] std::shared_ptr<Matrix<T>> calculateW() const;
+		[[nodiscard]] std::shared_ptr<Matrix<T>> calculateV() const;
+		[[nodiscard]] std::shared_ptr<Matrix<T>> calculatePv() const;
 
-		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateA_() const;
+		[[nodiscard]] std::shared_ptr<Matrix<T>> calculateA_() const;
 
 		[[nodiscard]] T distanceFromMuCenter() const;
 
-		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateResidualB() const;
-		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateResidualC() const;
-		[[nodiscard]] std::unique_ptr<Matrix<T>> calculateResidualC_() const;
+		[[nodiscard]] std::shared_ptr<Matrix<T>> calculateResidualB() const;
+		[[nodiscard]] std::shared_ptr<Matrix<T>> calculateResidualC() const;
+		[[nodiscard]] std::shared_ptr<Matrix<T>> calculateResidualC_() const;
 
 		[[nodiscard]] bool checkIsTermination() const;
 		[[nodiscard]] bool checkPrimalFeasibility() const;
 		[[nodiscard]] bool checkDualFeasibility() const;
+		[[nodiscard]] bool checkInfeasibility() const;
 
 		SolutionStatus internalSolver();
 
 	public:
-		SOCPSolver() : epsilon_(1.0e-9), alphaPrimal_(1.0 / 10),
+		SOCPSolver() : epsilon_(1.0e-6), alphaPrimal_(1.0 / 10),
 			alphaDual_(1.0 / 10), mu_(1.0), rho_(0.98), sigma_(1.0 / 10), n_(0), nn_(0),
 			currIter_(0),
-			maxIters_(3000), init_(new Classic4Initializator()), x_(nullptr),
+			maxIters_(3000), init_(std::make_unique<Classic4Initializator>()), x_(nullptr),
 			y_(nullptr), s_(nullptr)
 		{
 			using namespace std;
 
-			this->INITIALIZABLE_ARGS = { "epsilon", "tau", "mu", "beta", "rho", "sigma" };
+			this->INITIALIZABLE_ARGS = { "epsilon", "mu", "rho", "sigma" };
 			this->INITIALIZATOR.insert(make_pair<string, long double*>("epsilon", &epsilon_));
 			this->INITIALIZATOR.insert(make_pair<string, long double*>("mu", &mu_));
 			this->INITIALIZATOR.insert(make_pair<string, long double*>("rho", &rho_));
@@ -341,11 +342,7 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	bool SOCPSolver<T>::checkIsTermination() const
 	{
-		return
-			currIter_ <= maxIters_ &&
-			(mu_ >= epsilon_) &&
-			isInCone(x_.get()) && isInCone(s_.get()) &&
-			!checkPrimalFeasibility() && !checkDualFeasibility();
+		return currIter_ > maxIters_ || ((mu_ < epsilon_) && checkPrimalFeasibility() && checkDualFeasibility());
 	}
 
 	template <typename T>
@@ -450,17 +447,17 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculateW() const
+	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculateW() const
 	{
 		// w = P(x^1/2) * (P(x^1/2)*s)^(-1/2)
 		// NT skalazasi pont
 		// w vektor
 		using namespace std;
 
-		const unique_ptr<Matrix<T>> sqrtx(calculatePowerOf(this->x_.get(), 0.5));
-		const unique_ptr<Matrix<T>> pMatrixSqrtx(calculatePMatrixOf(sqrtx.get()));
-		const unique_ptr<Matrix<T>> sMultipliedBypMatrix(*pMatrixSqrtx * *this->s_);
-		const unique_ptr<Matrix<T>> sqrtSMultiplication(
+		const auto sqrtx(calculatePowerOf(this->x_.get(), 0.5));
+		const auto pMatrixSqrtx(calculatePMatrixOf(sqrtx.get()));
+		const auto sMultipliedBypMatrix(*pMatrixSqrtx * *this->s_);
+		const auto sqrtSMultiplication(
 			calculatePowerOf(calculatePowerOf(sMultipliedBypMatrix.get(), 0.5).get(), -1));
 
 		return move(*pMatrixSqrtx * *sqrtSMultiplication);
@@ -468,7 +465,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculateV() const
+	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculateV() const
 	{
 		// (P(w^(-1/2)) * x) / sqrt(mu)
 		using namespace std;
@@ -484,7 +481,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculatePv() const
+	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculatePv() const
 	{
 		// ahol v = P(w^-1/2) * x / sqrt(mu) = v / sqrt(mu)
 		// pv = v^-1 - v, klasszikus phi(t) = t fuggveny eseten
@@ -498,7 +495,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculateA_() const
+	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculateA_() const
 	{
 		// A_ = sqrt(mu) * A * P(w^1/2)
 		using namespace std;
@@ -522,7 +519,7 @@ namespace OPLibrary
 	}
 
 	template <typename T> requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualB() const
+	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualB() const
 	{
 		// Ax - b
 
@@ -533,7 +530,7 @@ namespace OPLibrary
 	}
 
 	template <typename T> requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualC() const
+	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualC() const
 	{
 		// AT * y + s - c
 
@@ -544,7 +541,7 @@ namespace OPLibrary
 	}
 
 	template <typename T> requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualC_() const
+	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualC_() const
 	{
 		// 1/sqrt(mu) * P(w)^1/2 * rc
 
@@ -579,6 +576,20 @@ namespace OPLibrary
 		return rc->norm() / (1.0 + c->norm()) < this->epsilon_;
 	}
 
+	template <typename T> requires std::floating_point<T>
+	bool SOCPSolver<T>::checkInfeasibility() const
+	{
+		auto hr(false);
+
+		if (currIter_ > maxIters_) hr = true;
+		if (this->status_ == SolutionStatus::FEASIBLE &&
+			containsNaN(x_.get()) || containsNaN(y_.get()) || containsNaN(s_.get())) hr = true;
+
+		if (!((mu_ < epsilon_) && checkPrimalFeasibility() && checkDualFeasibility())) hr = true;
+
+		return hr;
+	}
+
 	template <typename T>
 		requires std::floating_point<T>
 	SolutionStatus SOCPSolver<T>::internalSolver()
@@ -603,7 +614,7 @@ namespace OPLibrary
 			const auto rc_(calculateResidualC_());
 
 			// dy
-			unique_ptr<Matrix<T>> dy;
+			shared_ptr<Matrix<T>> dy;
 			{
 				// A_ * A_T * dy = -A_ * rc_ - rb - A_ * pv
 
@@ -614,21 +625,21 @@ namespace OPLibrary
 			}
 
 			// ds
-			unique_ptr<Matrix<T>> ds;
+			shared_ptr<Matrix<T>> ds;
 			{
 				// A_T * dy + ds = -rc_ => ds = -rc_ - A_T * dy
 				ds = *(*rc_ * -1) - *(*A_T * *dy);
 			}
 
 			//dx
-			unique_ptr<Matrix<T>> dx;
+			shared_ptr<Matrix<T>> dx;
 			{
 				// dx + ds = pv => dx = pv - ds
 				dx = *pv - *ds;
 			}
 
 			// deltay
-			unique_ptr<Matrix<T>> deltay;
+			shared_ptr<Matrix<T>> deltay;
 			{
 				deltay = *dy * mu_;
 			}
@@ -636,13 +647,13 @@ namespace OPLibrary
 			const auto sqrtw(calculatePowerOf(calculateW().get(), 0.5));
 
 			// deltax
-			unique_ptr<Matrix<T>> deltax;
+			shared_ptr<Matrix<T>> deltax;
 			{
 				deltax = *(*calculatePMatrixOf(sqrtw.get()) * sqrt(mu_)) * *dx;
 			}
 
 			// deltas
-			unique_ptr<Matrix<T>> deltas;
+			shared_ptr<Matrix<T>> deltas;
 			{
 				const auto invsqrtw(calculatePowerOf(sqrtw.get(), -1));
 
@@ -660,13 +671,9 @@ namespace OPLibrary
 				{ (*this->problem_->getObjectives()->transpose() * *this->x_)->get(0, 0),
 				(*this->problem_->getConstraintsObjectives()->transpose() * *this->y_)->get(0, 0),
 				(*this->x_->transpose() * *this->s_)->get(0, 0) });
-		} while (checkIsTermination());
+		} while (!checkIsTermination());
 
-		if (currIter_ > maxIters_) hr = SolutionStatus::UNFEASIBLE;
-		if (this->status_ == SolutionStatus::FEASIBLE &&
-			containsNaN(x_.get()) || containsNaN(y_.get()) || containsNaN(s_.get())) hr = SolutionStatus::UNFEASIBLE;
-
-		// bekell implementalni a feasible checkeket, primal, dual
+		if (checkInfeasibility()) hr = SolutionStatus::UNFEASIBLE;
 
 		return hr;
 	}

@@ -95,7 +95,7 @@ namespace OPLibrary
 		 * \brief Returns all the values from the Matrix.
 		 * \return vector of values
 		 */
-		[[nodiscard]] virtual std::unique_ptr<std::vector<T>> getValues() const = 0;
+		[[nodiscard]] virtual std::shared_ptr<std::vector<T>> getValues() const = 0;
 		/**
 		 * \brief Sets all the values in the Matrix, used for reconstruction.
 		 * \param values vector of values in the Matrix
@@ -113,7 +113,7 @@ namespace OPLibrary
 		 * \brief Returns all the values from diagonal.
 		 * \return vector of values
 		 */
-		[[nodiscard]] virtual std::unique_ptr<std::vector<T>> getDiagonalValues() const = 0;
+		[[nodiscard]] virtual std::shared_ptr<std::vector<T>> getDiagonalValues() const = 0;
 		/**
 		 * \brief Sets all the values along the diagonal.
 		 * \param values vector of values for the diagonal
@@ -125,7 +125,7 @@ namespace OPLibrary
 		 * \param cPos position in columns
 		 * \return vector of values
 		 */
-		[[nodiscard]] virtual std::unique_ptr<std::vector<T>> getColumn(const size_t& cPos) const = 0;
+		[[nodiscard]] virtual std::shared_ptr<std::vector<T>> getColumn(const size_t& cPos) const = 0;
 		/**
 		 * \brief Adds a new column to the right of the Matrix.
 		 * \param values vector of new values
@@ -142,14 +142,14 @@ namespace OPLibrary
 		 * \param cPos position in columns
 		 * \return the removed values
 		 */
-		virtual std::unique_ptr<std::vector<T>> removeColumn(const size_t& cPos) = 0;
+		virtual std::shared_ptr<std::vector<T>> removeColumn(const size_t& cPos) = 0;
 
 		/**
 		 * \brief Returns a row of values.
 		 * \param rPos position in rows
 		 * \return vector of values
 		 */
-		[[nodiscard]] virtual std::unique_ptr<std::vector<T>> getRow(const size_t& rPos) const = 0;
+		[[nodiscard]] virtual std::shared_ptr<std::vector<T>> getRow(const size_t& rPos) const = 0;
 		/**
 		 * \brief Adds a new row to the bottom of the Matrix.
 		 * \param values vector of new values
@@ -166,21 +166,21 @@ namespace OPLibrary
 		 * \param rPos position in rows
 		 * \return the removed values
 		 */
-		virtual std::unique_ptr<std::vector<T>> removeRow(const size_t& rPos) = 0;
+		virtual std::shared_ptr<std::vector<T>> removeRow(const size_t& rPos) = 0;
 
 		/**
 		 * \brief Transposes the matrix, inplace or not, if not returns the new transposed Matrix.
 		 * \param inplace determines if inplace or not
 		 * \return transposed Matrix
 		 */
-		virtual std::unique_ptr<Matrix<T>> transpose(const bool& inplace = false) = 0;
+		virtual std::shared_ptr<Matrix<T>> transpose(const bool& inplace = false) = 0;
 
 		/**
 		 * \brief Inverts the matrix, inplace or not, if not returns the new inverted Matrix.
 		 * \param inplace determines if inplace or not
 		 * \return inverted Matrix
 		 */
-		virtual std::unique_ptr<Matrix<T>> inverse(const bool& inplace = false) = 0;
+		virtual std::shared_ptr<Matrix<T>> inverse(const bool& inplace = false) = 0;
 
 		/**
 		 * \brief Adds a value to a specific position in the Matrix.
@@ -207,43 +207,43 @@ namespace OPLibrary
 		 * \param rhs second Matrix
 		 * \return New Matrix as product
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator*(const Matrix* rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator*(const Matrix* rhs) const = 0;
 		/**
 		 * \brief Multiplies with a Matrix.
 		 * \param rhs second Matrix
 		 * \return New Matrix as product
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator*(const Matrix& rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator*(const Matrix& rhs) const = 0;
 		/**
 		 * \brief Multiplies with a Matrix.
 		 * \param rhs second Matrix
 		 * \return New Matrix as product
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator*(const std::unique_ptr<Matrix<T>>& rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator*(const std::unique_ptr<Matrix<T>>& rhs) const = 0;
 		/**
 		 * \brief Multiplies with a Matrix.
 		 * \param rhs second Matrix
 		 * \return New Matrix as product
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator*(const std::shared_ptr<Matrix<T>>& rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator*(const std::shared_ptr<Matrix<T>>& rhs) const = 0;
 		/**
 		 * \brief Multiplies with a vector.
 		 * \param rhs second vector
 		 * \return New vector as product
 		 */
-		virtual std::unique_ptr<std::vector<T>> operator*(const std::vector<T>* rhs) const = 0;
+		virtual std::shared_ptr<std::vector<T>> operator*(const std::vector<T>* rhs) const = 0;
 		/**
 		 * \brief Multiplies with a vector.
 		 * \param rhs second vector
 		 * \return New vector as product
 		 */
-		virtual std::unique_ptr<std::vector<T>> operator*(const std::vector<T>& rhs) const = 0;
+		virtual std::shared_ptr<std::vector<T>> operator*(const std::vector<T>& rhs) const = 0;
 		/**
 		 * \brief Multiplies matrix with a scalar, componentwise.
 		 * \param rhs scalar value
 		 * \return New Matrix as product with scalar
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator*(const T& rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator*(const T& rhs) const = 0;
 		/**
 		 * \brief Matrix multiplication with assignment.
 		 * \param rhs scalar value
@@ -292,7 +292,7 @@ namespace OPLibrary
 		 * \param rhs scalar value
 		 * \return New Matrix as result
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator/(const T& rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator/(const T& rhs) const = 0;
 		/**
 		 * \brief Divides componentwise a matrix with a scalar.
 		 * \param rhs scalar value
@@ -305,25 +305,25 @@ namespace OPLibrary
 		 * \param rhs second Matrix
 		 * \return New matrix as addition product
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator+(const Matrix* rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator+(const Matrix* rhs) const = 0;
 		/**
 		 * \brief Adds to a Matrix.
 		 * \param rhs second Matrix
 		 * \return New matrix as addition product
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator+(const Matrix& rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator+(const Matrix& rhs) const = 0;
 		/**
 		 * \brief Adds to a Matrix.
 		 * \param rhs second Matrix
 		 * \return New matrix as addition product
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator+(const std::unique_ptr<Matrix<T>>& rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator+(const std::unique_ptr<Matrix<T>>& rhs) const = 0;
 		/**
 		 * \brief Adds to a Matrix.
 		 * \param rhs second Matrix
 		 * \return New matrix as addition product
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator+(const std::shared_ptr<Matrix<T>>& rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator+(const std::shared_ptr<Matrix<T>>& rhs) const = 0;
 		/**
 		 * \brief Adds to a Matrix.
 		 * \param rhs second Matrix
@@ -354,25 +354,25 @@ namespace OPLibrary
 		 * \param rhs second Matrix
 		 * \return New matrix as product
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator-(const Matrix* rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator-(const Matrix* rhs) const = 0;
 		/**
 		 * \brief Subtracts to a Matrix.
 		 * \param rhs second Matrix
 		 * \return New matrix as product
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator-(const Matrix& rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator-(const Matrix& rhs) const = 0;
 		/**
 		 * \brief Subtracts to a Matrix.
 		 * \param rhs second Matrix
 		 * \return New matrix as product
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator-(const std::unique_ptr<Matrix<T>>& rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator-(const std::unique_ptr<Matrix<T>>& rhs) const = 0;
 		/**
 		 * \brief Subtracts to a Matrix.
 		 * \param rhs second Matrix
 		 * \return New matrix as product
 		 */
-		virtual std::unique_ptr<Matrix<T>> operator-(const std::shared_ptr<Matrix<T>>& rhs) const = 0;
+		virtual std::shared_ptr<Matrix<T>> operator-(const std::shared_ptr<Matrix<T>>& rhs) const = 0;
 		/**
 		 * \brief Subtracts to a Matrix.
 		 * \param rhs second Matrix
@@ -428,7 +428,7 @@ namespace OPLibrary
 		 * \param eCol ending column
 		 * \return (sRow, sCol) - (eRow, eCol) block of Matrix as a new Matrix
 		 */
-		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol) const
+		[[nodiscard]] virtual std::shared_ptr<Matrix<T>> block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol) const
 			= 0;
 		/**
 		 * \brief Slices and exchanges a block of the matrix.
@@ -482,7 +482,7 @@ namespace OPLibrary
 		 * \param decomposition type
 		 * \return solution matrix/vector
 		 */
-		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> solve(Matrix<T>& rhs,
+		[[nodiscard]] virtual std::shared_ptr<Matrix<T>> solve(Matrix<T>& rhs,
 			const DecompositionType& decomposition =
 			DecompositionType::BDCSVD) = 0;
 		/**
@@ -491,7 +491,7 @@ namespace OPLibrary
 		 * \param decomposition type
 		 * \return solution matrix/vector
 		 */
-		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> solve(Matrix<T>* rhs,
+		[[nodiscard]] virtual std::shared_ptr<Matrix<T>> solve(Matrix<T>* rhs,
 			const DecompositionType& decomposition =
 			DecompositionType::BDCSVD) = 0;
 		/**
@@ -500,7 +500,7 @@ namespace OPLibrary
 		 * \param decomposition type
 		 * \return solution matrix/vector
 		 */
-		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> solve(const std::unique_ptr<Matrix<T>>& rhs,
+		[[nodiscard]] virtual std::shared_ptr<Matrix<T>> solve(const std::unique_ptr<Matrix<T>>& rhs,
 			const DecompositionType& decomposition =
 			DecompositionType::BDCSVD) = 0;
 		/**
@@ -509,7 +509,7 @@ namespace OPLibrary
 		 * \param decomposition type
 		 * \return solution matrix/vector
 		 */
-		[[nodiscard]] virtual std::unique_ptr<Matrix<T>> solve(const std::shared_ptr<Matrix<T>>& rhs,
+		[[nodiscard]] virtual std::shared_ptr<Matrix<T>> solve(const std::shared_ptr<Matrix<T>>& rhs,
 			const DecompositionType& decomposition =
 			DecompositionType::BDCSVD) = 0;
 	};

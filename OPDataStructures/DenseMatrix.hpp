@@ -3,6 +3,7 @@
 #include "Matrix.hpp"
 #include <Eigen/Dense>
 #include "MatrixException.hpp"
+#include <memory>
 
 namespace OPLibrary
 {
@@ -53,39 +54,39 @@ namespace OPLibrary
 		[[nodiscard]] T get(const size_t& rPos, const size_t& cPos) const override;
 		void set(const size_t& rPos, const size_t& cPos, const T& value) override;
 
-		[[nodiscard]] std::unique_ptr<std::vector<T>> getValues() const override;
+		[[nodiscard]] std::shared_ptr<std::vector<T>> getValues() const override;
 		void setValues(const std::vector<T>& values, const size_t& rows, const size_t& cols) override;
 
-		[[nodiscard]] std::unique_ptr<std::vector<T>> getDiagonalValues() const override;
+		[[nodiscard]] std::shared_ptr<std::vector<T>> getDiagonalValues() const override;
 		void setDiagonalValues(const std::vector<T>& values) override;
 
-		[[nodiscard]] std::unique_ptr<std::vector<T>> getColumn(const size_t& cPos) const override;
+		[[nodiscard]] std::shared_ptr<std::vector<T>> getColumn(const size_t& cPos) const override;
 
 		void addColumn(const std::vector<T>& values) override;
 		void setColumn(const size_t& cPos, const std::vector<T>& values) override;
-		std::unique_ptr<std::vector<T>> removeColumn(const size_t& cPos) override;
-		[[nodiscard]] std::unique_ptr<std::vector<T>> getRow(const size_t& rPos) const override;
+		std::shared_ptr<std::vector<T>> removeColumn(const size_t& cPos) override;
+		[[nodiscard]] std::shared_ptr<std::vector<T>> getRow(const size_t& rPos) const override;
 
 		void addRow(std::vector<T> values) override;
 		void setRow(const size_t& rPos, const std::vector<T>& values) override;
-		std::unique_ptr<std::vector<T>> removeRow(const size_t& rPos) override;
+		std::shared_ptr<std::vector<T>> removeRow(const size_t& rPos) override;
 
-		std::unique_ptr<Matrix<T>> transpose(const bool& inplace = false) override;
-		std::unique_ptr<Matrix<T>> inverse(const bool& inplace = false) override;
+		std::shared_ptr<Matrix<T>> transpose(const bool& inplace = false) override;
+		std::shared_ptr<Matrix<T>> inverse(const bool& inplace = false) override;
 
 		void addToElementByPos(const size_t& rPos, const size_t& cPos, const T& val) override;
 		void multiplyElementByPos(const size_t& rPos, const size_t& cPos, const T& val) override;
 
 		[[nodiscard]] T norm() const override;
 
-		std::unique_ptr<Matrix<T>> operator*(const Matrix<T>* rhs) const override;
-		std::unique_ptr<Matrix<T>> operator*(const Matrix<T>& rhs) const override;
+		std::shared_ptr<Matrix<T>> operator*(const Matrix<T>* rhs) const override;
+		std::shared_ptr<Matrix<T>> operator*(const Matrix<T>& rhs) const override;
 
-		std::unique_ptr<Matrix<T>> operator*(const std::unique_ptr<Matrix<T>>& rhs) const override;
-		std::unique_ptr<Matrix<T>> operator*(const std::shared_ptr<Matrix<T>>& rhs) const override;
+		std::shared_ptr<Matrix<T>> operator*(const std::unique_ptr<Matrix<T>>& rhs) const override;
+		std::shared_ptr<Matrix<T>> operator*(const std::shared_ptr<Matrix<T>>& rhs) const override;
 
-		std::unique_ptr<std::vector<T>> operator*(const std::vector<T>* rhs) const override;
-		std::unique_ptr<std::vector<T>> operator*(const std::vector<T>& rhs) const override;
+		std::shared_ptr<std::vector<T>> operator*(const std::vector<T>* rhs) const override;
+		std::shared_ptr<std::vector<T>> operator*(const std::vector<T>& rhs) const override;
 
 		Matrix<T>& operator*=(const Matrix<T>* rhs) override;
 		Matrix<T>& operator*=(const Matrix<T>& rhs) override;
@@ -96,26 +97,26 @@ namespace OPLibrary
 		Matrix<T>& operator*=(const std::vector<T>* rhs) override;
 		Matrix<T>& operator*=(const std::vector<T>& rhs) override;
 
-		std::unique_ptr<Matrix<T>> operator*(const T& rhs) const override;
+		std::shared_ptr<Matrix<T>> operator*(const T& rhs) const override;
 		Matrix<T>& operator*=(const T& rhs) override;
 
-		std::unique_ptr<Matrix<T>> operator/(const T& rhs) const override;
+		std::shared_ptr<Matrix<T>> operator/(const T& rhs) const override;
 		Matrix<T>& operator/=(const T& rhs) override;
 
-		std::unique_ptr<Matrix<T>> operator+(const Matrix<T>* rhs) const override;
-		std::unique_ptr<Matrix<T>> operator+(const Matrix<T>& rhs) const override;
-		std::unique_ptr<Matrix<T>> operator+(const std::unique_ptr<Matrix<T>>& rhs) const override;
-		std::unique_ptr<Matrix<T>> operator+(const std::shared_ptr<Matrix<T>>& rhs) const override;
+		std::shared_ptr<Matrix<T>> operator+(const Matrix<T>* rhs) const override;
+		std::shared_ptr<Matrix<T>> operator+(const Matrix<T>& rhs) const override;
+		std::shared_ptr<Matrix<T>> operator+(const std::unique_ptr<Matrix<T>>& rhs) const override;
+		std::shared_ptr<Matrix<T>> operator+(const std::shared_ptr<Matrix<T>>& rhs) const override;
 
 		Matrix<T>& operator+=(const Matrix<T>* rhs) override;
 		Matrix<T>& operator+=(const Matrix<T>& rhs) override;
 		Matrix<T>& operator+=(const std::unique_ptr<Matrix<T>>& rhs) override;
 		Matrix<T>& operator+=(const std::shared_ptr<Matrix<T>>& rhs) override;
 
-		std::unique_ptr<Matrix<T>> operator-(const Matrix<T>* rhs) const override;
-		std::unique_ptr<Matrix<T>> operator-(const Matrix<T>& rhs) const override;
-		std::unique_ptr<Matrix<T>> operator-(const std::unique_ptr<Matrix<T>>& rhs) const override;
-		std::unique_ptr<Matrix<T>> operator-(const std::shared_ptr<Matrix<T>>& rhs) const override;
+		std::shared_ptr<Matrix<T>> operator-(const Matrix<T>* rhs) const override;
+		std::shared_ptr<Matrix<T>> operator-(const Matrix<T>& rhs) const override;
+		std::shared_ptr<Matrix<T>> operator-(const std::unique_ptr<Matrix<T>>& rhs) const override;
+		std::shared_ptr<Matrix<T>> operator-(const std::shared_ptr<Matrix<T>>& rhs) const override;
 		Matrix<T>& operator-=(const Matrix<T>* rhs) override;
 		Matrix<T>& operator-=(const Matrix<T>& rhs) override;
 		Matrix<T>& operator-=(const std::shared_ptr<Matrix<T>>& rhs) override;
@@ -140,7 +141,7 @@ namespace OPLibrary
 			return out;
 		}
 
-		[[nodiscard]] std::unique_ptr<Matrix<T>>
+		[[nodiscard]] std::shared_ptr<Matrix<T>>
 			block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol) const override;
 		void block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, Matrix<T>* newVals) override;
 		void block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol, const std::unique_ptr<Matrix<T>>& newVals) override;
@@ -153,11 +154,11 @@ namespace OPLibrary
 		void exchangeRows(const size_t& lRow, const size_t& rRow) override;
 		void exchangeCols(const size_t& lCol, const size_t& rCol) override;
 
-		[[nodiscard]] std::unique_ptr<Matrix<T>> solve(Matrix<T>& rhs, const DecompositionType& decomposition) override;
-		[[nodiscard]] std::unique_ptr<Matrix<T>> solve(Matrix<T>* rhs, const DecompositionType& decomposition) override;
-		[[nodiscard]] std::unique_ptr<Matrix<T>>
+		[[nodiscard]] std::shared_ptr<Matrix<T>> solve(Matrix<T>& rhs, const DecompositionType& decomposition) override;
+		[[nodiscard]] std::shared_ptr<Matrix<T>> solve(Matrix<T>* rhs, const DecompositionType& decomposition) override;
+		[[nodiscard]] std::shared_ptr<Matrix<T>>
 			solve(const std::unique_ptr<Matrix<T>>& rhs, const DecompositionType& decomposition) override;
-		[[nodiscard]] std::unique_ptr<Matrix<T>>
+		[[nodiscard]] std::shared_ptr<Matrix<T>>
 			solve(const std::shared_ptr<Matrix<T>>& rhs, const DecompositionType& decomposition) override;
 	};
 
@@ -344,14 +345,14 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<std::vector<T>> DenseMatrix<T>::getValues() const
+	std::shared_ptr<std::vector<T>> DenseMatrix<T>::getValues() const
 	{
 		using namespace Eigen;
 		using namespace std;
 
 		if (this->matrix_ == nullptr) throw MatrixException("Tried to retrieve a null matrix.");
 
-		unique_ptr<vector<T>> retVector(make_unique<vector<T>>(vector<T>(this->matrix_->size())));
+		auto retVector(make_shared<vector<T>>(vector<T>(this->matrix_->size())));
 		Map<Eigen::Matrix<T, Dynamic, Dynamic>>(retVector->data(), this->getRows(), this->getCols()) = *this->matrix_;
 		return move(retVector);
 	}
@@ -373,7 +374,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<std::vector<T>> DenseMatrix<T>::getDiagonalValues() const
+	std::shared_ptr<std::vector<T>> DenseMatrix<T>::getDiagonalValues() const
 	{
 		using namespace Eigen;
 		using namespace std;
@@ -381,7 +382,7 @@ namespace OPLibrary
 		if (this->matrix_ == nullptr) throw MatrixException("Tried to retrieve a null matrix.");
 
 		const auto retrievedDiagonal = this->matrix_->diagonal();
-		unique_ptr<vector<T>> retVector(make_unique<vector<T>>(vector<T>(retrievedDiagonal.size())));
+		auto retVector(make_shared<vector<T>>(retrievedDiagonal.size()));
 		Map<Eigen::Matrix<T, Dynamic, 1>>(retVector->data(), retrievedDiagonal.size()) = retrievedDiagonal;
 
 		return move(retVector);
@@ -407,7 +408,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<std::vector<T>> DenseMatrix<T>::getColumn(const size_t& cPos) const
+	std::shared_ptr<std::vector<T>> DenseMatrix<T>::getColumn(const size_t& cPos) const
 	{
 		using namespace Eigen;
 		using namespace std;
@@ -416,7 +417,7 @@ namespace OPLibrary
 
 		const auto retrievedCol = Eigen::Matrix<T, Dynamic, 1>(this->matrix_->col(cPos).matrix());
 
-		unique_ptr<vector<T>> retVector(make_unique<vector<T>>(vector<T>(retrievedCol.size())));
+		auto retVector(make_shared<vector<T>>(retrievedCol.size()));
 
 		Map<Eigen::Matrix<T, Dynamic, 1>>(retVector->data(), retrievedCol.size()) = retrievedCol;
 
@@ -463,7 +464,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<std::vector<T>> DenseMatrix<T>::removeColumn(const size_t& cPos)
+	std::shared_ptr<std::vector<T>> DenseMatrix<T>::removeColumn(const size_t& cPos)
 	{
 		using namespace Eigen;
 		using namespace std;
@@ -484,7 +485,7 @@ namespace OPLibrary
 
 		instance->conservativeResize(instance->rows(), instance->cols() - 1);
 
-		unique_ptr<vector<T>> retVector(make_unique<vector<T>>(vector<T>(removedVals.size())));
+		auto retVector(make_shared<vector<T>>(removedVals.size()));
 		Map<Eigen::Matrix<T, Dynamic, 1>>(retVector->data(), removedVals.size()) = removedVals;
 
 		return move(retVector);
@@ -492,7 +493,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<std::vector<T>> DenseMatrix<T>::getRow(const size_t& rPos) const
+	std::shared_ptr<std::vector<T>> DenseMatrix<T>::getRow(const size_t& rPos) const
 	{
 		using namespace Eigen;
 		using namespace std;
@@ -501,7 +502,7 @@ namespace OPLibrary
 
 		const auto retrievedRow = Eigen::Matrix<T, 1, Dynamic>(this->matrix_->row(rPos).matrix());
 
-		unique_ptr<vector<T>> retVector(make_unique<vector<T>>(vector<T>(retrievedRow.size())));
+		auto retVector(make_shared<vector<T>>(retrievedRow.size()));
 
 		Map<Eigen::Matrix<T, 1, Dynamic>>(retVector->data(), retrievedRow.size()) = retrievedRow;
 
@@ -546,7 +547,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<std::vector<T>> DenseMatrix<T>::removeRow(const size_t& rPos)
+	std::shared_ptr<std::vector<T>> DenseMatrix<T>::removeRow(const size_t& rPos)
 	{
 		using namespace Eigen;
 		using namespace std;
@@ -567,7 +568,7 @@ namespace OPLibrary
 
 		instance->conservativeResize(instance->rows() - 1, instance->cols());
 
-		unique_ptr<vector<T>> retVector(make_unique<vector<T>>(vector<T>(removedVals.size())));
+		auto retVector(make_shared<vector<T>>(removedVals.size()));
 		Map<Eigen::Matrix<T, Dynamic, 1>>(retVector->data(), removedVals.size()) = removedVals;
 
 		return move(retVector);
@@ -575,7 +576,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::transpose(const bool& inplace)
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::transpose(const bool& inplace)
 	{
 		using namespace std;
 
@@ -590,14 +591,14 @@ namespace OPLibrary
 		}
 
 		const Matrix<T>* upcast = this;
-		unique_ptr<Matrix<T>> retVal(make_unique<DenseMatrix<T>>(DenseMatrix(*upcast)));
+		auto retVal(make_shared<DenseMatrix<T>>(DenseMatrix(*upcast)));
 		retVal->transpose(true);
 		return move(retVal);
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::inverse(const bool& inplace)
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::inverse(const bool& inplace)
 	{
 		using namespace std;
 
@@ -618,7 +619,7 @@ namespace OPLibrary
 		}
 
 		const Matrix<T>* upcast = this;
-		unique_ptr<Matrix<T>> retVal(make_unique<DenseMatrix<T>>(DenseMatrix(*upcast)));
+		auto retVal(make_shared<DenseMatrix<T>>(DenseMatrix(*upcast)));
 		retVal->inverse(true);
 		return move(retVal);
 	}
@@ -658,7 +659,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator*(const Matrix<T>* rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator*(const Matrix<T>* rhs) const
 	{
 		using namespace Eigen;
 		using namespace std;
@@ -670,7 +671,7 @@ namespace OPLibrary
 		const auto rows(this->getRows());
 		const auto cols(rhs->getCols());
 
-		auto retMatrix = make_unique<DenseMatrix<T>>(DenseMatrix(rows, cols));
+		auto retMatrix = make_shared<DenseMatrix<T>>(DenseMatrix(rows, cols));
 
 		auto rhsVals(rhs->getValues());
 		const auto rhsRows(rhs->getRows());
@@ -680,7 +681,7 @@ namespace OPLibrary
 			rhsVals->data(), rhsRows, rhsCols);
 
 		const auto tmpResult = Eigen::Matrix<T, Dynamic, Dynamic>(*this->matrix_ * rhsMatrix);
-		unique_ptr<vector<T>> tmpResultVec(make_unique<vector<T>>(vector<T>(tmpResult.size())));
+		auto tmpResultVec(make_shared<vector<T>>(tmpResult.size()));
 		Eigen::Map<Eigen::Matrix<T, Dynamic, Dynamic>>(tmpResultVec->data(), tmpResult.rows(), tmpResult.cols()) =
 			tmpResult;
 
@@ -691,28 +692,28 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator*(const Matrix<T>& rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator*(const Matrix<T>& rhs) const
 	{
 		return std::move(*this * (&rhs));
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator*(const std::unique_ptr<Matrix<T>>& rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator*(const std::unique_ptr<Matrix<T>>& rhs) const
 	{
 		return std::move(*this * rhs.get());
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator*(const std::shared_ptr<Matrix<T>>& rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator*(const std::shared_ptr<Matrix<T>>& rhs) const
 	{
 		return std::move(*this * rhs.get());
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<std::vector<T>> DenseMatrix<T>::operator*(const std::vector<T>* rhs) const
+	std::shared_ptr<std::vector<T>> DenseMatrix<T>::operator*(const std::vector<T>* rhs) const
 	{
 		using namespace Eigen;
 		using namespace std;
@@ -725,7 +726,7 @@ namespace OPLibrary
 
 		const auto product = Eigen::Matrix<T, Dynamic, 1>(*this->matrix_ * rhsVector);
 
-		unique_ptr<vector<T>> retVector(make_unique<vector<T>>(vector<T>(product.size())));
+		auto retVector(make_shared<vector<T>>(product.size()));
 		Map<Eigen::Matrix<T, Dynamic, 1>>(retVector->data(), product.size()) = product;
 
 		return move(retVector);
@@ -733,7 +734,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<std::vector<T>> DenseMatrix<T>::operator*(const std::vector<T>& rhs) const
+	std::shared_ptr<std::vector<T>> DenseMatrix<T>::operator*(const std::vector<T>& rhs) const
 	{
 		return std::move(*this * (&rhs));
 	}
@@ -809,15 +810,15 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator*(const T& rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator*(const T& rhs) const
 	{
 		using namespace Eigen;
 		using namespace std;
 
-		auto retMatrix(make_unique<DenseMatrix<T>>(DenseMatrix(this->rows_, this->cols_)));
+		auto retMatrix(make_shared<DenseMatrix<T>>(DenseMatrix(this->rows_, this->cols_)));
 
 		const auto tmpResult = Eigen::Matrix<T, Dynamic, Dynamic>(*this->matrix_ * rhs);
-		unique_ptr<vector<T>> tmpResultVec(make_unique<vector<T>>(vector<T>(tmpResult.size())));
+		shared_ptr<vector<T>> tmpResultVec(make_shared<vector<T>>(vector<T>(tmpResult.size())));
 		Map<Eigen::Matrix<T, Dynamic, Dynamic>>(tmpResultVec->data(), tmpResult.rows(), tmpResult.cols()) = tmpResult;
 
 		retMatrix->setValues(*tmpResultVec, tmpResult.rows(), tmpResult.cols());
@@ -835,13 +836,13 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator/(const T& rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator/(const T& rhs) const
 	{
 		using namespace std;
 
 		assert(this->cols_ == 1 && "Componentwise division valid for vector only.");
 
-		auto retMatrix(make_unique<DenseMatrix<T>>(DenseMatrix(this->rows_, 1)));
+		auto retMatrix(make_shared<DenseMatrix<T>>(DenseMatrix(this->rows_, 1)));
 
 		for (size_t i = 0; i < this->rows_; ++i)
 		{
@@ -869,7 +870,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator+(const Matrix<T>* rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator+(const Matrix<T>* rhs) const
 	{
 		using namespace Eigen;
 		using namespace std;
@@ -880,7 +881,7 @@ namespace OPLibrary
 				std::to_string(this->cols_) + "; r: " + std::to_string(rhs->getRows()) + "x" + std::to_string(
 					rhs->getCols()));
 
-		auto retMatrix(make_unique<DenseMatrix<T>>(DenseMatrix(this->rows_, this->cols_)));
+		auto retMatrix(make_shared<DenseMatrix<T>>(DenseMatrix(this->rows_, this->cols_)));
 
 		auto& lhsMatrix(this->matrix_);
 
@@ -892,7 +893,7 @@ namespace OPLibrary
 			rhsVals->data(), rhsRows, rhsCols);
 
 		const auto tmpResult = Eigen::Matrix<T, Dynamic, Dynamic>(*lhsMatrix + rhsMatrix);
-		unique_ptr<vector<T>> tmpResultVec(make_unique<vector<T>>(vector<T>(tmpResult.size())));
+		shared_ptr<vector<T>> tmpResultVec(make_shared<vector<T>>(vector<T>(tmpResult.size())));
 		Map<Eigen::Matrix<T, Dynamic, Dynamic>>(tmpResultVec->data(), tmpResult.rows(), tmpResult.cols()) = tmpResult;
 
 		retMatrix->setValues(*tmpResultVec, rhs->getRows(), rhs->getCols());
@@ -902,21 +903,21 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator+(const Matrix<T>& rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator+(const Matrix<T>& rhs) const
 	{
 		return std::move(*this + (&rhs));
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator+(const std::unique_ptr<Matrix<T>>& rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator+(const std::unique_ptr<Matrix<T>>& rhs) const
 	{
 		return std::move(*this + rhs.get());
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator+(const std::shared_ptr<Matrix<T>>& rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator+(const std::shared_ptr<Matrix<T>>& rhs) const
 	{
 		return std::move(*this - rhs.get());
 	}
@@ -968,7 +969,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator-(const Matrix<T>* rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator-(const Matrix<T>* rhs) const
 	{
 		using namespace Eigen;
 		using namespace std;
@@ -978,7 +979,7 @@ namespace OPLibrary
 				"Matrices are not substractable: l: " + std::to_string(this->rows_) + "x" + std::to_string(this->cols_)
 				+ "; r: " + std::to_string(rhs->getRows()) + "x" + std::to_string(rhs->getCols()));
 
-		auto retMatrix(make_unique<DenseMatrix<T>>(DenseMatrix(rhs->getRows(), rhs->getCols())));
+		auto retMatrix(make_shared<DenseMatrix<T>>(DenseMatrix(rhs->getRows(), rhs->getCols())));
 
 		auto& lhsMatrix(this->matrix_);
 
@@ -990,7 +991,7 @@ namespace OPLibrary
 			rhsVals->data(), rhsRows, rhsCols);
 
 		const auto tmpResult = Eigen::Matrix<T, Dynamic, Dynamic>(*lhsMatrix - rhsMatrix);
-		unique_ptr<vector<T>> tmpResultVec(make_unique<vector<T>>(vector<T>(tmpResult.size())));
+		auto tmpResultVec(make_shared<vector<T>>(vector<T>(tmpResult.size())));
 		Map<Eigen::Matrix<T, Dynamic, Dynamic>>(tmpResultVec->data(), tmpResult.rows(), tmpResult.cols()) = tmpResult;
 
 		retMatrix->setValues(*tmpResultVec, rhs->getRows(), rhs->getCols());
@@ -1000,21 +1001,21 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator-(const Matrix<T>& rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator-(const Matrix<T>& rhs) const
 	{
 		return std::move(*this - (&rhs));
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator-(const std::unique_ptr<Matrix<T>>& rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator-(const std::unique_ptr<Matrix<T>>& rhs) const
 	{
 		return std::move(*this - rhs.get());
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::operator-(const std::shared_ptr<Matrix<T>>& rhs) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator-(const std::shared_ptr<Matrix<T>>& rhs) const
 	{
 		return std::move(*this - rhs.get());
 	}
@@ -1065,7 +1066,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol) const
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::block(const size_t& sRow, const size_t& sCol, const size_t& eRow, const size_t& eCol) const
 	{
 		using namespace Eigen;
 		using namespace std;
@@ -1081,10 +1082,10 @@ namespace OPLibrary
 		const size_t nRows(eRow - sRow + 1);
 		const size_t nCols(eCol - sCol + 1);
 
-		auto retMatrix(make_unique<DenseMatrix<T>>(DenseMatrix(nRows, nCols)));
+		auto retMatrix(make_shared<DenseMatrix<T>>(DenseMatrix(nRows, nCols)));
 
 		const auto tmpMatrix(Eigen::Matrix<T, Dynamic, Dynamic>(this->matrix_->block(sRow, sCol, nRows, nCols)));
-		unique_ptr<vector<T>> tmpVals(make_unique<vector<T>>(vector<T>(tmpMatrix.size())));
+		shared_ptr<vector<T>> tmpVals(make_shared<vector<T>>(vector<T>(tmpMatrix.size())));
 		Map<Eigen::Matrix<T, Dynamic, Dynamic>>(tmpVals->data(), tmpMatrix.rows(), tmpMatrix.cols()) = tmpMatrix;
 
 		retMatrix->setValues(*tmpVals, nRows, nCols);
@@ -1141,7 +1142,7 @@ namespace OPLibrary
 		const size_t nRows(eRow - sRow + 1);
 		const size_t nCols(eCol - sCol + 1);
 
-		auto tmpMatrix(std::make_unique<DenseMatrix<T>>(DenseMatrix<T>(nRows, nCols)));
+		auto tmpMatrix(std::make_shared<DenseMatrix<T>>(DenseMatrix<T>(nRows, nCols)));
 		tmpMatrix->setValues(newVals, nRows, nCols);
 
 		this->block(sRow, sCol, eRow, eCol, tmpMatrix.get());
@@ -1156,7 +1157,7 @@ namespace OPLibrary
 		const size_t nRows(eRow - sRow + 1);
 		const size_t nCols(eCol - sCol + 1);
 
-		auto tmpMatrix(std::make_unique<DenseMatrix<T>>(DenseMatrix<T>(nRows, nCols)));
+		auto tmpMatrix(std::make_shared<DenseMatrix<T>>(DenseMatrix<T>(nRows, nCols)));
 		tmpMatrix->setValues(vector<T>(nRows * nCols, scalar), nRows, nCols);
 
 		this->block(sRow, sCol, eRow, eCol, tmpMatrix.get());
@@ -1195,14 +1196,14 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::solve(Matrix<T>* rhs, const DecompositionType& decomposition)
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::solve(Matrix<T>* rhs, const DecompositionType& decomposition)
 	{
 		return std::move(this->solve(*rhs, decomposition));
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::solve(const std::unique_ptr<Matrix<T>>& rhs,
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::solve(const std::unique_ptr<Matrix<T>>& rhs,
 		const DecompositionType& decomposition)
 	{
 		return std::move(this->solve(*rhs, decomposition));
@@ -1210,7 +1211,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::solve(const std::shared_ptr<Matrix<T>>& rhs,
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::solve(const std::shared_ptr<Matrix<T>>& rhs,
 		const DecompositionType& decomposition)
 	{
 		return std::move(this->solve(*rhs, decomposition));
@@ -1218,7 +1219,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::unique_ptr<Matrix<T>> DenseMatrix<T>::solve(Matrix<T>& rhs, const DecompositionType& decomposition)
+	std::shared_ptr<Matrix<T>> DenseMatrix<T>::solve(Matrix<T>& rhs, const DecompositionType& decomposition)
 	{
 		using namespace Eigen;
 		using namespace std;
@@ -1232,7 +1233,7 @@ namespace OPLibrary
 		const Eigen::Matrix<T, Dynamic, Dynamic> rhsE = Map<Eigen::Matrix<T, Dynamic, Dynamic>>(
 			rhsVals->data(), rhsRows, rhsCols);
 
-		auto ret(make_unique<DenseMatrix<T>>(DenseMatrix()));
+		auto ret(make_shared<DenseMatrix<T>>(DenseMatrix()));
 
 		Eigen::Matrix<T, Dynamic, Dynamic> solution;
 		if (decomposition == DecompositionType::BDCSVD)
@@ -1252,7 +1253,7 @@ namespace OPLibrary
 			throw MatrixException("Unsupported solver.");
 		}
 
-		unique_ptr<vector<T>> tmpResultVec(make_unique<vector<T>>(vector<T>(solution.size())));
+		shared_ptr<vector<T>> tmpResultVec(make_shared<vector<T>>(vector<T>(solution.size())));
 		Map<Eigen::Matrix<T, Dynamic, Dynamic>>(tmpResultVec->data(), solution.rows(), solution.cols()) = solution;
 
 		ret->setValues(*tmpResultVec, tmpResultVec->size(), 1);
