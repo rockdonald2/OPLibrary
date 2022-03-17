@@ -22,8 +22,9 @@ namespace OPLibrary
 
 		explicit DenseMatrix(const size_t& initialRows, const size_t& initialColumns) :
 			Matrix<T>(initialRows, initialColumns),
-			matrix_(new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(initialRows, initialColumns))
+			matrix_(std::make_unique<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>>(initialRows, initialColumns))
 		{
+			matrix_->fill(0.0);
 		}
 
 		explicit DenseMatrix(const Matrix<T>& rhs);
