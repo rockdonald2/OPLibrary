@@ -14,18 +14,6 @@
 namespace OPLibrary
 {
 	/**
-	 * \brief Representation of different solution statuses.
-	 */
-	enum class SolutionStatus
-	{
-		FEASIBLE,
-		UNFEASIBLE,
-		PRIMAL_UNFEASIBLE,
-		DUAL_UNFEASIBLE,
-		NONINITIALIZED
-	};
-
-	/**
 	 * \brief Representation of Solver algorithm.
 	 */
 	template <typename T>
@@ -40,10 +28,8 @@ namespace OPLibrary
 		std::shared_ptr<Writer<T>> writer_;
 		std::shared_ptr<Solution<T>> solution_;
 
-		SolutionStatus status_;
-
 	public:
-		Solver() : problem_(nullptr), writer_(nullptr), solution_(nullptr), status_(SolutionStatus::NONINITIALIZED)
+		Solver() : problem_(nullptr), writer_(nullptr), solution_(nullptr)
 		{
 		}
 
@@ -104,10 +90,6 @@ namespace OPLibrary
 		 * \return Solution
 		 */
 		[[nodiscard]] virtual std::shared_ptr<Solution<T>> getSolution();
-		/**
-		 * \brief Returns the final status of the problem.
-		 */
-		[[nodiscard]] virtual std::string getStatus();
 	};
 
 	template <typename T>
@@ -181,26 +163,5 @@ namespace OPLibrary
 	std::shared_ptr<Solution<T>> Solver<T>::getSolution()
 	{
 		return solution_;
-	}
-
-	template <typename T>
-		requires std::floating_point<T>
-	std::string Solver<T>::getStatus()
-	{
-		switch (this->status_)
-		{
-		case SolutionStatus::FEASIBLE:
-			return "feasible";
-		case SolutionStatus::UNFEASIBLE:
-			return "unfeasible";
-		case SolutionStatus::PRIMAL_UNFEASIBLE:
-			return "primal unfeasible";
-		case SolutionStatus::DUAL_UNFEASIBLE:
-			return "dual unfeasible";
-		case SolutionStatus::NONINITIALIZED:
-			return "uninitialized";
-		}
-
-		throw SolverException("Unknown final status.");
 	}
 }

@@ -16,6 +16,7 @@ namespace OPLibrary
 	class CSVWriter final : public Writer<T>
 	{
 		const inline static std::string SEPARATOR = ",";
+		const inline static std::string ENDLINE = "\n";
 
 		template <typename E>
 		void internalRowWrite(E elem);
@@ -48,21 +49,21 @@ namespace OPLibrary
 		const auto b(problem->getConstraintsObjectives()->getValues());
 		const auto c(problem->getObjectives()->getValues());
 
-		*this->output_ << "bT" + SEPARATOR;
+		internalRowWrite("bT: ");
 		std::for_each(b->begin(), b->end(), [this](auto n)
 			{
 				internalRowWrite(n);
 			});
-		*this->output_ << "\n";
+		*this->output_ << ENDLINE;
 
-		*this->output_ << "cT" + SEPARATOR;
+		internalRowWrite("cT: ");
 		std::for_each(c->begin(), c->end(), [this](auto n)
 			{
 				internalRowWrite(n);
 			});
-		*this->output_ << "\n";
+		*this->output_ << ENDLINE;
 
-		*this->output_ << "A" + SEPARATOR;
+		internalRowWrite("A: ");
 		for (size_t i = 0; i < A->getRows(); ++i)
 		{
 			const auto currRow(A->getRow(i));
@@ -70,10 +71,9 @@ namespace OPLibrary
 				{
 					internalRowWrite(n);
 				});
-			*this->output_ << SEPARATOR;
+			*this->output_ << ENDLINE << SEPARATOR;
 		}
 
-		*this->output_ << "\n";
 		*this->output_ << std::endl;
 	}
 
@@ -89,33 +89,39 @@ namespace OPLibrary
 	void CSVWriter<T>::writeSolution(const Solution<T>* solution)
 	{
 		if (wasIterationWritten_) {
-			*this->output_ << "\n";
+			*this->output_ << ENDLINE;
 		}
 
-		const auto x(solution->getX()->getValues());
-		const auto y(solution->getY()->getValues());
-		const auto s(solution->getS()->getValues());
+		const auto optimal(solution->getOptimalValue());
+		const auto x(solution->getPrimalSolution()->getValues());
+		const auto y(solution->getDualSolutionY()->getValues());
+		const auto s(solution->getDualSolutionS()->getValues());
 
-		*this->output_ << "xT" + SEPARATOR;
+		internalRowWrite("Optimal value: ");
+		internalRowWrite(optimal);
+		*this->output_ << ENDLINE;
+
+		internalRowWrite("xT: ");
 		std::for_each(x->begin(), x->end(), [this](auto n)
 			{
 				internalRowWrite(n);
 			});
-		*this->output_ << "\n";
+		*this->output_ << ENDLINE;
 
-		*this->output_ << "yT" + SEPARATOR;
+		internalRowWrite("yT: ");
 		std::for_each(y->begin(), y->end(), [this](auto n)
 			{
 				internalRowWrite(n);
 			});
-		*this->output_ << "\n";
+		*this->output_ << ENDLINE;
 
-		*this->output_ << "sT" + SEPARATOR;
+		internalRowWrite("sT: ");
 		std::for_each(s->begin(), s->end(), [this](auto n)
 			{
 				internalRowWrite(n);
 			});
-		*this->output_ << "\n";
+		*this->output_ << ENDLINE;
+
 		*this->output_ << std::endl;
 	}
 
@@ -136,7 +142,7 @@ namespace OPLibrary
 				{
 					internalRowWrite(n);
 				});
-			*this->output_ << "\n";
+			*this->output_ << ENDLINE;
 
 			wasIterationWritten_ = true;
 		}

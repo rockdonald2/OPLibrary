@@ -420,7 +420,7 @@ namespace OPLibrary
 		}
 		else
 		{
-			roots = solvePolynomial<T>(vector<T>({ A, B, C }));
+			roots = solvePolynomial<T>({ A, B, C });
 		}
 
 		roots.push_back(1.0);
@@ -582,8 +582,7 @@ namespace OPLibrary
 		auto hr(false);
 
 		if (currIter_ > maxIters_) hr = true;
-		if (this->status_ == SolutionStatus::FEASIBLE &&
-			containsNaN(x_.get()) || containsNaN(y_.get()) || containsNaN(s_.get())) hr = true;
+		if (containsNaN(x_.get()) || containsNaN(y_.get()) || containsNaN(s_.get())) hr = true;
 
 		if (!((mu_ < epsilon_) && checkPrimalFeasibility() && checkDualFeasibility())) hr = true;
 
@@ -713,11 +712,11 @@ namespace OPLibrary
 
 		this->init_->initialize(x_.get(), y_.get(), s_.get());
 
-		this->status_ = internalSolver();
+		const auto status(internalSolver());
 
-		this->solution_ = make_shared<Solution<T>>(Solution<T>(x_, y_, s_));
+		this->solution_ = make_shared<Solution<T>>(status, (*this->problem_->getObjectives()->transpose() * *x_)->get(0, 0), x_, y_, s_);
 
-		return this->status_;
+		return status;
 	}
 
 	template <typename T>

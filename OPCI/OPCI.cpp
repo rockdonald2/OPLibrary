@@ -10,6 +10,7 @@
 #include "SolverFactory.hpp"
 #include "Logger.hpp"
 #include "MatrixFactory.hpp"
+#include "ProblemBuilder.hpp"
 #include "WriterBuilder.hpp"
 #include "ThreadUtils.hpp"
 
@@ -41,13 +42,12 @@ int runOptimizer(const std::string& in, const std::string& out)
 		auto vector1(matrixFactory.createMatrix());
 		auto vector2(matrixFactory.createMatrix());
 
-		const auto problem(make_shared<Problem<TYPE>>(matrix, vector1, vector2));
+		const auto problem(ProblemBuilder<TYPE>().setConstraints(matrix).setConstraintsObjectives(vector1).setObjectives(vector2).build());
 
 		reader->readProblem(problem);
 		writer->writeProblem(problem);
 
-		const auto solver(
-			SolverFactory::createSolver<TYPE>(*ArgsParser::getStringArgument(ArgsParser::Args::SOLVER_TYPE)));
+		const auto solver(SolverFactory::createSolver<TYPE>(*ArgsParser::getStringArgument(ArgsParser::Args::SOLVER_TYPE)));
 
 		solver->setWriter(writer);
 		solver->setProblem(problem);
@@ -71,7 +71,7 @@ int runOptimizer(const std::string& in, const std::string& out)
 
 		const auto currThread(gexecutors.getById(this_thread::get_id()));
 		LOG.info(std::format("[{}] - Optimization problem successfully resolved. It is {}.",
-			currThread.has_value() ? currThread.value()->getName() : "Sequential (main) Optimizer", solver->getStatus()));
+			currThread ? currThread.value()->getName() : "Sequential (main) Optimizer", solution->getSolutionStatusString()));
 	}
 	catch (const ReaderException& e)
 	{
