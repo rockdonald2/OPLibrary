@@ -38,11 +38,11 @@ int runOptimizer(const std::string& in, const std::string& out)
 
 		const MatrixFactory<TYPE> matrixFactory;
 
-		auto matrix(matrixFactory.createMatrix());
-		auto vector1(matrixFactory.createMatrix());
-		auto vector2(matrixFactory.createMatrix());
-
-		const auto problem(ProblemBuilder<TYPE>().setConstraints(matrix).setConstraintsObjectives(vector1).setObjectives(vector2).build());
+		const auto problem(ProblemBuilder<TYPE>()
+			.setConstraints(matrixFactory.createMatrix())
+			.setConstraintsObjectives(matrixFactory.createMatrix())
+			.setObjectives(matrixFactory.createMatrix())
+			.build());
 
 		reader->readProblem(problem);
 		writer->writeProblem(problem);

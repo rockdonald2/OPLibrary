@@ -11,9 +11,9 @@ namespace OPLibrary
 	enum class SolutionStatus
 	{
 		FEASIBLE,
-		UNFEASIBLE,
-		PRIMAL_UNFEASIBLE,
-		DUAL_UNFEASIBLE,
+		INFEASIBLE,
+		PRIMAL_INFEASIBLE,
+		DUAL_INFEASIBLE,
 		NONINITIALIZED
 	};
 
@@ -86,11 +86,11 @@ namespace OPLibrary
 		{
 		case SolutionStatus::FEASIBLE:
 			return "feasible";
-		case SolutionStatus::UNFEASIBLE:
+		case SolutionStatus::INFEASIBLE:
 			return "unfeasible";
-		case SolutionStatus::PRIMAL_UNFEASIBLE:
+		case SolutionStatus::PRIMAL_INFEASIBLE:
 			return "primal unfeasible";
-		case SolutionStatus::DUAL_UNFEASIBLE:
+		case SolutionStatus::DUAL_INFEASIBLE:
 			return "dual unfeasible";
 		case SolutionStatus::NONINITIALIZED:
 			return "uninitialized";

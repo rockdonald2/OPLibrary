@@ -156,11 +156,9 @@ namespace OPLibrary
 			const auto detx(calculateEigenMaxOf(vec) * calculateEigenMinOf(vec));
 
 			const auto E(factory.createMatrix(n - 1, n - 1));
-			E->setValues(vector<T>(static_cast<size_t>(pow((n - 1), 2)), 0), n - 1, n - 1);
 			E->setDiagonalValues(vector<T>(n - 1, 1));
 
 			const auto helperTriangularMatrix(factory.createMatrix(n - 1, n - 1));
-			helperTriangularMatrix->setValues(vector<T>(static_cast<size_t>(pow(n - 1, 2)), 0), n - 1, n - 1);
 
 			for (size_t i = 0; i < (n - 1); ++i)
 			{
@@ -329,6 +327,8 @@ namespace OPLibrary
 			this->INITIALIZATOR.insert(make_pair<string, long double*>("sigma", &sigma_));
 		}
 
+		~SOCPSolver() override = default;
+
 		SOCPSolver(const SOCPSolver<T>&) = delete;
 		SOCPSolver<T>& operator=(const SOCPSolver<T>&) = delete;
 
@@ -473,7 +473,7 @@ namespace OPLibrary
 		const auto w(calculateW());
 		const auto sqrtInverseW(calculatePowerOf(calculatePowerOf(w.get(), 0.5).get(), -1));
 		const auto pOfW(calculatePMatrixOf(sqrtInverseW.get()));
-		// a gyokvonas feleslegesnek tunik
+		// calculating square root feels unnecessary
 		const auto xMultipliedpOfW(*pOfW * *this->x_);
 
 		return move(*xMultipliedpOfW / sqrt(this->mu_));
@@ -593,6 +593,30 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	SolutionStatus SOCPSolver<T>::internalSolver()
 	{
+		/*
+		 * jegyzet a tobb kup tamogatasahoz
+		 *
+		 * x = [egyes x vektorok egymas melle helyezese]
+		 * s es y gondolom ugyanugy
+		 *
+		 * e = [egyes e identitas vektorok egymas melle helyezese]
+		 *
+		 * P matrix = [diagonalis osszevonas az egyes P matrixoknak]
+		 *
+		 * w = [egyes w vektorok egymas melle helyezese]
+		 *		igy P(w) = diag(P(w1), ...)
+		 *
+		 * v = [egyes v vektorok egymas melle helyezese]
+		 *
+		 * eigenmax(x) = max{ eigenmax, minden egyes sajatertekre nezve }
+		 * eigenmin(x) = min{ eigenmin, minden egyes sajatertekre nezve }
+		 *
+		 * det(x) = egyes det(x)-k osszeszorozva
+		 *
+		 * a tobbi nem kellene valtozzon
+		 */
+
+
 		using namespace std;
 
 		auto hr(SolutionStatus::FEASIBLE);
@@ -672,7 +696,7 @@ namespace OPLibrary
 				(*this->x_->transpose() * *this->s_)->get(0, 0) });
 		} while (!checkIsTermination());
 
-		if (checkInfeasibility()) hr = SolutionStatus::UNFEASIBLE;
+		if (checkInfeasibility()) hr = SolutionStatus::INFEASIBLE;
 
 		return hr;
 	}
