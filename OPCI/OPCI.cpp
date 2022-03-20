@@ -73,31 +73,6 @@ int runOptimizer(const std::string& in, const std::string& out)
 		LOG.info(std::format("[{}] - Optimization problem successfully resolved. It is {}.",
 			currThread ? currThread.value()->getName() : "Sequential (main) Optimizer", solution->getSolutionStatusString()));
 	}
-	catch (const ReaderException& e)
-	{
-		LOG.error(e.what());
-		hr = EXIT_FAILURE;
-	}
-	catch (const MatrixException& e)
-	{
-		LOG.error(e.what());
-		hr = EXIT_FAILURE;
-	}
-	catch (const SolverException& e)
-	{
-		LOG.error(e.what());
-		hr = EXIT_FAILURE;
-	}
-	catch (const ArgumentException& e)
-	{
-		LOG.error(e.what());
-		hr = EXIT_FAILURE;
-	}
-	catch (const WriterException& e)
-	{
-		LOG.error(e.what());
-		hr = EXIT_FAILURE;
-	}
 	catch (const exception& e)
 	{
 		LOG.error(e.what());
@@ -105,7 +80,7 @@ int runOptimizer(const std::string& in, const std::string& out)
 	}
 	catch (...)
 	{
-		LOG.error("Unknown exception, possibly from Eigen.");
+		LOG.error("Unknown exception, possibly from Eigen, which doesn't derive from std::exception.");
 		hr = EXIT_FAILURE;
 	}
 
