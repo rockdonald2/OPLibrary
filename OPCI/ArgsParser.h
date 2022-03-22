@@ -17,6 +17,8 @@ namespace OPLibrary
 		enum class Args
 		{
 			CONFIG,
+			MAXIMIZE,
+			MINIMIZE,
 			INPUT_FILE,
 			PARALLEL,
 			OUTPUT_FILE,
@@ -25,12 +27,13 @@ namespace OPLibrary
 			MU,
 			RHO,
 			SIGMA,
+			INITIALIZATOR,
 			NONEXISTING
 		};
 
 	private:
-		const static inline std::vector<Args> PARAMETERIZED_ARGS_VALS = { Args::INPUT_FILE, Args::OUTPUT_FILE, Args::SOLVER_TYPE, Args::EPSILON, Args::RHO, Args::SIGMA, Args::MU };
-		const static inline std::vector<Args> NONPARAMETERIZED_ARGS_VALS = { Args::PARALLEL };
+		const static inline std::vector<Args> PARAMETERIZED_ARGS_VALS = { Args::INPUT_FILE, Args::OUTPUT_FILE, Args::SOLVER_TYPE, Args::EPSILON, Args::RHO, Args::SIGMA, Args::MU, Args::INITIALIZATOR };
+		const static inline std::vector<Args> NONPARAMETERIZED_ARGS_VALS = { Args::PARALLEL, Args::MAXIMIZE, Args::MINIMIZE };
 		static inline std::unordered_map<Args, std::vector<std::string>> options_ = []
 		{
 			using namespace std;
@@ -45,7 +48,9 @@ namespace OPLibrary
 			options.try_emplace(Args::RHO, vector<string>({ "--rho" }));
 			options.try_emplace(Args::SIGMA, vector<string>({ "--sigma" }));
 			options.try_emplace(Args::MU, vector<string>({ "--mu" }));
-
+			options.try_emplace(Args::MAXIMIZE, vector<string>({ "--max" }));
+			options.try_emplace(Args::MINIMIZE, vector<string>({ "--min" }));
+			options.try_emplace(Args::INITIALIZATOR, vector<string>({ "--init" }));
 
 			return options;
 		}();
@@ -63,6 +68,9 @@ namespace OPLibrary
 			strToArg.try_emplace("rho", Args::RHO);
 			strToArg.try_emplace("sigma", Args::SIGMA);
 			strToArg.try_emplace("mu", Args::MU);
+			strToArg.try_emplace("max", Args::MAXIMIZE);
+			strToArg.try_emplace("min", Args::MINIMIZE);
+			strToArg.try_emplace("init", Args::INITIALIZATOR);
 
 			return strToArg;
 		}();

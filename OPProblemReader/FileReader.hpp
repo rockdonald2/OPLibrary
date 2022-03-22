@@ -7,6 +7,8 @@
 #include "Reader.hpp"
 #include "ReaderException.hpp"
 #include "Logger.hpp"
+#include "SOCPProblem.hpp"
+#include "SOCPSolver.hpp"
 
 namespace OPLibrary
 {
@@ -26,10 +28,10 @@ namespace OPLibrary
 		void readInput(const size_t& maxRows, const size_t& maxCols, Matrix<T>* holder) const;
 
 	public:
-		explicit FileReader(std::ifstream* input) : rows_(0), cols_(0), input_(input) {}
+		explicit FileReader(std::ifstream* input, const ProblemType& type) : Reader<T>(type), rows_(0), cols_(0), input_(input) {}
 
-		void readProblem(const Problem<T>* problem) override;
-		void readProblem(const std::shared_ptr<Problem<T>>& problem) override;
+		void readProblem(Problem<T>* problem) override;
+		void readProblem(std::shared_ptr<Problem<T>>& problem) override;
 	};
 
 	template <typename T>
@@ -93,7 +95,7 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	void FileReader<T>::readProblem(const Problem<T>* problem)
+	void FileReader<T>::readProblem(Problem<T>* problem)
 	{
 		using namespace std;
 
@@ -105,11 +107,32 @@ namespace OPLibrary
 		if (input_->is_open())
 		{
 			rows_ = readParam();
-			cols_ = readParam();
+
+			// for extra SOCP related operations
+			if (this->type_ == ProblemType::SOCP)
+			{
+				const auto nof(readParam());
+
+				auto* pr(dynamic_cast<SOCPProblem<T>*>(problem));
+
+				vector<size_t> coneSizes;
+				for (size_t i(0); i < nof; ++i)
+				{
+					coneSizes.push_back(readParam());
+				}
+
+				pr->setConeSizes(coneSizes);
+
+				cols_ = std::reduce(std::execution::par, coneSizes.begin(), coneSizes.end(), static_cast<size_t>(0));
+			}
+			else
+			{
+				cols_ = readParam();
+			}
 
 			readInput(rows_, cols_, problem->getConstraints().get()); // A matrix
-			readInput(rows_, 1, problem->getConstraintsObjectives().get()); // b vektor
-			readInput(cols_, 1, problem->getObjectives().get()); // c vektor
+			readInput(rows_, 1, problem->getConstraintsObjectives().get()); // b vector
+			readInput(cols_, 1, problem->getObjectives().get()); // c vector
 		}
 		else
 		{
@@ -117,8 +140,9 @@ namespace OPLibrary
 		}
 	}
 
-	template <typename T> requires std::floating_point<T>
-	void FileReader<T>::readProblem(const std::shared_ptr<Problem<T>>& problem)
+	template <typename T>
+		requires std::floating_point<T>
+	void FileReader<T>::readProblem(std::shared_ptr<Problem<T>>& problem)
 	{
 		this->readProblem(problem.get());
 	}

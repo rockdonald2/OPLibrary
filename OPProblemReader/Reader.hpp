@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "Matrix.hpp"
 #include "Problem.hpp"
 
 namespace OPLibrary
@@ -12,16 +11,21 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	class Reader
 	{
+	protected:
+		ProblemType type_;
+
 	public:
+		explicit Reader(const ProblemType& type) : type_(type) {}
+
 		virtual ~Reader() = default;
 
 		/**
 		 * \brief Reads in the optimization problem in order of: constraints, constraints objectives and objectives.
 		 */
-		virtual void readProblem(const Problem<T>* problem) = 0;
+		virtual void readProblem(Problem<T>* problem) = 0;
 		/**
 		 * \brief Reads in the optimization problem in order of: constraints, constraints objectives and objectives.
 		 */
-		virtual void readProblem(const std::shared_ptr<Problem<T>>& problem) = 0;
+		virtual void readProblem(std::shared_ptr<Problem<T>>& problem) = 0;
 	};
 }

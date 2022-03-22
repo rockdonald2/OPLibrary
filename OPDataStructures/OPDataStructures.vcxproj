@@ -126,7 +126,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>..\OPDataStructures;..\OPProblemReader;..\OPSolver;..\OPUtility;..\packages\Eigen3.3.3.9\build\native\../..//lib/native/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\OPDataStructures;..\OPProblemReader;..\OPSolver;..\OPUtility;..\packages\boost.1.78.0\build\..\lib\native\include\;.\packages\Eigen3.3.3.9\build\native\../..//lib/native/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -165,6 +165,8 @@
     <ClInclude Include="DenseMatrix.hpp" />
     <ClInclude Include="Problem.hpp" />
     <ClInclude Include="ProblemBuilder.hpp" />
+    <ClInclude Include="SOCPProblem.hpp" />
+    <ClInclude Include="SOCPSolution.hpp" />
     <ClInclude Include="Solution.hpp" />
     <ClInclude Include="VectorExtension.hpp" />
   </ItemGroup>

@@ -5,50 +5,71 @@
 
 namespace OPLibrary
 {
+	enum class ProblemType
+	{
+		SOCP,
+		INVALID
+	};
+
+	enum class ObjectiveDirection
+	{
+		MAXIMIZE,
+		MINIMIZE,
+		INVALID
+	};
+
 	/**
 	 * \brief Representation of the optimization problem.
 	 */
 	template <typename T>
 		requires std::floating_point<T>
-	class Problem final
+	class Problem
 	{
+	protected:
+		ObjectiveDirection direction_;
 		std::shared_ptr<Matrix<T>> constraints_;
 		std::shared_ptr<Matrix<T>> constraintObjectives_;
 		std::shared_ptr<Matrix<T>> objectives_;
 
 	public:
-		Problem() : constraints_(nullptr), constraintObjectives_(nullptr), objectives_(nullptr) {}
-		Problem(Matrix<T>* cnstrs, Matrix<T>* cnstrsObjs, Matrix<T>* objs) : constraints_(cnstrs), constraintObjectives_(cnstrsObjs), objectives_(objs) {}
+		Problem() : direction_(ObjectiveDirection::INVALID), constraints_(nullptr), constraintObjectives_(nullptr), objectives_(nullptr) {}
+		Problem(const ObjectiveDirection& direction, Matrix<T>* cnstrs, Matrix<T>* cnstrsObjs, Matrix<T>* objs) : direction_(direction), constraints_(cnstrs), constraintObjectives_(cnstrsObjs), objectives_(objs) {}
 		/**
 		 * \brief Creates a new Problem instance, but releases all argument pointers, transfers ownership.
 		 */
-		Problem(std::unique_ptr<Matrix<T>>& cnstrs, std::unique_ptr<Matrix<T>>& cnstrsObjs, std::unique_ptr<Matrix<T>>& objs) : constraints_(cnstrs.release()), constraintObjectives_(cnstrsObjs.release()), objectives_(objs.release()) {}
-		Problem(const std::shared_ptr<Matrix<T>>& cnstrs, const std::shared_ptr<Matrix<T>>& cnstrsObjs, const std::shared_ptr<Matrix<T>>& objs) : constraints_(cnstrs), constraintObjectives_(cnstrsObjs), objectives_(objs) {}
+		Problem(const ObjectiveDirection& direction, std::unique_ptr<Matrix<T>>& cnstrs, std::unique_ptr<Matrix<T>>& cnstrsObjs, std::unique_ptr<Matrix<T>>& objs) : direction_(direction), constraints_(cnstrs.release()), constraintObjectives_(cnstrsObjs.release()), objectives_(objs.release()) {}
+		Problem(const ObjectiveDirection& direction, const std::shared_ptr<Matrix<T>>& cnstrs, const std::shared_ptr<Matrix<T>>& cnstrsObjs, const std::shared_ptr<Matrix<T>>& objs) : direction_(direction), constraints_(cnstrs), constraintObjectives_(cnstrsObjs), objectives_(objs) {}
+
+		virtual ~Problem() = default;
+
+		virtual ObjectiveDirection getObjectiveDirection() const;
+
+		virtual void setObjectiveDirection(const ObjectiveDirection& direction);
 
 		/**
 		 * \brief Sets the constraints matrix.
 		 */
-		void setConstraints(Matrix<T>* cnstrs);
+		virtual void setConstraints(Matrix<T>* cnstrs);
 		/**
 		 * \brief Sets the constraints matrix, but releases the original pointer, transfers ownership.
 		 */
-		void setConstraints(std::unique_ptr<Matrix<T>>& cnstrs);
+		virtual void setConstraints(std::unique_ptr<Matrix<T>>& cnstrs);
 		/**
 		 * \brief Sets the constraint objectives vector.
 		 */
-		void setConstraintsObjectives(Matrix<T>* cnstrsObjs);
+		virtual void setConstraintsObjectives(Matrix<T>* cnstrsObjs);
 		/**
 		 * \brief Sets the constraints objectives vector, but releases the original pointer, transfers ownership.
 		 */
-		void setConstraintsObjectives(std::unique_ptr<Matrix<T>>& cnstrsObjs);
+		virtual void setConstraintsObjectives(std::unique_ptr<Matrix<T>>& cnstrsObjs);
 		/**
 		 * \brief Sets the objectives vector.
 		 */
-		void setObjectives(Matrix<T>* objs);
+		virtual void setObjectives(Matrix<T>* objs);
 		/**
 		 * \brief Sets the objectives vector, but releases the original pointer, transfers ownership.
 		 */
-		void setObjectives(std::unique_ptr<Matrix<T>> objs);
+		virtual void setObjectives(std::unique_ptr<Matrix<T>> objs);
 
 		/**
 		 * \brief Returns the constraints matrix.
@@ -77,8 +98,20 @@ namespace OPLibrary
 			return out;
 		}
 
-		[[nodiscard]] std::string toString() const;
+		[[nodiscard]] virtual std::string toString() const;
 	};
+
+	template <typename T> requires std::floating_point<T>
+	ObjectiveDirection Problem<T>::getObjectiveDirection() const
+	{
+		return direction_;
+	}
+
+	template <typename T> requires std::floating_point<T>
+	void Problem<T>::setObjectiveDirection(const ObjectiveDirection& direction)
+	{
+		direction_ = direction;
+	}
 
 	template <typename T>
 		requires std::floating_point<T>

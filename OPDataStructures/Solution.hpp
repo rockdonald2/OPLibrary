@@ -19,8 +19,9 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	class Solution final
+	class Solution
 	{
+	protected:
 		SolutionStatus status_;
 		T optimal_;
 		std::shared_ptr<Matrix<T>> x_;
@@ -43,12 +44,14 @@ namespace OPLibrary
 		{
 		}
 
-		[[nodiscard]] T getOptimalValue() const;
-		[[nodiscard]] SolutionStatus getSolutionStatus() const;
-		[[nodiscard]] std::string getSolutionStatusString() const;
-		[[nodiscard]] std::shared_ptr<Matrix<T>> getPrimalSolution() const;
-		[[nodiscard]] std::shared_ptr<Matrix<T>> getDualSolutionY() const;
-		[[nodiscard]] std::shared_ptr<Matrix<T>> getDualSolutionS() const;
+		virtual ~Solution() = default;
+
+		[[nodiscard]] virtual T getOptimalValue() const;
+		[[nodiscard]] virtual SolutionStatus getSolutionStatus() const;
+		[[nodiscard]] virtual std::string getSolutionStatusString() const;
+		[[nodiscard]] virtual std::shared_ptr<Matrix<T>> getPrimalSolution() const;
+		[[nodiscard]] virtual std::shared_ptr<Matrix<T>> getDualSolutionY() const;
+		[[nodiscard]] virtual std::shared_ptr<Matrix<T>> getDualSolutionS() const;
 
 		friend std::ostream& operator<<(std::ostream& out, const Solution<T>& sol)
 		{
@@ -64,7 +67,7 @@ namespace OPLibrary
 			return out;
 		}
 
-		[[nodiscard]] std::string toString() const;
+		[[nodiscard]] virtual std::string toString() const;
 	};
 
 	template <typename T> requires std::floating_point<T>

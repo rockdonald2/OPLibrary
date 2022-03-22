@@ -33,24 +33,43 @@ int runOptimizer(const std::string& in, const std::string& out)
 
 		if (!inFile.is_open()) throw ArgumentException("Invalid input file.");
 
-		const auto reader(ReaderBuilder<TYPE>().setType(ReaderType::FILE).setInput(&inFile).build());
-		const auto writer(WriterBuilder<TYPE>().setType(WriterType::CSV).setOutput(&outFile).build());
+		const auto problemType(*ArgsParser::getStringArgument(ArgsParser::Args::SOLVER_TYPE));
+		const auto objectiveDir(ArgsParser::getBooleanArgument(ArgsParser::Args::MAXIMIZE) ? ObjectiveDirection::MAXIMIZE : ObjectiveDirection::MINIMIZE);
+		const auto initializator(ArgsParser::getStringArgument(ArgsParser::Args::INITIALIZATOR));
+
+		const auto reader(ReaderBuilder<TYPE>()
+			.setType(ReaderType::FILE)
+			.setProblemType(problemType)
+			.setInput(&inFile)
+			.build());
+		const auto writer(WriterBuilder<TYPE>()
+			.setType(WriterType::CSV)
+			.setProblemType(problemType)
+			.setOutput(&outFile)
+			.build());
 
 		const MatrixFactory<TYPE> matrixFactory;
 
-		const auto problem(ProblemBuilder<TYPE>()
+		auto problem(ProblemBuilder<TYPE>()
+			.setProblemType(problemType)
 			.setConstraints(matrixFactory.createMatrix())
 			.setConstraintsObjectives(matrixFactory.createMatrix())
 			.setObjectives(matrixFactory.createMatrix())
+			.setObjectiveDirection(objectiveDir)
 			.build());
 
 		reader->readProblem(problem);
 		writer->writeProblem(problem);
 
-		const auto solver(SolverFactory::createSolver<TYPE>(*ArgsParser::getStringArgument(ArgsParser::Args::SOLVER_TYPE)));
+		const auto solver(SolverFactory::createSolver<TYPE>(problemType));
 
 		solver->setWriter(writer);
 		solver->setProblem(problem);
+
+		if (initializator)
+		{
+			solver->setStartingPointInitializator(*initializator);
+		}
 
 		for (const auto args(solver->getInitializableArgs()); const auto & arg : args)
 		{
@@ -99,13 +118,6 @@ int optimize(int argc, char* argv[])
 	const auto parallel(ArgsParser::getBooleanArgument(ArgsParser::Args::PARALLEL));
 
 	{
-		if (!inputs || !outputs)
-		{
-			LOG.blank("Inputs/Outputs unspecified.");
-			ArgsParser::printHelp();
-			return EXIT_FAILURE;
-		}
-
 		assert(inputs->size() == outputs->size() && "Individual outputs should be applied to inputs.");
 
 		if (parallel) {
@@ -119,7 +131,7 @@ int optimize(int argc, char* argv[])
 
 	const auto combined(boost::combine(inputs.value(), outputs.value()));
 
-	if (parallel.has_value() && parallel.value() == true)
+	if (parallel && parallel.value())
 	{
 		for (const auto& [input, output] : combined)
 		{

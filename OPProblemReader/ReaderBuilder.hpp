@@ -8,7 +8,8 @@ namespace OPLibrary
 {
 	enum class ReaderType
 	{
-		FILE
+		FILE,
+		INVALID
 	};
 
 	/**
@@ -18,7 +19,10 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	class ReaderBuilder final
 	{
+		inline static const std::map<std::string, ProblemType> MAP_STR_TO_PROBLEM{ {"SOCP", ProblemType::SOCP} };
+
 		ReaderType type_;
+		ProblemType problemType_;
 		void* input_;
 
 	public:
@@ -35,7 +39,6 @@ namespace OPLibrary
 		ReaderBuilder& setType(const ReaderType& type)
 		{
 			type_ = type;
-
 			return *this;
 		}
 
@@ -47,8 +50,29 @@ namespace OPLibrary
 		ReaderBuilder& setInput(void* input)
 		{
 			input_ = input;
-
 			return *this;
+		}
+
+		ReaderBuilder& setProblemType(const ProblemType& type)
+		{
+			problemType_ = type;
+			return *this;
+		}
+
+		ReaderBuilder& setProblemType(const std::string& type)
+		{
+			std::string temp(type);
+			std::ranges::transform(temp, temp.begin(), [](const unsigned char c) { return std::toupper(c); });
+
+			if (!MAP_STR_TO_PROBLEM.contains(temp))
+				throw SolverException("Unsupported problem type.");
+
+			switch (MAP_STR_TO_PROBLEM.at(temp))
+			{
+			case ProblemType::SOCP: return setProblemType(ProblemType::SOCP);
+			}
+
+			throw SolverException("Unsupported problem type.");
 		}
 
 		/**
@@ -61,7 +85,7 @@ namespace OPLibrary
 
 			switch (type_)
 			{
-			case ReaderType::FILE: return std::move(std::make_unique<FileReader<T>>(static_cast<std::ifstream*>(input_)));
+			case ReaderType::FILE: return std::move(std::make_unique<FileReader<T>>(static_cast<std::ifstream*>(input_), problemType_));
 			}
 
 			throw ReaderException("Unsupported reader type.");

@@ -5,10 +5,13 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <numeric>
+#include <execution>
+#include <valarray>
 
 #include "Solver.hpp"
 #include "MatrixFactory.hpp"
-#include "MatrixUtils.hpp"
+#include "SOCPSolution.hpp"
 #include "Solution.hpp"
 #include "SolverException.hpp"
 #include "VectorExtension.hpp"
@@ -22,6 +25,8 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	class SOCPSolver final : public Solver<T>
 	{
+		using CONE_GROUP = std::vector<std::shared_ptr<Matrix<T>>>;
+
 		/**
 		 * \brief Initializator with Strategy pattern to initialize solution vectors.
 		 */
@@ -31,7 +36,7 @@ namespace OPLibrary
 			Initializator() = default;
 			virtual ~Initializator() = default;
 
-			virtual void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) = 0;
+			virtual void initialize(std::vector<std::shared_ptr<Matrix<T>>> x, std::shared_ptr<Matrix<T>> y, std::vector<std::shared_ptr<Matrix<T>>> s) = 0;
 
 			Initializator(const Initializator&) = delete;
 			void operator=(const Initializator&) = delete;
@@ -45,7 +50,7 @@ namespace OPLibrary
 		class ClassicInitializator final : public Initializator
 		{
 		public:
-			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
+			void initialize(std::vector<std::shared_ptr<Matrix<T>>> x, std::shared_ptr<Matrix<T>> y, std::vector<std::shared_ptr<Matrix<T>>> s) override;
 		};
 
 		/**
@@ -54,7 +59,7 @@ namespace OPLibrary
 		class Classic2Initializator final : public Initializator
 		{
 		public:
-			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
+			void initialize(std::vector<std::shared_ptr<Matrix<T>>> x, std::shared_ptr<Matrix<T>> y, std::vector<std::shared_ptr<Matrix<T>>> s) override;
 		};
 
 		/**
@@ -63,7 +68,7 @@ namespace OPLibrary
 		class Classic3Initializator final : public Initializator
 		{
 		public:
-			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
+			void initialize(std::vector<std::shared_ptr<Matrix<T>>> x, std::shared_ptr<Matrix<T>> y, std::vector<std::shared_ptr<Matrix<T>>> s) override;
 		};
 
 		/**
@@ -72,45 +77,53 @@ namespace OPLibrary
 		class Classic4Initializator final : public Initializator
 		{
 		public:
-			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
+			void initialize(std::vector<std::shared_ptr<Matrix<T>>> x, std::shared_ptr<Matrix<T>> y, std::vector<std::shared_ptr<Matrix<T>>> s) override;
 		};
 
-		class Classic5Initializator final : public Initializator
+		/**
+		 * \brief Markowitz initializator, starting points depend on the number of variables inside a cone.
+		 */
+		class MarkowitzInitializator final : public Initializator
 		{
 		public:
-			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
+			void initialize(std::vector<std::shared_ptr<Matrix<T>>> x, std::shared_ptr<Matrix<T>> y, std::vector<std::shared_ptr<Matrix<T>>> s) override;
 		};
 
-		class ManualInitializator final : public Initializator
-		{
-		public:
-			void initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s) override;
-		};
+		long double epsilon_; // independent of number of cones
+		std::vector<long double> alphaPrimal_; // will depend on number of cones
+		std::vector<long double> alphaDual_; // will depend on number of cones
+		long double mu_; // independent of noc
+		long double rho_; // independent of number of cones
+		long double sigma_; // independent of number of cones
 
-		long double epsilon_;
-		long double alphaPrimal_;
-		long double alphaDual_;
-		long double mu_;
-		long double rho_;
-		long double sigma_;
-
-		size_t n_;
-		size_t nn_;
+		std::vector<size_t> n_; // will depend on number of cones
+		size_t m_; // independent of number of cones
 
 		size_t currIter_;
 		size_t maxIters_;
 
-		std::unique_ptr<Initializator> init_;
+		inline static const std::map<std::string, std::shared_ptr<Initializator>> INITS = {
+			{"classic", std::make_shared<ClassicInitializator>()},
+			{"classic2", std::make_shared<Classic2Initializator>()}, {"classic3", std::make_shared<Classic3Initializator>()}, {"classic4", std::make_shared<Classic4Initializator>()},
+			{"markowitz", std::make_shared<MarkowitzInitializator>()}
+		};
+		std::shared_ptr<Initializator> init_;
 
-		std::shared_ptr<Matrix<T>> x_;
-		std::shared_ptr<Matrix<T>> y_;
-		std::shared_ptr<Matrix<T>> s_;
+		std::vector<std::shared_ptr<Matrix<T>>> x_; // will depend on number of cones
+		std::shared_ptr<Matrix<T>> y_; // independent of number of cones
+		std::vector<std::shared_ptr<Matrix<T>>> s_;
+
+		std::vector<std::shared_ptr<Matrix<T>>> cnstrs_; // separate A matrices for individual cones
+		std::vector<std::shared_ptr<Matrix<T>>> objs_; // separate b vectors for individual cones
+		std::shared_ptr<Matrix<T>> cnstrsObjs_;
 
 		static T calculateEigenMinOf(Matrix<T>* vec)
 		{
 			using namespace std;
 
 			assert(vec->getCols() == 1 && "Eigenvalue min can only be calculated for vectors.");
+
+			if (vec->getSize() == 1) return vec->get(0, 0);
 
 			const auto tmpBlock(vec->block(1, 0, vec->getRows() - 1, 0));
 
@@ -122,6 +135,8 @@ namespace OPLibrary
 			using namespace std;
 
 			assert(vec->getCols() == 1 && "Eigenvalue max can only be calculated for vectors.");
+
+			if (vec->getSize() == 1) return vec->get(0, 0);
 
 			const auto tmpBlock(vec->block(1, 0, vec->getRows() - 1, 0));
 
@@ -140,6 +155,8 @@ namespace OPLibrary
 
 			// norm^2
 			retMatrix->set(0, 0, pow(vec->norm(), 2));
+
+			if (vec->getSize() == 1) return retMatrix;
 
 			const auto x1(vec->get(0, 0));
 			const auto x2n(vec->block(1, 0, vec->getRows() - 1, 0));
@@ -185,6 +202,8 @@ namespace OPLibrary
 			auto c1(factory.createMatrix(n, 1));
 			c1->set(0, 0, 0.5);
 
+			if (vec->getSize() == 1) return move(c1);
+
 			const auto x2n(vec->block(1, 0, n - 1, 0));
 			const auto normx2n(x2n->norm());
 
@@ -212,6 +231,8 @@ namespace OPLibrary
 			const MatrixFactory<T> factory(MatrixType::DENSE);
 			auto c2(factory.createMatrix(n, 1));
 			c2->set(0, 0, 0.5);
+
+			if (vec->getSize() == 1) return move(c2);
 
 			const auto x2n(vec->block(1, 0, n - 1, 0));
 			const auto normx2n(x2n->norm());
@@ -248,32 +269,6 @@ namespace OPLibrary
 			return move(ret);
 		}
 
-		static std::shared_ptr<Matrix<T>> oOperation(Matrix<T>* lhs, Matrix<T>* rhs)
-		{
-			assert(lhs->getCols() == 1 && rhs->getCols() == 1 && "Bilinear operator o can only be calculated for vectors.");
-			assert(lhs->getRows() == rhs->getRows() && "Bilinear operator o can only be calculated for same dimensional vectors.");
-
-			using namespace std;
-
-			const auto n(lhs->getRows());
-
-			const MatrixFactory<T> factory;
-
-			auto ret(factory.createMatrix(n, 1));
-
-			ret->set(0, 0, (*lhs->transpose() * *rhs)->get(0, 0));
-
-			const auto x1(lhs->get(0, 0));
-			const auto s1(rhs->get(0, 0));
-
-			for (size_t i = 1; i < n; ++i)
-			{
-				ret->set(i, 0, x1 * rhs->get(i, 0) + s1 * lhs->get(i, 0));
-			}
-
-			return ret;
-		}
-
 		static bool isInCone(Matrix<T>* vec)
 		{
 			assert(vec->getCols() == 1 && "Is In Cone method can only be applied to vectors.");
@@ -290,21 +285,52 @@ namespace OPLibrary
 				});
 		}
 
-		[[nodiscard]] T calculateMu() const;
-		[[nodiscard]] T calculateAlpha(const Matrix<T>* vec, const Matrix<T>* delta) const;
-		[[nodiscard]] std::shared_ptr<Matrix<T>> calculateW() const;
-		[[nodiscard]] std::shared_ptr<Matrix<T>> calculateV() const;
-		[[nodiscard]] std::shared_ptr<Matrix<T>> calculatePv() const;
+		static std::shared_ptr<Matrix<T>> calculateCombinedVectors(const std::vector<size_t>& individualLengths, const std::vector<std::shared_ptr<Matrix<T>>>& vectors)
+		{
+			const auto n(std::reduce(std::execution::par, individualLengths.begin(), individualLengths.end(), static_cast<size_t>(0)));
+			auto combined(MatrixFactory<T>().createMatrix(n, 1));
+			size_t lastPoz(0);
 
-		[[nodiscard]] std::shared_ptr<Matrix<T>> calculateA_() const;
+			for (const auto& v : vectors)
+			{
+				combined->block(lastPoz, 0, lastPoz + v->getRows() - 1, 0, *v->getValues());
+				lastPoz += v->getRows();
+			}
 
-		[[nodiscard]] T distanceFromMuCenter() const;
+			return combined;
+		}
+
+		static std::shared_ptr<Matrix<T>> calculateHorizontallyCombinedMatrix(const std::vector<size_t>& individualRows, const std::vector<size_t>& individualCols, const std::vector<std::shared_ptr<Matrix<T>>>& matrices)
+		{
+			const auto m(*std::ranges::max_element(individualRows));
+			const auto n(std::reduce(std::execution::par, individualCols.begin(), individualCols.end(), static_cast<size_t>(0)));
+
+			auto combined(MatrixFactory<T>().createMatrix(m, n));
+			size_t lastN(0);
+
+			for (const auto& tm : matrices)
+			{
+				combined->block(0, lastN, tm->getRows() - 1, lastN + tm->getCols() - 1, tm);
+				lastN += tm->getCols();
+			}
+
+			return move(combined);
+		}
+
+		[[nodiscard]] long double calculateMu() const;
+		[[nodiscard]] long double calculateAlpha(const Matrix<T>* vec, const Matrix<T>* delta) const;
+		[[nodiscard]] std::vector<std::shared_ptr<Matrix<T>>> calculateW() const;
+		[[nodiscard]] std::vector<std::shared_ptr<Matrix<T>>> calculateV() const;
+		[[nodiscard]] std::vector<std::shared_ptr<Matrix<T>>> calculatePv() const;
+
+		[[nodiscard]] std::vector<std::shared_ptr<Matrix<T>>> calculateA_() const;
 
 		[[nodiscard]] std::shared_ptr<Matrix<T>> calculateResidualB() const;
-		[[nodiscard]] std::shared_ptr<Matrix<T>> calculateResidualC() const;
-		[[nodiscard]] std::shared_ptr<Matrix<T>> calculateResidualC_() const;
+		[[nodiscard]] std::vector<std::shared_ptr<Matrix<T>>> calculateResidualC() const;
+		[[nodiscard]] std::vector<std::shared_ptr<Matrix<T>>> calculateResidualC_() const;
 
 		[[nodiscard]] bool checkIsTermination() const;
+		[[nodiscard]] bool checkMu() const;
 		[[nodiscard]] bool checkPrimalFeasibility() const;
 		[[nodiscard]] bool checkDualFeasibility() const;
 		[[nodiscard]] bool checkInfeasibility() const;
@@ -312,11 +338,10 @@ namespace OPLibrary
 		SolutionStatus internalSolver();
 
 	public:
-		SOCPSolver() : epsilon_(1.0e-6), alphaPrimal_(1.0 / 10),
-			alphaDual_(1.0 / 10), mu_(1.0), rho_(0.98), sigma_(1.0 / 10), n_(0), nn_(0),
+		SOCPSolver() : epsilon_(1.0e-6), mu_(1.0), rho_(0.995), sigma_(1.0 / 10), m_(0),
 			currIter_(0),
-			maxIters_(3000), init_(std::make_unique<Classic4Initializator>()), x_(nullptr),
-			y_(nullptr), s_(nullptr)
+			maxIters_(3000), init_(std::make_shared<ClassicInitializator>()),
+			y_(nullptr)
 		{
 			using namespace std;
 
@@ -335,6 +360,8 @@ namespace OPLibrary
 		SOCPSolver(SOCPSolver<T>&&) = delete;
 		SOCPSolver<T>& operator=(SOCPSolver<T>&&) = delete;
 
+		void setStartingPointInitializator(const std::string& init) override;
+
 		SolutionStatus solve() override;
 	};
 
@@ -342,19 +369,29 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	bool SOCPSolver<T>::checkIsTermination() const
 	{
-		return currIter_ > maxIters_ || ((mu_ < epsilon_) && checkPrimalFeasibility() && checkDualFeasibility());
+		return currIter_ > maxIters_
+			|| (checkMu() && checkPrimalFeasibility() && checkDualFeasibility());
 	}
 
-	template <typename T>
-		requires std::floating_point<T>
-	T SOCPSolver<T>::calculateMu() const
+	template <typename T> requires std::floating_point<T>
+	bool SOCPSolver<T>::checkMu() const
 	{
-		return (*(*this->x_->transpose() * (2.0 * this->sigma_ / static_cast<long double>(this->n_))) * *this->s_)->get(0, 0);
+		return mu_ < epsilon_;
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	T SOCPSolver<T>::calculateAlpha(const Matrix<T>* vec, const Matrix<T>* delta) const
+	long double SOCPSolver<T>::calculateMu() const
+	{
+		using namespace std;
+
+		const auto n(std::reduce(std::execution::par, n_.begin(), n_.end(), static_cast<size_t>(0)));
+		return (*(*calculateCombinedVectors(n_, x_)->transpose() * (2.0 * sigma_ / n)) * *calculateCombinedVectors(n_, s_))->get(0, 0);
+	}
+
+	template <typename T>
+		requires std::floating_point<T>
+	long double SOCPSolver<T>::calculateAlpha(const Matrix<T>* vec, const Matrix<T>* delta) const
 	{
 		using namespace std;
 
@@ -369,44 +406,51 @@ namespace OPLibrary
 		// x1 negyzete - x2n negyzetosszege
 		// C = x1^2 - sum(xi^2)
 
+		T A, B, C;
 		const auto deltax1(delta->get(0, 0));
-		const auto deltax2n(delta->block(1, 0, delta->getRows() - 1, 0)->getValues());
-
-		T A;
-		{
-			T sum(0);
-			for_each(deltax2n->begin(), deltax2n->end(), [&sum](T n)
-				{
-					sum += pow(n, 2);
-				});
-
-			A = pow(deltax1, 2) - sum;
-		}
-
 		const auto x1(vec->get(0, 0));
-		const auto x2n(vec->block(1, 0, vec->getRows() - 1, 0)->getValues());
 
-		T B;
+		if (vec->getSize() == 1)
 		{
-			T sum(0);
-			for (size_t i = 0; i < x2n->size(); ++i)
+			A = pow(deltax1, 2);
+			B = 2 * x1 * deltax1;
+			C = pow(x1, 2);
+		}
+		else
+		{
+			const auto deltax2n(delta->block(1, 0, delta->getRows() - 1, 0)->getValues());
+
 			{
-				sum += (x2n->at(i) * deltax2n->at(i));
+				T sum(0);
+				for_each(deltax2n->begin(), deltax2n->end(), [&sum](T n)
+					{
+						sum += pow(n, 2);
+					});
+
+				A = pow(deltax1, 2) - sum;
 			}
 
-			B = x1 * deltax1 - sum;
-			B *= 2;
-		}
+			const auto x2n(vec->block(1, 0, vec->getRows() - 1, 0)->getValues());
 
-		T C;
-		{
-			T sum(0);
-			for_each(x2n->begin(), x2n->end(), [&sum](T n)
+			{
+				T sum(0);
+				for (size_t i = 0; i < x2n->size(); ++i)
 				{
-					sum += pow(n, 2);
-				});
+					sum += (x2n->at(i) * deltax2n->at(i));
+				}
 
-			C = pow(x1, 2) - sum;
+				B = x1 * deltax1 - sum;
+				B *= 2;
+			}
+			{
+				T sum(0);
+				for_each(x2n->begin(), x2n->end(), [&sum](T n)
+					{
+						sum += pow(n, 2);
+					});
+
+				C = pow(x1, 2) - sum;
+			}
 		}
 
 		vector<T> roots;
@@ -447,110 +491,206 @@ namespace OPLibrary
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculateW() const
+	std::vector<std::shared_ptr<Matrix<T>>> SOCPSolver<T>::calculateW() const
 	{
+		// for each cone
 		// w = P(x^1/2) * (P(x^1/2)*s)^(-1/2)
-		// NT skalazasi pont
-		// w vektor
+		// NT scaling point
+		// w vector
 		using namespace std;
 
-		const auto sqrtx(calculatePowerOf(this->x_.get(), 0.5));
-		const auto pMatrixSqrtx(calculatePMatrixOf(sqrtx.get()));
-		const auto sMultipliedBypMatrix(*pMatrixSqrtx * *this->s_);
-		const auto sqrtSMultiplication(
-			calculatePowerOf(calculatePowerOf(sMultipliedBypMatrix.get(), 0.5).get(), -1));
+		CONE_GROUP sqrtx;
+		for (const auto& x : this->x_)
+		{
+			sqrtx.push_back(calculatePowerOf(x.get(), 0.5));
+		}
+		CONE_GROUP pMatrixSqrtx;
+		for (const auto& x : sqrtx)
+		{
+			pMatrixSqrtx.push_back(calculatePMatrixOf(x.get()));
+		}
 
-		return move(*pMatrixSqrtx * *sqrtSMultiplication);
+		CONE_GROUP sMultipliedBypMatrix;
+		for (size_t i(0); i < pMatrixSqrtx.size(); ++i)
+		{
+			sMultipliedBypMatrix.push_back(*pMatrixSqrtx.at(i) * this->s_.at(i));
+		}
+
+		CONE_GROUP sqrtSMultip;
+		for (const auto& x : sMultipliedBypMatrix)
+		{
+			sqrtSMultip.push_back(calculatePowerOf(calculatePowerOf(x.get(), 0.5).get(), -1));
+		}
+
+		CONE_GROUP w;
+		for (size_t i(0); i < pMatrixSqrtx.size(); ++i)
+		{
+			w.push_back(*pMatrixSqrtx.at(i) * sqrtSMultip.at(i));
+		}
+
+		return move(w);
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculateV() const
+	std::vector<std::shared_ptr<Matrix<T>>> SOCPSolver<T>::calculateV() const
 	{
 		// (P(w^(-1/2)) * x) / sqrt(mu)
 		using namespace std;
 
 		const auto w(calculateW());
-		const auto sqrtInverseW(calculatePowerOf(calculatePowerOf(w.get(), 0.5).get(), -1));
-		const auto pOfW(calculatePMatrixOf(sqrtInverseW.get()));
-		// calculating square root feels unnecessary
-		const auto xMultipliedpOfW(*pOfW * *this->x_);
 
-		return move(*xMultipliedpOfW / sqrt(this->mu_));
+		CONE_GROUP sqrtInvW;
+		for (const auto& tw : w)
+		{
+			sqrtInvW.push_back(calculatePowerOf(calculatePowerOf(tw.get(), 0.5).get(), -1));
+		}
+
+		CONE_GROUP pOfW;
+		for (const auto& tw : sqrtInvW)
+		{
+			pOfW.push_back(calculatePMatrixOf(tw.get()));
+		}
+
+		CONE_GROUP xMultipOfW;
+		for (size_t i(0); i < pOfW.size(); ++i)
+		{
+			xMultipOfW.push_back(*pOfW.at(i) * this->x_.at(i));
+		}
+
+		for (size_t i(0); i < xMultipOfW.size(); ++i)
+		{
+			*xMultipOfW.at(i) /= sqrt(mu_);
+		}
+
+		return move(xMultipOfW);
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculatePv() const
+	std::vector<std::shared_ptr<Matrix<T>>> SOCPSolver<T>::calculatePv() const
 	{
 		// ahol v = P(w^-1/2) * x / sqrt(mu) = v / sqrt(mu)
 		// pv = v^-1 - v, klasszikus phi(t) = t fuggveny eseten
+
 		using namespace std;
 
 		const auto v(calculateV());
-		const auto vInverse(calculatePowerOf(v.get(), -1));
 
-		return move(*vInverse - *v);
+		CONE_GROUP vInv;
+		for (const auto& tv : v)
+		{
+			vInv.push_back(calculatePowerOf(tv.get(), -1));
+		}
+
+		CONE_GROUP ret;
+		for (size_t i(0); i < v.size(); ++i)
+		{
+			ret.push_back(*vInv.at(i) - v.at(i));
+		}
+
+		return move(ret);
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculateA_() const
+	std::vector<std::shared_ptr<Matrix<T>>> SOCPSolver<T>::calculateA_() const
 	{
 		// A_ = sqrt(mu) * A * P(w^1/2)
 		using namespace std;
 
-		const auto AMultipliedMu(*this->problem_->getConstraints() * sqrt(this->mu_));
+		CONE_GROUP AMultipMu;
+		for (const auto& A : cnstrs_)
+		{
+			AMultipMu.push_back(*A * sqrt(mu_));
+		}
+
 		const auto w(calculateW());
-		const auto sqrtW(calculatePowerOf(w.get(), 0.5));
-		const auto pOfW(calculatePMatrixOf(sqrtW.get()));
 
-		return move(*AMultipliedMu * *pOfW);
+		CONE_GROUP sqrtW;
+		for (const auto& tw : w)
+		{
+			sqrtW.push_back(calculatePowerOf(tw.get(), 0.5));
+		}
+
+		CONE_GROUP pOfW;
+		for (const auto& tw : sqrtW)
+		{
+			pOfW.push_back(calculatePMatrixOf(tw.get()));
+		}
+
+		for (size_t i(0); i < AMultipMu.size(); ++i)
+		{
+			*AMultipMu.at(i) *= *pOfW.at(i);
+		}
+
+		return move(AMultipMu);
 	}
 
-	template <typename T> requires std::floating_point<T>
-	T SOCPSolver<T>::distanceFromMuCenter() const
-	{
-		// a mu centrumtol vett tavolsag egyenlo ||pv||F / 2,
-		// azonban a || ||F = sqrt(2) * || ||
-
-		const auto pv(calculatePv());
-		return sqrt(2) * pv->norm() / 2;
-	}
-
-	template <typename T> requires std::floating_point<T>
+	template <typename T>
+		requires std::floating_point<T>
 	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualB() const
 	{
+		using namespace std;
 		// Ax - b
 
-		const auto& A(this->problem_->getConstraints());
-		const auto& b(this->problem_->getConstraintsObjectives());
+		const auto A(calculateHorizontallyCombinedMatrix({ m_ }, n_, cnstrs_));
+		const auto& b(cnstrsObjs_);
 
-		return std::move(*(*A * *x_) - *b);
+		// we need to concatenate each x variable groups
+		const auto combinedX(calculateCombinedVectors(this->n_, this->x_));
+
+		return std::move(*(*A * *combinedX) - *b);
 	}
 
-	template <typename T> requires std::floating_point<T>
-	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualC() const
+	template <typename T>
+		requires std::floating_point<T>
+	std::vector<std::shared_ptr<Matrix<T>>> SOCPSolver<T>::calculateResidualC() const
 	{
+		using namespace std;
+		// for each cone
 		// AT * y + s - c
 
-		const auto AT(this->problem_->getConstraints()->transpose());
-		const auto& c(this->problem_->getObjectives());
+		CONE_GROUP ret;
+		for (size_t i(0); i < cnstrs_.size(); ++i)
+		{
+			ret.push_back(*(*(*cnstrs_.at(i)->transpose() * y_) + s_.at(i)) - *objs_.at(i));
+		}
 
-		return std::move(*(*(*AT * y_) + *s_) - *c);
+		return ret;
 	}
 
-	template <typename T> requires std::floating_point<T>
-	std::shared_ptr<Matrix<T>> SOCPSolver<T>::calculateResidualC_() const
+	template <typename T>
+		requires std::floating_point<T>
+	std::vector<std::shared_ptr<Matrix<T>>> SOCPSolver<T>::calculateResidualC_() const
 	{
 		// 1/sqrt(mu) * P(w)^1/2 * rc
-
-		const auto mu(1.0 / sqrt(mu_));
-		const auto w(calculatePowerOf(calculateW().get(), 0.5));
-		const auto pOfW(calculatePMatrixOf(w.get()));
 		const auto rc(calculateResidualC());
+		const auto w(calculateW());
 
-		return std::move(*(*pOfW * mu) * *rc);
+		CONE_GROUP sqrtW;
+		for (const auto& tw : w)
+		{
+			sqrtW.push_back(calculatePowerOf(tw.get(), 0.5));
+		}
+
+		CONE_GROUP pOfW;
+		for (const auto& tw : sqrtW)
+		{
+			pOfW.push_back(calculatePMatrixOf(tw.get()));
+		}
+
+		for (const auto& m : pOfW)
+		{
+			*m *= 1 / sqrt(mu_);
+		}
+
+		for (size_t i(0); i < pOfW.size(); ++i)
+		{
+			*pOfW.at(i) *= rc.at(i);
+		}
+
+		return std::move(pOfW);
 	}
 
 	template <typename T>
@@ -570,21 +710,21 @@ namespace OPLibrary
 	bool SOCPSolver<T>::checkDualFeasibility() const
 	{
 		// ||rc|| / (1 + ||c||)
-		const auto rc(calculateResidualC());
-		const auto c(this->problem_->getObjectives());
+		const auto trc(calculateResidualC());
+		const auto rc(calculateCombinedVectors(n_, trc));
+		const auto c(calculateCombinedVectors(n_, objs_));
 
 		return rc->norm() / (1.0 + c->norm()) < this->epsilon_;
 	}
 
-	template <typename T> requires std::floating_point<T>
+	template <typename T>
+		requires std::floating_point<T>
 	bool SOCPSolver<T>::checkInfeasibility() const
 	{
 		auto hr(false);
 
 		if (currIter_ > maxIters_) hr = true;
-		if (containsNaN(x_.get()) || containsNaN(y_.get()) || containsNaN(s_.get())) hr = true;
-
-		if (!((mu_ < epsilon_) && checkPrimalFeasibility() && checkDualFeasibility())) hr = true;
+		if (!(checkMu() && checkPrimalFeasibility() && checkDualFeasibility())) hr = true;
 
 		return hr;
 	}
@@ -593,52 +733,33 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	SolutionStatus SOCPSolver<T>::internalSolver()
 	{
-		/*
-		 * jegyzet a tobb kup tamogatasahoz
-		 *
-		 * x = [egyes x vektorok egymas melle helyezese]
-		 * s es y gondolom ugyanugy
-		 *
-		 * e = [egyes e identitas vektorok egymas melle helyezese]
-		 *
-		 * P matrix = [diagonalis osszevonas az egyes P matrixoknak]
-		 *
-		 * w = [egyes w vektorok egymas melle helyezese]
-		 *		igy P(w) = diag(P(w1), ...)
-		 *
-		 * v = [egyes v vektorok egymas melle helyezese]
-		 *
-		 * eigenmax(x) = max{ eigenmax, minden egyes sajatertekre nezve }
-		 * eigenmin(x) = min{ eigenmin, minden egyes sajatertekre nezve }
-		 *
-		 * det(x) = egyes det(x)-k osszeszorozva
-		 *
-		 * a tobbi nem kellene valtozzon
-		 */
-
-
 		using namespace std;
 
 		auto hr(SolutionStatus::FEASIBLE);
 		const MatrixFactory<T> matrixFactory;
-		this->writer_->setIterationHeaders({ "cTx", "bTy", "Duality Gap" });
 		this->currIter_ = 0;
 
 		do
 		{
 			++this->currIter_;
 
+			// calc barrier param
 			this->mu_ = calculateMu();
 
+			// calc residuals
 			const auto rb(calculateResidualB());
-			const auto pv(calculatePv());
-			const auto A_(calculateA_());
+			const auto rc_(calculateCombinedVectors(n_, calculateResidualC_()));
+
+			// calc important metrics
+			const auto pv(calculateCombinedVectors(n_, calculatePv()));
+			const auto A_(calculateHorizontallyCombinedMatrix({ m_ }, n_, calculateA_()));
 			const auto A_T(A_->transpose());
-			const auto rc_(calculateResidualC_());
 
 			// dy
 			shared_ptr<Matrix<T>> dy;
 			{
+				// (m x nj) * (nj x m) * (m x 1) = -(m x nj) * (nj x 1) - (m x 1) - (m x nj) * (nj x 1)
+				// (m x m) * (m x 1) = -(m x 1) - (m x 1) - (m x 1)
 				// A_ * A_T * dy = -A_ * rc_ - rb - A_ * pv
 
 				const auto lhs = *A_ * *A_T;
@@ -661,44 +782,84 @@ namespace OPLibrary
 				dx = *pv - *ds;
 			}
 
+			// we need to separate individual cone directions
+			// in case of dy we do not need to separate anything
+
 			// deltay
 			shared_ptr<Matrix<T>> deltay;
 			{
 				deltay = *dy * mu_;
 			}
 
-			const auto sqrtw(calculatePowerOf(calculateW().get(), 0.5));
+			CONE_GROUP deltax;
+			CONE_GROUP deltas;
 
-			// deltax
-			shared_ptr<Matrix<T>> deltax;
+			for (size_t lastPoz(0); const auto & n : n_)
 			{
-				deltax = *(*calculatePMatrixOf(sqrtw.get()) * sqrt(mu_)) * *dx;
+				deltax.push_back(dx->block(lastPoz, 0, lastPoz + n - 1, 0));
+				deltas.push_back(ds->block(lastPoz, 0, lastPoz + n - 1, 0));
+				lastPoz += n;
 			}
 
-			// deltas
-			shared_ptr<Matrix<T>> deltas;
+			const auto w(calculateW());
+			CONE_GROUP pofsqrtw;
+			CONE_GROUP pofinvsqrtw;
+			for (const auto& tw : w)
 			{
+				const auto sqrtw(calculatePowerOf(tw.get(), 0.5));
 				const auto invsqrtw(calculatePowerOf(sqrtw.get(), -1));
 
-				deltas = *(*calculatePMatrixOf(invsqrtw.get()) * sqrt(mu_)) * *ds;
+				pofsqrtw.push_back(calculatePMatrixOf(sqrtw.get()));
+				pofinvsqrtw.push_back(calculatePMatrixOf(invsqrtw.get()));
 			}
 
-			this->alphaPrimal_ = calculateAlpha(x_.get(), deltax.get());
-			this->alphaDual_ = calculateAlpha(s_.get(), deltas.get());
+			// deltax and deltas
+			for (size_t i(0); i < n_.size(); ++i)
+			{
+				deltax.at(i) = *(*pofsqrtw.at(i) * sqrt(mu_)) * *deltax.at(i);
+				deltas.at(i) = *(*pofinvsqrtw.at(i) * sqrt(mu_)) * *deltas.at(i);
 
-			*x_ += *(*deltax * (this->alphaPrimal_ * this->rho_));
-			*s_ += *(*deltas * (this->alphaDual_ * this->rho_));
-			*y_ += *(*deltay * (this->alphaDual_ * this->rho_));
+				alphaPrimal_.push_back(calculateAlpha(x_.at(i).get(), deltax.at(i).get()));
+				alphaDual_.push_back(calculateAlpha(s_.at(i).get(), deltas.at(i).get()));
+			}
 
-			this->writer_->writeIteration(this->currIter_,
-				{ (*this->problem_->getObjectives()->transpose() * *this->x_)->get(0, 0),
-				(*this->problem_->getConstraintsObjectives()->transpose() * *this->y_)->get(0, 0),
-				(*this->x_->transpose() * *this->s_)->get(0, 0) });
+			const auto a1(*ranges::min_element(alphaPrimal_));
+			const auto a2(*ranges::min_element(alphaDual_));
+
+			for (size_t i(0); i < n_.size(); ++i)
+			{
+				*deltax.at(i) *= (a1 * this->rho_);
+				*x_.at(i) += *deltax.at(i);
+
+				*deltas.at(i) *= (a2 * this->rho_);
+				*s_.at(i) += *deltas.at(i);
+			}
+
+			*y_ += *(*deltay * (a2 * this->rho_));
+
+			{
+				const auto ctx(*this->problem_->getObjectives()->transpose() * *calculateCombinedVectors(n_, x_));
+				const auto bty(*this->problem_->getConstraintsObjectives()->transpose() * *y_);
+
+				this->writer_->writeIteration(this->currIter_, { ctx->get(0, 0), bty->get(0, 0), (*ctx - *bty)->get(0, 0) });
+			}
 		} while (!checkIsTermination());
 
+		// check for final infeasibility
 		if (checkInfeasibility()) hr = SolutionStatus::INFEASIBLE;
 
 		return hr;
+	}
+
+	template <typename T> requires std::floating_point<T>
+	void SOCPSolver<T>::setStartingPointInitializator(const std::string& init)
+	{
+		std::string temp(init);
+		std::ranges::transform(temp, temp.begin(), [](const unsigned char c) { return std::tolower(c); });
+
+		if (!INITS.contains(temp)) throw SolverException("Unsupported starting point initializator type.");
+
+		init_ = INITS.at(temp);
 	}
 
 	template <typename T>
@@ -724,132 +885,204 @@ namespace OPLibrary
 			throw SolverException("No writer is set.");
 		}
 
-		this->n_ = this->problem_->getObjectives()->getRows();
-
-		this->nn_ = this->problem_->getConstraintsObjectives()->getRows();
+		this->writer_->setIterationHeaders({ "cTx", "bTy", "Duality Gap" });
 
 		const MatrixFactory<T> matrixFactory;
+		vector<size_t> coneSizes;
 
-		this->x_ = matrixFactory.createMatrix(n_, 1);
-		this->y_ = matrixFactory.createMatrix(nn_, 1);
-		this->s_ = matrixFactory.createMatrix(n_, 1);
+		// we need to separate individual cones
+		try {
+			m_ = this->problem_->getConstraintsObjectives()->getRows();
 
-		this->init_->initialize(x_.get(), y_.get(), s_.get());
+			const auto* pr(dynamic_cast<SOCPProblem<T>*>(this->problem_.get()));
+
+			if (!pr) throw SolverException("Failed to convert given problem to SOCP problem.");
+
+			coneSizes = pr->getConeSizes();
+
+			n_ = coneSizes;
+
+			const auto& A(this->problem_->getConstraints());
+			const auto& b(this->problem_->getConstraintsObjectives());
+			auto c(this->problem_->getObjectives());
+
+			if (this->problem_->getObjectiveDirection() == ObjectiveDirection::MAXIMIZE)
+			{
+				*c *= -1;
+			}
+
+			// set A
+			size_t lastPoz(0);
+			for (const auto& size : coneSizes)
+			{
+				cnstrs_.push_back(A->block(0, lastPoz, m_ - 1, lastPoz + size - 1));
+				lastPoz += size;
+			}
+
+			cnstrsObjs_ = b;
+
+			lastPoz = static_cast<size_t>(0);
+			for (const auto& size : coneSizes)
+			{
+				objs_.push_back(c->block(lastPoz, 0, lastPoz + size - 1, 0));
+				lastPoz += size;
+			}
+		}
+		catch (const exception&)
+		{
+			throw SolverException("Failed to convert given problem to SOCP problem.");
+		}
+
+		// one set of x and s for each cone
+		for (const auto& n : n_)
+		{
+			x_.push_back(matrixFactory.createMatrix(n, 1));
+			s_.push_back(matrixFactory.createMatrix(n, 1));
+		}
+		y_ = matrixFactory.createMatrix(m_, 1); // only one
+
+		init_->initialize(x_, y_, s_);
 
 		const auto status(internalSolver());
 
-		this->solution_ = make_shared<Solution<T>>(status, (*this->problem_->getObjectives()->transpose() * *x_)->get(0, 0), x_, y_, s_);
+		const auto cx(calculateCombinedVectors(n_, x_));
+		const auto cs(calculateCombinedVectors(n_, s_));
+		auto opt((*this->problem_->getObjectives()->transpose() * *cx)->get(0, 0));
+
+		if (this->problem_->getObjectiveDirection() == ObjectiveDirection::MAXIMIZE)
+		{
+			opt *= -1;
+		}
+
+		this->solution_ = make_shared<SOCPSolution<T>>(status, opt, cx, y_, cs, coneSizes);
 
 		return status;
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	void SOCPSolver<T>::ClassicInitializator::initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s)
+	void SOCPSolver<T>::ClassicInitializator::initialize(std::vector<std::shared_ptr<Matrix<T>>> x, std::shared_ptr<Matrix<T>> y, std::vector<std::shared_ptr<Matrix<T>>> s)
 	{
 		using namespace std;
 
-		if (x == nullptr || y == nullptr || s == nullptr)
+		if (x.empty() || y == nullptr || s.empty())
 			throw SolverException(
 				"Wrong arguments for initializer, matrices have to be allocated before initializing them.");
 
-		const auto rows(x->getRows());
-
-		x->setValues(vector<T>(x->getRows(), 0), x->getRows(), 1);
-		x->set(0, 0, 1);
+		for (const auto& tx : x)
+		{
+			tx->setValues(vector<T>(tx->getRows(), 0), tx->getRows(), 1);
+			tx->set(0, 0, 1);
+		}
 
 		y->setValues(vector<T>(y->getRows(), 0), y->getRows(), 1);
 
-		s->setValues(vector<T>(s->getRows(), 0), s->getRows(), 1);
-		s->set(0, 0, 1);
+		for (const auto& ts : s)
+		{
+			ts->setValues(vector<T>(ts->getRows(), 0), ts->getRows(), 1);
+			ts->set(0, 0, 1);
+		}
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	void SOCPSolver<T>::Classic2Initializator::initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s)
+	void SOCPSolver<T>::Classic2Initializator::initialize(std::vector<std::shared_ptr<Matrix<T>>> x, std::shared_ptr<Matrix<T>> y, std::vector<std::shared_ptr<Matrix<T>>> s)
 	{
 		using namespace std;
 
-		if (x == nullptr || y == nullptr || s == nullptr)
+		if (x.empty() || y == nullptr || s.empty())
 			throw SolverException(
 				"Wrong arguments for initializer, matrices have to be allocated before initializing them.");
 
-		x->setValues(vector<T>(x->getRows(), 0), x->getRows(), 1);
-		x->set(0, 0, 1);
+		for (const auto& tx : x)
+		{
+			tx->setValues(vector<T>(tx->getRows(), 0), tx->getRows(), 1);
+			tx->set(0, 0, 1);
+		}
 
 		y->setValues(vector<T>(y->getRows(), 1), y->getRows(), 1);
 
-		s->setValues(vector<T>(s->getRows(), 0), s->getRows(), 1);
-		s->set(0, 0, 2);
+		for (const auto& ts : s)
+		{
+			ts->setValues(vector<T>(ts->getRows(), 0), ts->getRows(), 1);
+			ts->set(0, 0, 2);
+		}
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	void SOCPSolver<T>::Classic3Initializator::initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s)
+	void SOCPSolver<T>::Classic3Initializator::initialize(std::vector<std::shared_ptr<Matrix<T>>> x, std::shared_ptr<Matrix<T>> y, std::vector<std::shared_ptr<Matrix<T>>> s)
 	{
 		using namespace std;
 
-		if (x == nullptr || y == nullptr || s == nullptr)
+		if (x.empty() || y == nullptr || s.empty())
 			throw SolverException(
 				"Wrong arguments for initializer, matrices have to be allocated before initializing them.");
 
-		x->setValues(vector<T>(x->getRows(), 0), x->getRows(), 1);
-		x->set(0, 0, 1);
+		for (const auto& tx : x)
+		{
+			tx->setValues(vector<T>(tx->getRows(), 0), tx->getRows(), 1);
+			tx->set(0, 0, 1);
+		}
 
 		y->setValues(vector<T>(y->getRows(), 1), y->getRows(), 1);
 
-		s->setValues(vector<T>(s->getRows(), 0), s->getRows(), 1);
-		s->set(0, 0, 1);
+		for (const auto& ts : s)
+		{
+			ts->setValues(vector<T>(ts->getRows(), 0), ts->getRows(), 1);
+			ts->set(0, 0, 1);
+		}
 	}
 
 	template <typename T>
 		requires std::floating_point<T>
-	void SOCPSolver<T>::Classic4Initializator::initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s)
+	void SOCPSolver<T>::Classic4Initializator::initialize(std::vector<std::shared_ptr<Matrix<T>>> x, std::shared_ptr<Matrix<T>> y, std::vector<std::shared_ptr<Matrix<T>>> s)
 	{
 		using namespace std;
 
-		if (x == nullptr || y == nullptr || s == nullptr)
+		if (x.empty() || y == nullptr || s.empty())
 			throw SolverException(
 				"Wrong arguments for initializer, matrices have to be allocated before initializing them.");
 
-		x->setValues(vector<T>(x->getRows(), 0), x->getRows(), 1);
-		x->set(0, 0, 2);
-		x->set(1, 0, 1);
+		for (const auto& tx : x)
+		{
+			tx->setValues(vector<T>(tx->getRows(), 0), tx->getRows(), 1);
+			tx->set(0, 0, 2);
+			tx->set(1, 0, 1);
+		}
 
 		y->setValues(vector<T>(y->getRows(), 0), y->getRows(), 1);
 
-		s->setValues(vector<T>(s->getRows(), 0), s->getRows(), 1);
-		s->set(0, 0, 2);
-		s->set(1, 0, 1);
+		for (const auto& ts : s)
+		{
+			ts->setValues(vector<T>(ts->getRows(), 0), ts->getRows(), 1);
+			ts->set(0, 0, 2);
+			ts->set(1, 0, 1);
+		}
 	}
 
-	template <typename T> requires std::floating_point<T>
-	void SOCPSolver<T>::Classic5Initializator::initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s)
+	template <typename T>
+		requires std::floating_point<T>
+	void SOCPSolver<T>::MarkowitzInitializator::initialize(std::vector<std::shared_ptr<Matrix<T>>> x, std::shared_ptr<Matrix<T>> y, std::vector<std::shared_ptr<Matrix<T>>> s)
 	{
 		using namespace std;
 
-		if (x == nullptr || y == nullptr || s == nullptr)
+		if (x.empty() || y == nullptr || s.empty())
 			throw SolverException(
 				"Wrong arguments for initializer, matrices have to be allocated before initializing them.");
 
-		x->setValues(vector<T>(x->getRows(), 1), x->getRows(), 1);
+		for (const auto& tx : x)
+		{
+			tx->setValues(vector<T>(tx->getRows(), 0), tx->getRows(), 1);
+			tx->set(0, 0, 1.0 / tx->getRows());
+		}
 
-		y->setValues(vector<T>(y->getRows(), 1), y->getRows(), 1);
-
-		s->setValues(vector<T>(s->getRows(), 1), s->getRows(), 1);
-	}
-
-	template <typename T> requires std::floating_point<T>
-	void SOCPSolver<T>::ManualInitializator::initialize(Matrix<T>* x, Matrix<T>* y, Matrix<T>* s)
-	{
-		using namespace std;
-
-		if (x == nullptr || y == nullptr || s == nullptr)
-			throw SolverException(
-				"Wrong arguments for initializer, matrices have to be allocated before initializing them.");
-
-		x->setValues(vector<T>(x->getRows(), 0), x->getRows(), 1);
 		y->setValues(vector<T>(y->getRows(), 0), y->getRows(), 1);
-		s->setValues(vector<T>(s->getRows(), 0), s->getRows(), 1);
+
+		for (const auto& ts : s)
+		{
+			ts->setValues(vector<T>(ts->getRows(), 0), ts->getRows(), 1);
+			ts->set(0, 0, 1.0 / ts->getRows());
+		}
 	}
 }

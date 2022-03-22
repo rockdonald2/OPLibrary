@@ -919,7 +919,7 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	std::shared_ptr<Matrix<T>> DenseMatrix<T>::operator+(const std::shared_ptr<Matrix<T>>& rhs) const
 	{
-		return std::move(*this - rhs.get());
+		return std::move(*this + rhs.get());
 	}
 
 	template <typename T>

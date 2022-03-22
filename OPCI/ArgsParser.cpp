@@ -163,6 +163,24 @@ namespace OPLibrary
 			}
 		}
 
+		if (args_.contains(Args::MAXIMIZE) && args_.contains(Args::MINIMIZE))
+		{
+			LOG.error("Invalid value set for objective direction, both max and min were specified.");
+			return false;
+		}
+
+		if (!args_.contains(Args::SOLVER_TYPE))
+		{
+			LOG.error("No problem type was set.");
+			return false;
+		}
+
+		if (!args_.contains(Args::INPUT_FILE) || !args_.contains(Args::OUTPUT_FILE))
+		{
+			LOG.error("No input or output was specified.");
+			return false;
+		}
+
 		if (!tokens_.empty())
 		{
 			LOG.error(format("Unresolved parameters: {}.", toString(tokens_, " ")));

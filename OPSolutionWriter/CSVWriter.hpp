@@ -24,7 +24,7 @@ namespace OPLibrary
 		bool wasIterationWritten_;
 		std::vector<std::string> headers_;
 	public:
-		explicit CSVWriter(std::ostream* output) : Writer<T>(output), wasIterationWritten_(false) {}
+		explicit CSVWriter(std::ostream* output, const ProblemType& type) : Writer<T>(output, type), wasIterationWritten_(false) {}
 
 		void writeProblem(const Problem<T>* problem) override;
 		void writeProblem(const std::shared_ptr<Problem<T>>& problem) override;
@@ -48,6 +48,20 @@ namespace OPLibrary
 		const auto A(problem->getConstraints());
 		const auto b(problem->getConstraintsObjectives()->getValues());
 		const auto c(problem->getObjectives()->getValues());
+
+		if (this->type_ == ProblemType::SOCP)
+		{
+			const auto* pr(dynamic_cast<const SOCPProblem<T>*>(problem));
+
+			internalRowWrite("noc: ");
+			const auto& cs(pr->getConeSizes());
+			std::for_each(cs.begin(), cs.end(), [this](auto n)
+				{
+					internalRowWrite(n);
+				});
+
+			*this->output_ << ENDLINE;
+		}
 
 		internalRowWrite("bT: ");
 		std::for_each(b->begin(), b->end(), [this](auto n)
@@ -92,13 +106,32 @@ namespace OPLibrary
 			*this->output_ << ENDLINE;
 		}
 
+		const auto feasibility(solution->getSolutionStatusString());
 		const auto optimal(solution->getOptimalValue());
 		const auto x(solution->getPrimalSolution()->getValues());
 		const auto y(solution->getDualSolutionY()->getValues());
 		const auto s(solution->getDualSolutionS()->getValues());
 
+		if (this->type_ == ProblemType::SOCP)
+		{
+			const auto* sl(dynamic_cast<const SOCPSolution<T>*>(solution));
+
+			internalRowWrite("noc: ");
+			const auto& c(sl->getCones());
+			std::for_each(c.begin(), c.end(), [this](auto n)
+				{
+					internalRowWrite(n);
+				});
+
+			*this->output_ << ENDLINE;
+		}
+
 		internalRowWrite("Optimal value: ");
 		internalRowWrite(optimal);
+		*this->output_ << ENDLINE;
+
+		internalRowWrite("Feasibility: ");
+		internalRowWrite(feasibility);
 		*this->output_ << ENDLINE;
 
 		internalRowWrite("xT: ");

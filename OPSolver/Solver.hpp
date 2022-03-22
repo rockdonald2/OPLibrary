@@ -51,6 +51,8 @@ namespace OPLibrary
 		 */
 		virtual void setInitializableArg(const std::string& arg, const long double& val);
 
+		virtual void setStartingPointInitializator(const std::string& init) = 0;
+
 		/**
 		 * \brief Sets the problem for this solver.
 		 * \param problem instance
