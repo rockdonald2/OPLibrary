@@ -928,9 +928,9 @@ namespace OPLibrary
 				lastPoz += size;
 			}
 		}
-		catch (const exception&)
+		catch (const exception& e)
 		{
-			throw SolverException("Failed to convert given problem to SOCP problem.");
+			throw SolverException(e.what());
 		}
 
 		// one set of x and s for each cone
