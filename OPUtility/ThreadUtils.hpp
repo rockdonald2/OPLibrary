@@ -91,7 +91,7 @@ public:
 
 	[[nodiscard]] std::optional<const ThreadType*> getById(const std::thread::id& id) const;
 
-	[[nodiscard]] std::vector<ThreadType*> getExecutors() const;
+	[[nodiscard]] std::vector<const ThreadType*> getExecutors() const;
 
 	void waitForExecutors() const;
 	void clearExecutors();
@@ -119,12 +119,12 @@ std::optional<const ThreadType*> ExecutorContainer<ThreadType>::getById(const st
 }
 
 template <typename ThreadType>
-std::vector<ThreadType*> ExecutorContainer<ThreadType>::getExecutors() const
+std::vector<const ThreadType*> ExecutorContainer<ThreadType>::getExecutors() const
 {
 	static_assert(std::is_base_of_v<std::jthread, ThreadType>, "ThreadType must inherit from std::jthread.");
 
 	std::lock_guard g1(m1Executors_);
-	std::vector<ThreadType*> lexecutors;
+	std::vector<const ThreadType*> lexecutors;
 
 	for (const auto& executor : executors_ | std::views::values)
 	{
