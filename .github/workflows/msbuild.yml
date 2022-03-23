@@ -27,18 +27,13 @@ jobs:
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+    
+    - name: Install Doxygen with Choco
+      run: choco install doxygen.install
 
     - name: Build OPLibrary
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}\OPLibrary.sln
-      
-    #- name: Make dist dir
-    #  working-directory: ${{env.GITHUB_WORKSPACE}}
-    #  run: mkdir ${{env.SOLUTION_FILE_PATH}}/dist
-      
-    #- name: Zip build output
-    #  working-directory: ${{env.GITHUB_WORKSPACE}}
-    #  run: Compress-Archive ${{env.SOLUTION_FILE_PATH}}/x64/${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}/dist/build.zip 
         
     # zips the output
     - name: Upload build output
@@ -46,4 +41,16 @@ jobs:
       with:
         name: OPLibrary
         path: ${{env.SOLUTION_FILE_PATH}}/${{env.BUILD_ARCHITECTURE}}/${{env.BUILD_CONFIGURATION}}
-        retention-days: 14
+        retention-days: 7
+        
+    - name: Generate docs
+      run: |
+        & "C:/Program Files/doxygen/bin/doxygen.exe" .\Doxyfile
+        
+    # zip and upload docs
+    - name: Zip and upload docs
+      uses: actions/upload-artifact@v3
+      with:
+        name: OPLibrary Docs
+        path: ${{env.SOLUTION_FILE_PATH}}/Documentation
+        retention-days: 7
