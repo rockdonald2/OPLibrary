@@ -168,6 +168,7 @@
     <ClInclude Include="Reader.hpp" />
     <ClInclude Include="ReaderException.hpp" />
     <ClInclude Include="ReaderBuilder.hpp" />
+    <ClInclude Include="SOCPFileReader.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

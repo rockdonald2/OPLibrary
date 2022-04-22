@@ -16,11 +16,10 @@ namespace OPLibrary
 	{
 	protected:
 		std::ostream* output_;
-		ProblemType type_;
 
 	public:
-		Writer() : output_(nullptr), type_(ProblemType::INVALID) {}
-		explicit Writer(std::ostream* output, const ProblemType& type) : output_(output), type_(type) {}
+		Writer() : output_(nullptr) {}
+		explicit Writer(std::ostream* output) : output_(output) {}
 		virtual ~Writer() = default;
 
 		/**

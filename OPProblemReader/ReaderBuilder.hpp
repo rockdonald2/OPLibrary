@@ -3,6 +3,7 @@
 #include "Reader.hpp"
 #include "FileReader.hpp"
 #include "ReaderException.hpp"
+#include "SOCPFileReader.hpp"
 
 namespace OPLibrary
 {
@@ -85,7 +86,13 @@ namespace OPLibrary
 
 			switch (type_)
 			{
-			case ReaderType::FILE: return std::move(std::make_unique<FileReader<T>>(static_cast<std::ifstream*>(input_), problemType_));
+			case ReaderType::FILE:
+			{
+				switch (problemType_)
+				{
+				case ProblemType::SOCP: return std::move(std::make_unique<SOCPFileReader<T>>(static_cast<std::ifstream*>(input_)));
+				}
+			}
 			}
 
 			throw ReaderException("Unsupported reader type.");

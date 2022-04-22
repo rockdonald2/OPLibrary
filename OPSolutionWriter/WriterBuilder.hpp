@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "CSVWriter.hpp"
+#include "SOCPCSVWriter.hpp"
 #include "Writer.hpp"
 #include "WriterException.hpp"
 
@@ -69,7 +70,13 @@ namespace OPLibrary
 
 			switch (type_)
 			{
-			case WriterType::CSV: return std::move(std::make_shared<CSVWriter<T>>(static_cast<std::ostream*>(output_), problemType_));
+			case WriterType::CSV:
+			{
+				switch (problemType_)
+				{
+				case ProblemType::SOCP: return std::move(std::make_shared<SOCPCSVWriter<T>>(static_cast<std::ostream*>(output_)));
+				}
+			}
 			}
 
 			throw WriterException("Unsupported writer type.");

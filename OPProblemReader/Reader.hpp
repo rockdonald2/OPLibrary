@@ -11,12 +11,7 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	class Reader
 	{
-	protected:
-		ProblemType type_;
-
 	public:
-		explicit Reader(const ProblemType& type) : type_(type) {}
-
 		virtual ~Reader() = default;
 
 		/**
