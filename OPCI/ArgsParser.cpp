@@ -83,17 +83,24 @@ namespace OPLibrary
 	void ArgsParser::printHelp()
 	{
 		LOG.blank("Command line interface for OPLibrary.");
-		LOG.blank("Usage:");
-		LOG.blank("\t -h | --help \t\t\t\t -- prints help message");
-		LOG.blank("\t -c | --config <config file path> \t -- specifies config file path, replaces any CLI arguments");
-		LOG.blank("\t -f | --file <input(s) file path> \t -- specifies input(s)");
-		LOG.blank("\t -p | --parallel \t\t\t -- multiple file inputs should run parallel, otherwise sequentially");
-		LOG.blank("\t -o | --output <output(s) file path> \t -- specifies output(s)");
-		LOG.blank("\t -s | --solver <solver type> \t\t -- specifies the solver type");
-		LOG.blank("\t --epsilon <value> \t\t\t -- specifies epsilon");
-		LOG.blank("\t --rho <value> \t\t\t\t -- specifies rho");
-		LOG.blank("\t --sigma <value> \t\t\t -- specifies sigma");
-		LOG.blank("\t --mu <value> \t\t\t\t -- specifies mu");
+		LOG.blank("Usage: OPCI.exe [OPTIONS] -f <input(s)> -o <output(s)>");
+		LOG.blank("Options:");
+		LOG.blank("\t -h | --help \t\t\t\t prints help message");
+		LOG.blank("\t -c | --config <config file path> \t specifies config file path, replaces any CLI options");
+		LOG.blank("\t -f | --file <input(s) file path> \t specifies input(s)");
+		LOG.blank("\t -p | --parallel \t\t\t multiple file inputs should run parallel");
+		LOG.blank("\t -o | --output <output(s) file path> \t specifies output(s)");
+		LOG.blank("\t -s | --solver <solver type> \t\t specifies the solver type");
+		LOG.blank("\t --init <initializator> \t\t specifies initializator for primal and dual problems");
+		LOG.blank("\t --max \t\t\t\t\t specifies whether it is a maximization problem");
+		LOG.blank("\t --min \t\t\t\t\t specifies whether it is a minimization problem");
+		LOG.blank("\t --epsilon <value> \t\t\t specifies epsilon");
+		LOG.blank("\t --rho <value> \t\t\t\t specifies rho");
+		LOG.blank("\t --sigma <value> \t\t\t specifies sigma");
+		LOG.blank("\t --mu <value> \t\t\t\t specifies mu");
+		LOG.blank("Note:");
+		LOG.blank("\t - same solver type, initializator and input parameters will be used for all input problems.");
+		LOG.blank("\t - check docs for available initializators/solvers.");
 	}
 
 	bool ArgsParser::parseArguments(int argc, char** argv)
