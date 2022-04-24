@@ -4,12 +4,12 @@
 
 ## Usage
 
-1. Download a recently compiled release from the **Issues** page.
+1. Download a recently compiled release from the **Actions** page.
 2. `$ ./OPCI.exe --help` or `./OPCI.exe -f problem.txt -o solution.csv`.
 
 _See below for input problem schema examples for currently implemented problem types._
 
-```shell
+```plain
 Command line interface for OPLibrary.
 Usage: OPCI.exe [OPTIONS] -f <input(s)> -o <output(s)>
 Options:
@@ -97,3 +97,7 @@ Example problem
 
 2 1 0 0 2 1 0 0 2 1 0 0 2 1 0 0
 ```
+
+### Other remarks
+
+- Check out the generated DoxyDoc in the **Actions** page.
