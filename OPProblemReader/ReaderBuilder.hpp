@@ -83,7 +83,7 @@ namespace OPLibrary
 		[[nodiscard]] std::unique_ptr<Reader<T>> build() const
 		{
 			if (input_ == nullptr) throw ReaderException("Invalid input stream.");
-			if (problemType_ == ProblemType::INVALID) throw ReaderException("No problem type was set for writer.");
+			if (problemType_ == ProblemType::INVALID) throw ReaderException("No problem type was set for reader.");
 
 			switch (type_)
 			{
