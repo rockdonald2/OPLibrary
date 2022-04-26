@@ -27,7 +27,7 @@ Options:
          --sigma <value>                         specifies sigma
          --mu <value>                            specifies mu
 Note:
-         - same solver type, initializator and input parameters will be used for all input problems.
+         - same solver type, initializator, objective direction and input parameters will be used for all input problems.
          - check docs for available initializators/solvers.
 ```
 
