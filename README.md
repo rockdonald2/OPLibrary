@@ -35,7 +35,7 @@ Note:
 
 | Option | Description |
 | ----------- | ----------- |
-| -f or --file | Space separated input files, e.g. `-f problem1.txt -f problem2.txt`; can have any extension. |
+| -f or --file | Space separated input files, e.g. `-f problem1.txt problem2.txt`; can have any extension. |
 | -o or --output | See `-f or --file`. |
 | -p or --parallel | For each input file a new executor thread will be created, problems will be resolved in parallel, but user should be responsible for uniquity of inputs and outputs. |
 | -s or --solver | Currently implemented solvers are: `SOCP`. [See below for explanation of types.](#solvers)  |

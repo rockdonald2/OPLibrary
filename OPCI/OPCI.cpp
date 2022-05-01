@@ -86,7 +86,10 @@ int runOptimizer(const std::string& in, const std::string& out)
 
 		const auto solution(solver->getSolution());
 
-		writer->writeSolution(solution);
+		if (solution->getSolutionStatus() == SolutionStatus::FEASIBLE)
+		{
+			writer->writeSolution(solution);
+		}
 
 		const auto currThread(gexecutors.getById(this_thread::get_id()));
 		LOG.info(std::format("[{}] - Optimization problem successfully resolved. It is {}.",
