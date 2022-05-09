@@ -11,6 +11,7 @@
 
 #include "Solver.hpp"
 #include "MatrixFactory.hpp"
+#include "MatrixUtils.hpp"
 #include "SOCPSolution.hpp"
 #include "Solution.hpp"
 #include "SolverException.hpp"
@@ -369,8 +370,12 @@ namespace OPLibrary
 		requires std::floating_point<T>
 	bool SOCPSolver<T>::checkIsTermination() const
 	{
+		const auto ctx(*this->problem_->getObjectives()->transpose() * *calculateCombinedVectors(n_, x_));
+		const auto bty(*this->problem_->getConstraintsObjectives()->transpose() * *y_);
+
 		return currIter_ > maxIters_
-			|| (checkMu() && checkPrimalFeasibility() && checkDualFeasibility());
+			|| (checkMu() && checkPrimalFeasibility() && checkDualFeasibility())
+			|| (containsNaN(ctx.get()) || containsNaN(bty.get()));
 	}
 
 	template <typename T> requires std::floating_point<T>
@@ -725,6 +730,11 @@ namespace OPLibrary
 
 		if (currIter_ > maxIters_) hr = true;
 		if (!(checkMu() && checkPrimalFeasibility() && checkDualFeasibility())) hr = true;
+
+		const auto ctx(*this->problem_->getObjectives()->transpose() * *calculateCombinedVectors(n_, x_));
+		const auto bty(*this->problem_->getConstraintsObjectives()->transpose() * *y_);
+
+		if (containsNaN(ctx.get()) || containsNaN(bty.get())) hr = true;
 
 		return hr;
 	}
