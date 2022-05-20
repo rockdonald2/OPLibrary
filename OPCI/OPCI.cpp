@@ -1,4 +1,3 @@
-#include <format>
 #include <boost/range/combine.hpp>
 #include <set>
 #include <vector>

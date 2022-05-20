@@ -1,5 +1,4 @@
 ﻿#include <algorithm>
-#include <format>
 #include <fstream>
 #include <sstream>
 #include <cassert>
