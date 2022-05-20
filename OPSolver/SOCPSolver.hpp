@@ -337,6 +337,7 @@ namespace OPLibrary
 		[[nodiscard]] bool checkInfeasibility() const;
 
 		SolutionStatus internalSolver();
+		void internalSolverPreparations(std::shared_ptr<Matrix<T>> A, std::shared_ptr<Matrix<T>> b, std::shared_ptr<Matrix<T>> c);
 
 	public:
 		SOCPSolver() : epsilon_(1.0e-6), mu_(1.0), rho_(0.995), sigma_(1.0 / 10), m_(0),
@@ -861,6 +862,38 @@ namespace OPLibrary
 		return hr;
 	}
 
+	/*
+	 * For some problem types there is a need for certain preparations.
+	 * E.g., in case of Markowitz basic problems we need to calculate the Cholesky factorization for the covariance matrix.
+	 */
+	template <typename T> requires std::floating_point<T>
+	void SOCPSolver<T>::internalSolverPreparations(std::shared_ptr<Matrix<T>> A, std::shared_ptr<Matrix<T>> b, std::shared_ptr<Matrix<T>> c)
+	{
+		using namespace std;
+
+		if (this->problem_->getObjectiveDirection() == ObjectiveDirection::MAXIMIZE)
+		{
+			*c *= -1;
+		}
+
+		// complicated switches for specific initializators on which we can make assumptions what type of problem is used
+
+		if (this->init_ == this->INITS.at("markowitz"))
+		{
+			const auto firstRow(A->block(0, 0, 1, A->getCols() - 1)->getValues());
+			const size_t ones(count(firstRow->begin(), firstRow->end(), 1));
+
+			// if Markowitz problem we need to replace the covariance matrix with Cholesky factorization transpose
+			auto covariance(A->block(1, 0, A->getRows() - 2, ones - 1));
+
+			// bit of a cheat
+			const shared_ptr<Matrix<T>> G(calculateCholesky(covariance.get()));
+
+			// we replace covariance with transpose of G
+			A->block(1, 0, A->getRows() - 2, ones - 1, G->transpose());
+		}
+	}
+
 	template <typename T> requires std::floating_point<T>
 	void SOCPSolver<T>::setStartingPointInitializator(const std::string& init)
 	{
@@ -916,10 +949,7 @@ namespace OPLibrary
 			const auto& b(this->problem_->getConstraintsObjectives());
 			auto c(this->problem_->getObjectives());
 
-			if (this->problem_->getObjectiveDirection() == ObjectiveDirection::MAXIMIZE)
-			{
-				*c *= -1;
-			}
+			internalSolverPreparations(A, b, c);
 
 			// set A
 			size_t lastPoz(0);
