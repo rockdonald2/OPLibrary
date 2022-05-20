@@ -51,7 +51,7 @@ namespace OPLibrary
 			}
 			catch (const exception&)
 			{
-				LOG.error(std::format("Failed to use {} as a number, skipping.\n", placeholder));
+				LOG.error("Failed to use " + placeholder + " as a number, skipping.\n");
 			}
 		} while (true);
 	}
@@ -79,7 +79,7 @@ namespace OPLibrary
 					}
 					catch (const std::exception&)
 					{
-						LOG.error(std::format("Failed to use {} as a number, skipping.\n", placeholder));
+						LOG.error("Failed to use " + placeholder + " as a number, skipping.\n");
 						--j;
 					}
 				}

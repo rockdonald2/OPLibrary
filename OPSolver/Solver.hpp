@@ -113,8 +113,9 @@ namespace OPLibrary
 		}
 		else
 		{
-			LOG.error(format("Tried to set an invalid initializable arg {} to value {}, skipping.",
-				arg, val));
+			LOG.error(
+				"Tried to set an invalid initializable arg " + arg + " to value " + std::to_string(val) + ", skipping."
+			);
 		}
 	}
 

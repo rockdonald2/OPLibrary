@@ -147,7 +147,7 @@ namespace OPLibrary
 						args_.insert(make_pair(arg, val)); break;
 					}
 
-					LOG.error(format("Invalid value for argument {}.", option));
+					LOG.error("Invalid value for argument " + option);
 					return false;
 				}
 			}
@@ -164,7 +164,7 @@ namespace OPLibrary
 						args_.insert(make_pair(arg, vector<string>{"true"})); break;
 					}
 
-					LOG.error(format("Invalid value for argument {}, should be left empty.", option));
+					LOG.error("Invalid value for argument " + option + ", should be left empty.");
 					return false;
 				}
 			}
@@ -190,7 +190,7 @@ namespace OPLibrary
 
 		if (!tokens_.empty())
 		{
-			LOG.error(format("Unresolved parameters: {}.", toString(tokens_, " ")));
+			LOG.error("Unresolved parameters: " + toString(tokens_, " "));
 			return false;
 		}
 

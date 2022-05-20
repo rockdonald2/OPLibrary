@@ -34,7 +34,7 @@ namespace OPLibrary
 	template <typename E>
 	void CSVWriter<T>::internalRowWrite(E elem)
 	{
-		*this->output_ << std::format("{}" + SEPARATOR, elem);
+		*this->output_ << elem << SEPARATOR;
 	}
 
 	template <typename T>

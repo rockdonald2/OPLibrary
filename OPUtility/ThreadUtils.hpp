@@ -53,7 +53,7 @@ class NamedJThread : public std::jthread
 
 public:
 	template <typename Fn, typename... Args>
-	explicit NamedJThread(Fn&& func, Args&&... args) : jthread(func, args...), name_(std::format("Executor {}", counter_.incrementAndGet())) {}
+	explicit NamedJThread(Fn&& func, Args&&... args) : jthread(func, args...), name_("Executor " + std::to_string(counter_.incrementAndGet())) {}
 
 	template <typename Fn, typename... Args>
 	explicit NamedJThread(Fn&& func, Args&&... args, const std::string& name) : jthread(func, args...), name_(name) {}

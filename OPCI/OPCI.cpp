@@ -92,8 +92,10 @@ int runOptimizer(const std::string& in, const std::string& out)
 		}
 
 		const auto currThread(gexecutors.getById(this_thread::get_id()));
-		LOG.info(std::format("[{}] - Optimization problem successfully resolved. It is {}.",
-			currThread ? currThread.value()->getName() : "Sequential (main) Optimizer", solution->getSolutionStatusString()));
+		LOG.info(
+			"[" + (currThread ? currThread.value()->getName() : "Sequential (main) Optimizer") +
+			"] - Optimization problem successfully resolved. It is " + solution->getSolutionStatusString()
+		);
 	}
 	catch (const exception& e)
 	{
