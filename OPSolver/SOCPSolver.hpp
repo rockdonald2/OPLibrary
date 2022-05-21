@@ -882,14 +882,18 @@ namespace OPLibrary
 			const auto firstRow(A->block(0, 0, 1, A->getCols() - 1)->getValues());
 			const size_t ones(count(firstRow->begin(), firstRow->end(), 1));
 
+			size_t idx;
+			if (ones == 0) idx = 1;
+			else idx = ones - 1;
+
 			// if Markowitz problem we need to replace the covariance matrix with Cholesky factorization transpose
-			auto covariance(A->block(1, 0, A->getRows() - 2, ones - 1));
+			auto covariance(A->block(1, 0, A->getRows() - 2, idx));
 
 			// bit of a cheat
 			const shared_ptr<Matrix<T>> G(calculateCholesky(covariance.get()));
 
 			// we replace covariance with transpose of G
-			A->block(1, 0, A->getRows() - 2, ones - 1, G->transpose());
+			A->block(1, 0, A->getRows() - 2, idx, G->transpose());
 		}
 	}
 
