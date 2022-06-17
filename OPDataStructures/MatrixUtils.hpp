@@ -37,7 +37,7 @@ template <typename T>
 
 	const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> eigenMatrix = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>>(vals->data(), rows, cols);
 
-	Eigen::MatrixXd L(eigenMatrix.llt().matrixL());
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, 0> L(eigenMatrix.llt().matrixL());
 
 	const MatrixFactory<T> factory;
 	auto retMatrix(factory.createMatrix(L.rows(), L.cols()));
